@@ -127,6 +127,9 @@ a {
   font-size: 1.15rem;
   font-weight: 600;
   letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .appbar-title .brand-mark {
@@ -1247,4 +1250,19 @@ html[dir="rtl"] .nav-drawer-link { text-align: right; }
   font-weight: 600;
   color: var(--text);
   text-transform: capitalize;
+}
+
+/* ============================================================
+   Logo mark
+   ============================================================ */
+.appbar-logo {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  flex-shrink: 0;
+}
+.auth-logo-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
 }

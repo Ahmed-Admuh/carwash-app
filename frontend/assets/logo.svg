@@ -1,0 +1,24 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <rect width="256" height="256" rx="56" fill="#0B1E33"/>
+  <!-- Water arc behind the car, suggesting a wash/wave -->
+  <path d="M40 168c28-22 56-22 84 0s56 22 84 0" stroke="#0F9B8E" stroke-width="10" stroke-linecap="round" fill="none" opacity="0.55"/>
+  <path d="M32 190c28-22 56-22 84 0s56 22 84 0" stroke="#0F9B8E" stroke-width="12" stroke-linecap="round" fill="none"/>
+  <!-- Car silhouette -->
+  <path d="M62 150
+           c4-20 18-34 30-38
+           l10-16c4-6 10-10 17-10h38
+           c7 0 13 4 17 10l10 16
+           c12 4 26 18 30 38
+           v18a8 8 0 0 1-8 8h-10
+           a16 16 0 0 1-32 0h-52
+           a16 16 0 0 1-32 0h-10
+           a8 8 0 0 1-8-8z"
+        fill="#F6F4EF"/>
+  <path d="M96 96 l-8 16h80l-8-16c-2-4-6-6-10-6h-44c-4 0-8 2-10 6z" fill="#0B1E33"/>
+  <circle cx="94" cy="176" r="14" fill="#0B1E33"/>
+  <circle cx="94" cy="176" r="6" fill="#F6F4EF"/>
+  <circle cx="162" cy="176" r="14" fill="#0B1E33"/>
+  <circle cx="162" cy="176" r="6" fill="#F6F4EF"/>
+  <!-- Sparkle accent -->
+  <path d="M196 70 l4 10 10 4-10 4-4 10-4-10-10-4 10-4z" fill="#E0972F"/>
+</svg>

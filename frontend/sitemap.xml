@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Replace YOUR-DOMAIN-HERE below with your actual live URL (e.g.
+  carwash-app.ahmedalturki545.workers.dev, or your custom domain once you
+  have one) before this does anything useful.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://YOUR-DOMAIN-HERE/index.html</loc>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://YOUR-DOMAIN-HERE/about.html</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://YOUR-DOMAIN-HERE/book.html</loc>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://YOUR-DOMAIN-HERE/signup.html</loc>
+    <priority>0.6</priority>
+  </url>
+</urlset>
