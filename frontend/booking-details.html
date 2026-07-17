@@ -172,13 +172,38 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- Add Payment Method Modal -->
+<div class="modal-overlay" id="paymentModalBD">
+  <div class="modal-panel">
+    <div class="modal-header">
+      <h3 data-i18n="modal_add_payment_title">Add Payment Method</h3>
+      <button class="modal-close" id="closePaymentModalBD">&times;</button>
+    </div>
+    <form id="paymentFormBD">
+      <div class="payment-type-grid" id="paymentTypeGridBD">
+        <div class="payment-type-btn" data-type="visa"><i class="fab fa-cc-visa"></i></div>
+        <div class="payment-type-btn" data-type="mastercard"><i class="fab fa-cc-mastercard"></i></div>
+        <div class="payment-type-btn" data-type="amex"><i class="fab fa-cc-amex"></i></div>
+        <div class="payment-type-btn" data-type="discover"><i class="fab fa-cc-discover"></i></div>
+        <div class="payment-type-btn" data-type="apple-pay"><i class="fab fa-apple-pay"></i></div>
+      </div>
+      <div class="form-group last4-group" id="last4GroupBD">
+        <label for="pLast4BD" data-i18n="modal_last4">Last 4 digits of card</label>
+        <input type="text" id="pLast4BD" class="form-control" maxlength="4" placeholder="1234">
+      </div>
+      <button type="submit" class="btn btn-block" id="paymentSubmitBtnBD" disabled data-i18n="btn_add_payment">Add Payment Method</button>
+    </form>
+  </div>
+</div>
+
 <!-- Sticky Price Footer -->
 <div class="sticky-price-footer" id="stickyFooter">
   <div class="sticky-price-label">Total:</div>
-  <div class="sticky-price-value" id="sticky-total">$0.00</div>
+  <div class="sticky-price-value" id="sticky-total">0.00 <span class="sar-symbol" aria-hidden="true">&#x20C1;</span><span class="sr-only">SAR</span></div>
 </div>
 
 <script src="js/demo-mode.js"></script>
+<script src="js/currency.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/i18n.js"></script>
 <script src="js/menu.js"></script>
@@ -216,7 +241,8 @@
     selectedAddonIds: new Set(),
     selectedDate: null,
     selectedTime: null,
-    selectedPayment: null
+    selectedPayment: null,
+    selectedPaymentType: null
   };
 
   document.addEventListener('DOMContentLoaded', async () => {
@@ -300,6 +326,9 @@
 
         <h3 class="section-title" style="margin-top: 1.75rem; font-size: 1.15rem;"><i class="fas fa-credit-card"></i> <span data-i18n="booking_step_payment">Payment Method</span></h3>
         <div class="payment-methods" id="paymentMethods"></div>
+        <button type="button" class="btn btn-outline btn-block" id="addPaymentBtnBD" style="margin-top: 0.6rem;">
+          <i class="fas fa-plus-circle"></i> <span data-i18n="btn_add_payment">Add Payment Method</span>
+        </button>
 
         <div class="form-group" style="margin-top: 1.5rem;">
           <label for="special-requests" data-i18n="booking_special_requests">Special Requests (Optional)</label>
@@ -307,10 +336,10 @@
         </div>
 
         <div class="price-summary" id="priceSummary">
-          <div class="price-line"><span>Base Price:</span><span id="base-price">$0.00</span></div>
-          <div class="price-line"><span>Add-ons:</span><span id="addons-price-line">$0.00</span></div>
-          <div class="price-line"><span>Tax:</span><span id="tax">$0.00</span></div>
-          <div class="price-line price-total"><span data-i18n="booking_total">Total:</span><span id="total">$0.00</span></div>
+          <div class="price-line"><span data-i18n="bd_base_price">Base Price:</span><span id="base-price">0.00 <span class="sar-symbol" aria-hidden="true">&#x20C1;</span><span class="sr-only">SAR</span></span></div>
+          <div class="price-line"><span data-i18n="bd_addons_price">Add-ons:</span><span id="addons-price-line">0.00 <span class="sar-symbol" aria-hidden="true">&#x20C1;</span><span class="sr-only">SAR</span></span></div>
+          <div class="price-line"><span data-i18n="bd_tax">Tax:</span><span id="tax">0.00 <span class="sar-symbol" aria-hidden="true">&#x20C1;</span><span class="sr-only">SAR</span></span></div>
+          <div class="price-line price-total"><span data-i18n="booking_total">Total:</span><span id="total">0.00 <span class="sar-symbol" aria-hidden="true">&#x20C1;</span><span class="sr-only">SAR</span></span></div>
         </div>
 
         <button class="btn btn-block" id="confirm-booking">
@@ -389,13 +418,13 @@
         <i class="fas fa-shower"></i>
         <h4>${t('bd_exterior_only', 'Exterior Only')}</h4>
         <div class="choice-desc">${t('choice_exterior_desc', 'Outside wash, rinse & dry')}</div>
-        <div class="choice-price">$${exteriorPrice.toFixed(2)}</div>
+        <div class="choice-price">${formatPrice(exteriorPrice)}</div>
       </div>
       <div class="choice-card ${state.washType === 'full' ? 'selected' : ''}" data-wash="full">
         <i class="fas fa-car-burst"></i>
         <h4>${t('bd_exterior_interior', 'Exterior + Interior')}</h4>
         <div class="choice-desc">${t('choice_full_desc', 'Full wash plus interior clean')}</div>
-        <div class="choice-price">$${fullPrice.toFixed(2)}</div>
+        <div class="choice-price">${formatPrice(fullPrice)}</div>
       </div>
     `;
     grid.querySelectorAll('.choice-card').forEach(card => {
@@ -438,7 +467,7 @@
     grid.innerHTML = addons.map(a => `
       <div class="addon-item ${state.selectedAddonIds.has(a.id) ? 'selected' : ''}" data-addon-id="${a.id}">
         <div>${addonLabel(a.name)}</div>
-        <div class="addon-price">+$${parseFloat(a.price).toFixed(2)}</div>
+        <div class="addon-price">+${formatPrice(a.price)}</div>
       </div>
     `).join('');
 
@@ -470,20 +499,23 @@
       ];
     }
 
-    if (methods.length === 0) {
-      container.innerHTML = `<div class="text-muted" style="font-size: 0.85rem;">${t('bd_no_saved_payment', 'No saved payment methods. Add one from your profile.')}</div>`;
-      return;
-    }
+    // Cash is always offered, even with no saved cards — settled in person,
+    // not tied to any saved payment method.
+    const cashOption = { id: 'cash', type: 'cash', label: t('bd_cash_label', 'Cash (pay on arrival)'), is_default: false };
+    const allMethods = [...methods, cashOption];
 
-    state.selectedPayment = methods.find(m => m.is_default)?.id || methods[0].id;
+    const defaultMethod = methods.find(m => m.is_default) || methods[0] || cashOption;
+    state.selectedPayment = defaultMethod.id;
+    state.selectedPaymentType = defaultMethod.type;
 
     const iconMap = {
       visa: 'fab fa-cc-visa', mastercard: 'fab fa-cc-mastercard',
-      amex: 'fab fa-cc-amex', discover: 'fab fa-cc-discover', 'apple-pay': 'fab fa-apple-pay'
+      amex: 'fab fa-cc-amex', discover: 'fab fa-cc-discover', 'apple-pay': 'fab fa-apple-pay',
+      cash: 'fas fa-money-bill-wave'
     };
 
-    container.innerHTML = methods.map(m => `
-      <div class="payment-method ${m.id === state.selectedPayment ? 'selected' : ''}" data-payment-id="${m.id}">
+    container.innerHTML = allMethods.map(m => `
+      <div class="payment-method ${m.id === state.selectedPayment ? 'selected' : ''}" data-payment-id="${m.id}" data-payment-type="${m.type}">
         <i class="${iconMap[m.type] || 'fas fa-credit-card'} payment-icon"></i>
         <div>${m.label}</div>
       </div>
@@ -491,12 +523,62 @@
 
     container.querySelectorAll('.payment-method').forEach(el => {
       el.addEventListener('click', function() {
-        state.selectedPayment = parseInt(this.dataset.paymentId, 10);
+        const idAttr = this.dataset.paymentId;
+        state.selectedPayment = idAttr === 'cash' ? 'cash' : parseInt(idAttr, 10);
+        state.selectedPaymentType = this.dataset.paymentType;
         container.querySelectorAll('.payment-method').forEach(p => p.classList.remove('selected'));
         this.classList.add('selected');
       });
     });
   }
+
+  // ---- Add Payment Method modal (right from the booking flow) ----
+  let selectedNewPaymentType = null;
+  document.getElementById('addPaymentBtnBD').addEventListener('click', () => {
+    document.getElementById('paymentModalBD').classList.add('active');
+  });
+  document.getElementById('closePaymentModalBD').addEventListener('click', () => {
+    document.getElementById('paymentModalBD').classList.remove('active');
+  });
+  document.getElementById('paymentModalBD').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('paymentModalBD')) e.currentTarget.classList.remove('active');
+  });
+  document.querySelectorAll('#paymentTypeGridBD .payment-type-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#paymentTypeGridBD .payment-type-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedNewPaymentType = btn.dataset.type;
+      document.getElementById('last4GroupBD').classList.toggle('visible', selectedNewPaymentType !== 'apple-pay');
+      document.getElementById('paymentSubmitBtnBD').disabled = false;
+    });
+  });
+  document.getElementById('paymentFormBD').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!selectedNewPaymentType) return;
+    const last4 = document.getElementById('pLast4BD').value.trim();
+    if (selectedNewPaymentType !== 'apple-pay' && !/^\d{4}$/.test(last4)) {
+      showToast(t('profile_enter_4_digits', 'Please enter exactly 4 digits.'), true);
+      return;
+    }
+    const labelMap = { visa: 'Visa', mastercard: 'Mastercard', amex: 'Amex', discover: 'Discover', 'apple-pay': 'Apple Pay' };
+    const label = selectedNewPaymentType === 'apple-pay' ? 'Apple Pay' : `${labelMap[selectedNewPaymentType]} •••• ${last4}`;
+    try {
+      await apiFetch('/payment-methods', {
+        method: 'POST',
+        body: JSON.stringify({ type: selectedNewPaymentType, last4: selectedNewPaymentType === 'apple-pay' ? null : last4, label, isDefault: false })
+      });
+      showToast(t('profile_payment_added', 'Payment method added.'));
+      document.getElementById('paymentModalBD').classList.remove('active');
+      e.target.reset();
+      document.querySelectorAll('#paymentTypeGridBD .payment-type-btn').forEach(b => b.classList.remove('selected'));
+      document.getElementById('last4GroupBD').classList.remove('visible');
+      document.getElementById('paymentSubmitBtnBD').disabled = true;
+      selectedNewPaymentType = null;
+      await loadPaymentMethods();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  });
 
   async function loadSlots() {
     const grid = document.getElementById('slotGrid');
@@ -567,11 +649,11 @@
     const tax = subtotal * TAX_RATE;
     const total = subtotal + tax;
 
-    document.getElementById('base-price').textContent = `$${basePrice.toFixed(2)}`;
-    document.getElementById('addons-price-line').textContent = `$${addonsTotal.toFixed(2)}`;
-    document.getElementById('tax').textContent = `$${tax.toFixed(2)}`;
-    document.getElementById('total').textContent = `$${total.toFixed(2)}`;
-    document.getElementById('sticky-total').textContent = `$${total.toFixed(2)}`;
+    document.getElementById('base-price').innerHTML = formatPrice(basePrice);
+    document.getElementById('addons-price-line').innerHTML = formatPrice(addonsTotal);
+    document.getElementById('tax').innerHTML = formatPrice(tax);
+    document.getElementById('total').innerHTML = formatPrice(total);
+    document.getElementById('sticky-total').innerHTML = formatPrice(total);
   }
 
   async function confirmBooking() {
@@ -615,7 +697,8 @@
           addonIds: Array.from(state.selectedAddonIds),
           date: state.selectedDate,
           time: state.selectedTime,
-          paymentMethodId: state.selectedPayment,
+          paymentMethodId: state.selectedPayment === 'cash' ? null : state.selectedPayment,
+          paymentMethodType: state.selectedPaymentType,
           specialRequests: document.getElementById('special-requests').value,
           address: address
         })

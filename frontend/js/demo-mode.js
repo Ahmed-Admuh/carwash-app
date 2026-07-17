@@ -58,22 +58,22 @@ function buildSeedData() {
 
   const carWashes = [
     // Fixed locations
-    { id: 1, owner_id: 2, name: "Sparkle Auto Wash", service_type: "location", location: "Downtown", address: "142 Main St", distance_km: 2.8, rating: 4.5, review_count: 142, wait_time_minutes: 15, exterior_price: 15.00, full_wash_addon: 8.00, concurrent_slots: 2, slot_interval_minutes: 15, service_radius_km: null, points_per_visit: 15, image_url: "https://images.unsplash.com/photo-1750492960736-6ef3f76d6c95?fm=jpg&q=80&w=1200&auto=format&fit=crop", description: "A neighborhood favorite for a quick, reliable wash." },
-    { id: 2, owner_id: null, name: "SuperClean Express", service_type: "location", location: "Burnaby", address: "88 Kingsway Ave", distance_km: 4.3, rating: 4.2, review_count: 87, wait_time_minutes: 5, exterior_price: 10.00, full_wash_addon: 6.00, concurrent_slots: 2, slot_interval_minutes: 15, service_radius_km: null, points_per_visit: 8, image_url: "https://images.unsplash.com/photo-1762933855598-273a51b47649?fm=jpg&q=80&w=1200&auto=format&fit=crop", description: "Fast in-and-out express wash, no appointment stress." },
-    { id: 3, owner_id: null, name: "EcoWash", service_type: "location", location: "Richmond", address: "5 Garden City Rd", distance_km: 3.1, rating: 4.7, review_count: 203, wait_time_minutes: 25, exterior_price: 18.00, full_wash_addon: 9.00, concurrent_slots: 2, slot_interval_minutes: 15, service_radius_km: null, points_per_visit: 20, image_url: "https://images.pexels.com/photos/5233285/pexels-photo-5233285.jpeg?auto=compress&cs=tinysrgb&w=1200", description: "Biodegradable soaps and water-reclaiming equipment." },
-    { id: 4, owner_id: null, name: "FastShine", service_type: "location", location: "Surrey", address: "220 King George Blvd", distance_km: 5.7, rating: 4.0, review_count: 64, wait_time_minutes: 10, exterior_price: 12.00, full_wash_addon: 7.00, concurrent_slots: 2, slot_interval_minutes: 15, service_radius_km: null, points_per_visit: 10, image_url: "https://images.unsplash.com/photo-1750492960736-6ef3f76d6c95?fm=jpg&q=80&w=1200&auto=format&fit=crop", description: "Straightforward, budget-friendly washes." },
-    { id: 5, owner_id: 2, name: "Golden Touch", service_type: "location", location: "Vancouver", address: "900 Granville St", distance_km: 1.5, rating: 4.8, review_count: 311, wait_time_minutes: 30, exterior_price: 25.00, full_wash_addon: 10.00, concurrent_slots: 2, slot_interval_minutes: 15, service_radius_km: null, points_per_visit: 30, image_url: "https://images.pexels.com/photos/5233285/pexels-photo-5233285.jpeg?auto=compress&cs=tinysrgb&w=1200", description: "Premium hand-finished detailing." },
-    { id: 6, owner_id: null, name: "Quick N Clean", service_type: "location", location: "New West", address: "12 Columbia St", distance_km: 6.2, rating: 3.9, review_count: 41, wait_time_minutes: 0, exterior_price: 8.00, full_wash_addon: 5.00, concurrent_slots: 2, slot_interval_minutes: 15, service_radius_km: null, points_per_visit: 6, image_url: "https://images.unsplash.com/photo-1762933855598-273a51b47649?fm=jpg&q=80&w=1200&auto=format&fit=crop", description: "The no-frills budget option — always the cheapest in town." },
-    { id: 7, owner_id: null, name: "Midnight Wash 24/7", service_type: "location", location: "Coquitlam", address: "77 Lougheed Hwy", distance_km: 7.4, rating: 4.1, review_count: 58, wait_time_minutes: 5, exterior_price: 11.00, full_wash_addon: 6.00, concurrent_slots: 3, slot_interval_minutes: 15, service_radius_km: null, points_per_visit: 9, image_url: "https://images.unsplash.com/photo-1750492960736-6ef3f76d6c95?fm=jpg&q=80&w=1200&auto=format&fit=crop", description: "Open around the clock — self-serve bays, never closed." },
-    { id: 8, owner_id: 2, name: "Prestige Detailing Studio", service_type: "location", location: "West Vancouver", address: "1500 Marine Dr", distance_km: 9.1, rating: 4.9, review_count: 96, wait_time_minutes: 45, exterior_price: 35.00, full_wash_addon: 15.00, concurrent_slots: 1, slot_interval_minutes: 30, service_radius_km: null, points_per_visit: 40, image_url: "https://images.pexels.com/photos/5233261/pexels-photo-5233261.jpeg?auto=compress&cs=tinysrgb&w=1200", description: "By-appointment concours-level detailing for people who take their car seriously." },
+    { id: 1, owner_id: 2, name: "Sparkle Auto Wash", service_type: "location", location: "Downtown", address: "142 Main St", distance_km: 2.8, rating: 4.5, review_count: 142, wait_time_minutes: 15, exterior_price: 15.00, full_wash_addon: 8.00, concurrent_slots: 2, slot_interval_minutes: 15, service_radius_km: null, points_per_visit: 15, image_url: "https://images.unsplash.com/photo-1750492960736-6ef3f76d6c95?fm=jpg&q=80&w=1200&auto=format&fit=crop", description: "A neighborhood favorite for a quick, reliable wash." , points_rate: 1.0, auto_accept: true, operating_hours: {"is24_7": true, "schedule": {}}, gallery_images: [] },
+    { id: 2, owner_id: null, name: "SuperClean Express", service_type: "location", location: "Burnaby", address: "88 Kingsway Ave", distance_km: 4.3, rating: 4.2, review_count: 87, wait_time_minutes: 5, exterior_price: 10.00, full_wash_addon: 6.00, concurrent_slots: 2, slot_interval_minutes: 15, service_radius_km: null, points_per_visit: 8, image_url: "https://images.unsplash.com/photo-1762933855598-273a51b47649?fm=jpg&q=80&w=1200&auto=format&fit=crop", description: "Fast in-and-out express wash, no appointment stress." , points_rate: 0.53, auto_accept: true, operating_hours: {"is24_7": true, "schedule": {}}, gallery_images: [] },
+    { id: 3, owner_id: null, name: "EcoWash", service_type: "location", location: "Richmond", address: "5 Garden City Rd", distance_km: 3.1, rating: 4.7, review_count: 203, wait_time_minutes: 25, exterior_price: 18.00, full_wash_addon: 9.00, concurrent_slots: 2, slot_interval_minutes: 15, service_radius_km: null, points_per_visit: 20, image_url: "https://images.pexels.com/photos/5233285/pexels-photo-5233285.jpeg?auto=compress&cs=tinysrgb&w=1200", description: "Biodegradable soaps and water-reclaiming equipment." , points_rate: 1.33, auto_accept: true, operating_hours: {"is24_7": true, "schedule": {}}, gallery_images: [] },
+    { id: 4, owner_id: null, name: "FastShine", service_type: "location", location: "Surrey", address: "220 King George Blvd", distance_km: 5.7, rating: 4.0, review_count: 64, wait_time_minutes: 10, exterior_price: 12.00, full_wash_addon: 7.00, concurrent_slots: 2, slot_interval_minutes: 15, service_radius_km: null, points_per_visit: 10, image_url: "https://images.unsplash.com/photo-1750492960736-6ef3f76d6c95?fm=jpg&q=80&w=1200&auto=format&fit=crop", description: "Straightforward, budget-friendly washes." , points_rate: 0.67, auto_accept: true, operating_hours: {"is24_7": true, "schedule": {}}, gallery_images: [] },
+    { id: 5, owner_id: 2, name: "Golden Touch", service_type: "location", location: "Vancouver", address: "900 Granville St", distance_km: 1.5, rating: 4.8, review_count: 311, wait_time_minutes: 30, exterior_price: 25.00, full_wash_addon: 10.00, concurrent_slots: 2, slot_interval_minutes: 15, service_radius_km: null, points_per_visit: 30, image_url: "https://images.pexels.com/photos/5233285/pexels-photo-5233285.jpeg?auto=compress&cs=tinysrgb&w=1200", description: "Premium hand-finished detailing." , points_rate: 2.0, auto_accept: true, operating_hours: {"is24_7": true, "schedule": {}}, gallery_images: [] },
+    { id: 6, owner_id: null, name: "Quick N Clean", service_type: "location", location: "New West", address: "12 Columbia St", distance_km: 6.2, rating: 3.9, review_count: 41, wait_time_minutes: 0, exterior_price: 8.00, full_wash_addon: 5.00, concurrent_slots: 2, slot_interval_minutes: 15, service_radius_km: null, points_per_visit: 6, image_url: "https://images.unsplash.com/photo-1762933855598-273a51b47649?fm=jpg&q=80&w=1200&auto=format&fit=crop", description: "The no-frills budget option — always the cheapest in town." , points_rate: 0.4, auto_accept: true, operating_hours: {"is24_7": true, "schedule": {}}, gallery_images: [] },
+    { id: 7, owner_id: null, name: "Midnight Wash 24/7", service_type: "location", location: "Coquitlam", address: "77 Lougheed Hwy", distance_km: 7.4, rating: 4.1, review_count: 58, wait_time_minutes: 5, exterior_price: 11.00, full_wash_addon: 6.00, concurrent_slots: 3, slot_interval_minutes: 15, service_radius_km: null, points_per_visit: 9, image_url: "https://images.unsplash.com/photo-1750492960736-6ef3f76d6c95?fm=jpg&q=80&w=1200&auto=format&fit=crop", description: "Open around the clock — self-serve bays, never closed." , points_rate: 0.6, auto_accept: true, operating_hours: {"is24_7": true, "schedule": {}}, gallery_images: [] },
+    { id: 8, owner_id: 2, name: "Prestige Detailing Studio", service_type: "location", location: "West Vancouver", address: "1500 Marine Dr", distance_km: 9.1, rating: 4.9, review_count: 96, wait_time_minutes: 45, exterior_price: 35.00, full_wash_addon: 15.00, concurrent_slots: 1, slot_interval_minutes: 30, service_radius_km: null, points_per_visit: 40, image_url: "https://images.pexels.com/photos/5233261/pexels-photo-5233261.jpeg?auto=compress&cs=tinysrgb&w=1200", description: "By-appointment concours-level detailing for people who take their car seriously." , points_rate: 2.67, auto_accept: true, operating_hours: {"is24_7": true, "schedule": {}}, gallery_images: [] },
     // Home service (van)
-    { id: 9, owner_id: 2, name: "DriveClean Mobile Wash", service_type: "home-service", location: "Comes to your home", address: null, distance_km: 0, rating: 4.6, review_count: 58, wait_time_minutes: 0, exterior_price: 22.00, full_wash_addon: 12.00, concurrent_slots: 1, slot_interval_minutes: 45, service_radius_km: 15, points_per_visit: 20, image_url: "https://images.pexels.com/photos/6196223/pexels-photo-6196223.jpeg?auto=compress&cs=tinysrgb&w=1200", description: "A fully-equipped van with its own water tank and generator comes to your driveway." },
-    { id: 10, owner_id: null, name: "HomeShine On-Demand", service_type: "home-service", location: "Comes to your home", address: null, distance_km: 0, rating: 4.4, review_count: 33, wait_time_minutes: 0, exterior_price: 20.00, full_wash_addon: 10.00, concurrent_slots: 1, slot_interval_minutes: 45, service_radius_km: 10, points_per_visit: 18, image_url: "https://images.pexels.com/photos/6196223/pexels-photo-6196223.jpeg?auto=compress&cs=tinysrgb&w=1200", description: "A two-person detailing crew and their van, at your address." },
-    { id: 11, owner_id: null, name: "WeekendWash Concierge", service_type: "home-service", location: "Comes to your home", address: null, distance_km: 0, rating: 4.8, review_count: 21, wait_time_minutes: 0, exterior_price: 30.00, full_wash_addon: 14.00, concurrent_slots: 1, slot_interval_minutes: 60, service_radius_km: 20, points_per_visit: 28, image_url: "https://images.pexels.com/photos/6196223/pexels-photo-6196223.jpeg?auto=compress&cs=tinysrgb&w=1200", description: "A premium weekend-only concierge wash, booked ahead." },
+    { id: 9, owner_id: 2, name: "DriveClean Mobile Wash", service_type: "home-service", location: "Comes to your home", address: null, distance_km: 0, rating: 4.6, review_count: 58, wait_time_minutes: 0, exterior_price: 22.00, full_wash_addon: 12.00, concurrent_slots: 1, slot_interval_minutes: 45, service_radius_km: 15, points_per_visit: 20, image_url: "https://images.pexels.com/photos/6196223/pexels-photo-6196223.jpeg?auto=compress&cs=tinysrgb&w=1200", description: "A fully-equipped van with its own water tank and generator comes to your driveway." , points_rate: 1.33, auto_accept: true, operating_hours: {"is24_7": true, "schedule": {}}, gallery_images: [] },
+    { id: 10, owner_id: null, name: "HomeShine On-Demand", service_type: "home-service", location: "Comes to your home", address: null, distance_km: 0, rating: 4.4, review_count: 33, wait_time_minutes: 0, exterior_price: 20.00, full_wash_addon: 10.00, concurrent_slots: 1, slot_interval_minutes: 45, service_radius_km: 10, points_per_visit: 18, image_url: "https://images.pexels.com/photos/6196223/pexels-photo-6196223.jpeg?auto=compress&cs=tinysrgb&w=1200", description: "A two-person detailing crew and their van, at your address." , points_rate: 1.2, auto_accept: true, operating_hours: {"is24_7": true, "schedule": {}}, gallery_images: [] },
+    { id: 11, owner_id: null, name: "WeekendWash Concierge", service_type: "home-service", location: "Comes to your home", address: null, distance_km: 0, rating: 4.8, review_count: 21, wait_time_minutes: 0, exterior_price: 30.00, full_wash_addon: 14.00, concurrent_slots: 1, slot_interval_minutes: 60, service_radius_km: 20, points_per_visit: 28, image_url: "https://images.pexels.com/photos/6196223/pexels-photo-6196223.jpeg?auto=compress&cs=tinysrgb&w=1200", description: "A premium weekend-only concierge wash, booked ahead." , points_rate: 1.87, auto_accept: true, operating_hours: {"is24_7": true, "schedule": {}}, gallery_images: [] },
     // Moto-mobile (washes cars via a motorcycle with a water tank)
-    { id: 12, owner_id: 2, name: "MotoWheels Quick Wash", service_type: "moto-mobile", location: "Comes to your home", address: null, distance_km: 0, rating: 4.7, review_count: 46, wait_time_minutes: 0, exterior_price: 12.00, full_wash_addon: 6.00, concurrent_slots: 1, slot_interval_minutes: 30, service_radius_km: 12, points_per_visit: 12, image_url: "https://images.pexels.com/photos/4513028/pexels-photo-4513028.jpeg?auto=compress&cs=tinysrgb&w=1200", description: "A motorcycle fitted with its own water tank washes your car right at your door." },
-    { id: 13, owner_id: null, name: "BikeVan Express", service_type: "moto-mobile", location: "Comes to your home", address: null, distance_km: 0, rating: 4.3, review_count: 27, wait_time_minutes: 0, exterior_price: 10.00, full_wash_addon: 5.00, concurrent_slots: 1, slot_interval_minutes: 30, service_radius_km: 8, points_per_visit: 10, image_url: "https://images.pexels.com/photos/36709685/pexels-photo-36709685.jpeg?auto=compress&cs=tinysrgb&w=1200", description: "Zips through traffic to reach you fast." },
-    { id: 14, owner_id: 2, name: "ZipWash Moto", service_type: "moto-mobile", location: "Comes to your home", address: null, distance_km: 0, rating: 4.0, review_count: 14, wait_time_minutes: 0, exterior_price: 9.00, full_wash_addon: 4.00, concurrent_slots: 1, slot_interval_minutes: 30, service_radius_km: 6, points_per_visit: 8, image_url: "https://images.pexels.com/photos/4513028/pexels-photo-4513028.jpeg?auto=compress&cs=tinysrgb&w=1200", description: "The budget moto-mobile option — quick and cheap." }
+    { id: 12, owner_id: 2, name: "MotoWheels Quick Wash", service_type: "moto-mobile", location: "Comes to your home", address: null, distance_km: 0, rating: 4.7, review_count: 46, wait_time_minutes: 0, exterior_price: 12.00, full_wash_addon: 6.00, concurrent_slots: 1, slot_interval_minutes: 30, service_radius_km: 12, points_per_visit: 12, image_url: "https://images.pexels.com/photos/4513028/pexels-photo-4513028.jpeg?auto=compress&cs=tinysrgb&w=1200", description: "A motorcycle fitted with its own water tank washes your car right at your door." , points_rate: 0.8, auto_accept: true, operating_hours: {"is24_7": true, "schedule": {}}, gallery_images: [] },
+    { id: 13, owner_id: null, name: "BikeVan Express", service_type: "moto-mobile", location: "Comes to your home", address: null, distance_km: 0, rating: 4.3, review_count: 27, wait_time_minutes: 0, exterior_price: 10.00, full_wash_addon: 5.00, concurrent_slots: 1, slot_interval_minutes: 30, service_radius_km: 8, points_per_visit: 10, image_url: "https://images.pexels.com/photos/36709685/pexels-photo-36709685.jpeg?auto=compress&cs=tinysrgb&w=1200", description: "Zips through traffic to reach you fast." , points_rate: 0.67, auto_accept: true, operating_hours: {"is24_7": true, "schedule": {}}, gallery_images: [] },
+    { id: 14, owner_id: 2, name: "ZipWash Moto", service_type: "moto-mobile", location: "Comes to your home", address: null, distance_km: 0, rating: 4.0, review_count: 14, wait_time_minutes: 0, exterior_price: 9.00, full_wash_addon: 4.00, concurrent_slots: 1, slot_interval_minutes: 30, service_radius_km: 6, points_per_visit: 8, image_url: "https://images.pexels.com/photos/4513028/pexels-photo-4513028.jpeg?auto=compress&cs=tinysrgb&w=1200", description: "The budget moto-mobile option — quick and cheap." , points_rate: 0.53, auto_accept: true, operating_hours: {"is24_7": true, "schedule": {}}, gallery_images: [] }
   ];
 
   const carAddons = [
@@ -184,12 +184,35 @@ function apiError(message, status = 400) {
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const VEHICLE_SURCHARGE = { sedan: 0, suv: 5, truck: 8, van: 10 };
 const TAX_RATE = 0.1;
+const VALID_PAYMENT_TYPES = ["visa", "mastercard", "amex", "discover", "apple-pay", "cash"];
 const TIERS = [
   { points: 500, label: "Free Basic Wash (Exterior Only)" },
   { points: 1000, label: "Free Full Detail (Exterior + Interior)" },
-  { points: 1500, label: "$25 Off Any Mobile Service" },
+  { points: 1500, label: "75 SAR Off Any Mobile Service" },
   { points: 2500, label: "Free Premium Detail + Priority Booking for a Month" }
 ];
+
+// Mirrors backend/utils/hoursUtil.js — Saudi Arabia is a single fixed
+// UTC+3 offset year-round (no daylight saving), so that's used directly
+// rather than a full timezone database.
+const DAY_NAMES = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+function isOpenNow(operatingHours) {
+  if (!operatingHours) return true;
+  if (operatingHours.is24_7) return true;
+  const now = new Date(Date.now() + 3 * 60 * 60 * 1000);
+  const dayName = DAY_NAMES[now.getUTCDay()];
+  const periods = (operatingHours.schedule && operatingHours.schedule[dayName]) || [];
+  if (periods.length === 0) return false;
+  const nowMinutes = now.getUTCHours() * 60 + now.getUTCMinutes();
+  return periods.some(period => {
+    const [openH, openM] = period.open.split(":").map(Number);
+    const [closeH, closeM] = period.close.split(":").map(Number);
+    const openMinutes = openH * 60 + openM;
+    const closeMinutes = closeH * 60 + closeM;
+    if (closeMinutes <= openMinutes) return nowMinutes >= openMinutes || nowMinutes < closeMinutes;
+    return nowMinutes >= openMinutes && nowMinutes < closeMinutes;
+  });
+}
 
 // ============================================================
 // Router — mirrors backend/routes/*.js
@@ -227,6 +250,7 @@ const DemoAPI = {
       if (accountRole === "seller") {
         if (!business || !business.name || !business.name.trim()) throw apiError("Please enter your wash business name.");
         if (!["location", "home-service", "moto-mobile"].includes(business.serviceType)) throw apiError("Please choose a valid service type for your business.");
+        if (business.exteriorPrice == null || isNaN(business.exteriorPrice) || business.exteriorPrice < 0) throw apiError("Please enter a price for an exterior-only wash.");
       }
       const emailNorm = email.trim().toLowerCase();
       if (db.users.some(u => u.email === emailNorm)) throw apiError("An account with this email already exists. Try logging in instead.", 409);
@@ -236,14 +260,28 @@ const DemoAPI = {
 
       if (accountRole === "seller") {
         const isMobile = business.serviceType !== "location";
-        db.carWashes.push({
+        const newWash = {
           id: db.nextId.carWash++, owner_id: user.id, name: business.name.trim(), service_type: business.serviceType,
           location: business.location ? business.location.trim() : (isMobile ? "Comes to your home" : null),
           address: null, distance_km: 0, rating: 4.5, review_count: 0, wait_time_minutes: isMobile ? 0 : 15,
-          exterior_price: 15.00, full_wash_addon: 8.00, concurrent_slots: isMobile ? 1 : 2, slot_interval_minutes: isMobile ? 45 : 15,
-          service_radius_km: isMobile ? 15 : null, points_per_visit: 10, image_url: null,
-          description: "New on Car Wash Finder — set your pricing and details from your seller dashboard."
-        });
+          exterior_price: business.exteriorPrice != null ? business.exteriorPrice : 15.00,
+          full_wash_addon: business.fullWashAddon || 8.00,
+          points_rate: business.pointsRate || 1.0,
+          auto_accept: business.autoAccept !== false,
+          concurrent_slots: business.concurrentSlots || (isMobile ? 1 : 2),
+          slot_interval_minutes: business.slotIntervalMinutes || (isMobile ? 45 : 15),
+          service_radius_km: isMobile ? (business.serviceRadiusKm || 15) : null,
+          operating_hours: business.operatingHours || { is24_7: true, schedule: {} },
+          gallery_images: [], image_url: null,
+          description: "New on Car Wash Finder — add photos and fine-tune details from your seller dashboard."
+        };
+        db.carWashes.push(newWash);
+        if (Array.isArray(business.extras)) {
+          business.extras.forEach(extra => {
+            if (!extra.name || extra.price == null) return;
+            db.addonServices.push({ id: db.nextId.addon++, car_wash_id: newWash.id, name: extra.name, price: extra.price, applies_to: extra.appliesTo || "both" });
+          });
+        }
       }
       saveDB(db);
       return { status: 201, data: { token: demoToken(user.id), user: publicUser(user) } };
@@ -277,6 +315,8 @@ const DemoAPI = {
       let list = db.carWashes.slice();
       if (query.type) list = list.filter(w => w.service_type === query.type);
       list.sort((a, b) => a.id - b.id);
+      list = list.map(w => ({ ...w, is_open_now: isOpenNow(w.operating_hours) }));
+      if (query.openNow === "true") list = list.filter(w => w.is_open_now);
       return { status: 200, data: list };
     }
 
@@ -284,7 +324,7 @@ const DemoAPI = {
       const wash = db.carWashes.find(w => w.id === parseInt(seg[1], 10));
       if (!wash) throw apiError("Car wash not found.", 404);
       const addons = db.addonServices.filter(a => a.car_wash_id === wash.id).sort((a, b) => a.price - b.price);
-      return { status: 200, data: { ...wash, addons } };
+      return { status: 200, data: { ...wash, is_open_now: isOpenNow(wash.operating_hours), addons } };
     }
 
     if (method === "GET" && seg[0] === "carwashes" && seg[2] === "slots") {
@@ -379,9 +419,11 @@ const DemoAPI = {
     // ---------- BOOKINGS ----------
     if (method === "POST" && pathname === "/bookings") {
       const user = requireUser();
-      const { carWashId, vehicleId, vehicleType, washType, addonIds = [], date, time, paymentMethodId, specialRequests, address } = body;
+      const { carWashId, vehicleId, vehicleType, washType, addonIds = [], date, time, paymentMethodId, paymentMethodType, specialRequests, address } = body;
       if (!carWashId || !washType || !date || !time) throw apiError("Missing required booking fields.");
       if (!["exterior", "full"].includes(washType)) throw apiError("washType must be 'exterior' or 'full'.");
+      if (!paymentMethodType || !VALID_PAYMENT_TYPES.includes(paymentMethodType)) throw apiError("Please choose a payment method.");
+      if (paymentMethodType !== "cash" && !paymentMethodId) throw apiError("Please choose a saved payment method, or select Cash.");
 
       const wash = db.carWashes.find(w => w.id === carWashId);
       if (!wash) throw apiError("Car wash not found.", 404);
@@ -411,15 +453,26 @@ const DemoAPI = {
       const tax = Math.round(subtotal * TAX_RATE * 100) / 100;
       const total = Math.round((subtotal + tax) * 100) / 100;
 
+      // Cash is settled later in person (unpaid until then); everything
+      // else is treated as paid immediately (no real payment gateway here).
+      const paymentStatus = paymentMethodType === "cash" ? "unpaid" : "paid";
+      const pointsEarned = paymentStatus === "paid" ? Math.round(total * parseFloat(wash.points_rate || 1)) : 0;
+      const initialStatus = wash.auto_accept === false ? "pending" : "confirmed";
+
       const booking = {
         id: db.nextId.booking++, booking_ref: "CW-" + Math.floor(100000 + Math.random() * 900000),
         user_id: user.id, car_wash_id: carWashId, vehicle_id: vehicleId || null, wash_type: washType,
         addons, booking_date: date, booking_time: time, base_price: basePrice, addons_price: addonsPrice,
-        tax, total_price: total, payment_method_id: paymentMethodId || null,
-        address: (address && address.trim()) || null, special_requests: specialRequests || null,
-        points_earned: 0, status: "confirmed", created_at: new Date().toISOString()
+        tax, total_price: total, payment_method_id: paymentMethodId || null, payment_method_type: paymentMethodType,
+        payment_status: paymentStatus, address: (address && address.trim()) || null, special_requests: specialRequests || null,
+        points_earned: pointsEarned, status: initialStatus, cancelled_by: null, cancellation_reason: null,
+        created_at: new Date().toISOString()
       };
       db.bookings.push(booking);
+      if (pointsEarned > 0) {
+        user.points_balance += pointsEarned;
+        db.pointTransactions.push({ id: db.nextId.pointTx++, user_id: user.id, booking_id: booking.id, points: pointsEarned, reason: `Paid booking at ${wash.name}`, created_at: new Date().toISOString() });
+      }
       saveDB(db);
       return { status: 201, data: { ...booking, carWashName: wash.name } };
     }
@@ -438,9 +491,16 @@ const DemoAPI = {
     }
     if (method === "PATCH" && seg[0] === "bookings" && seg[2] === "cancel") {
       const user = requireUser();
-      const booking = db.bookings.find(b => b.id === parseInt(seg[1], 10) && b.user_id === user.id && b.status !== "cancelled");
-      if (!booking) throw apiError("Booking not found or already cancelled.", 404);
+      const booking = db.bookings.find(b => b.id === parseInt(seg[1], 10) && b.user_id === user.id && !["cancelled", "completed"].includes(b.status));
+      if (!booking) throw apiError("Booking not found, already cancelled, or already completed.", 404);
+
+      if (booking.payment_status === "paid" && booking.points_earned > 0) {
+        user.points_balance = Math.max(0, user.points_balance - booking.points_earned);
+        db.pointTransactions.push({ id: db.nextId.pointTx++, user_id: user.id, booking_id: booking.id, points: -booking.points_earned, reason: "Points reversed — booking cancelled", created_at: new Date().toISOString() });
+        booking.payment_status = "refunded";
+      }
       booking.status = "cancelled";
+      booking.cancelled_by = "customer";
       saveDB(db);
       return { status: 200, data: booking };
     }
@@ -507,50 +567,185 @@ const DemoAPI = {
     // ---------- SELLER ----------
     if (method === "GET" && pathname === "/seller/washes") {
       const user = requireSellerUser();
-      return { status: 200, data: db.carWashes.filter(w => w.owner_id === user.id).sort((a, b) => a.id - b.id) };
+      const washes = db.carWashes.filter(w => w.owner_id === user.id).sort((a, b) => a.id - b.id);
+      return { status: 200, data: washes.map(w => ({ ...w, is_open_now: isOpenNow(w.operating_hours) })) };
     }
+
+    if (method === "POST" && pathname === "/seller/washes") {
+      const user = requireSellerUser();
+      const {
+        name, serviceType, location, address, exteriorPrice, fullWashAddon,
+        pointsRate, autoAccept, concurrentSlots, slotIntervalMinutes,
+        serviceRadiusKm, operatingHours, description, imageUrl, extras
+      } = body;
+      if (!name || !name.trim()) throw apiError("Please name your wash place.");
+      if (!["location", "home-service", "moto-mobile"].includes(serviceType)) throw apiError("Please choose a valid service type.");
+      if (exteriorPrice == null || isNaN(exteriorPrice) || exteriorPrice < 0) throw apiError("Please enter a valid exterior wash price.");
+
+      const isMobile = serviceType !== "location";
+      const wash = {
+        id: db.nextId.carWash++, owner_id: user.id, name: name.trim(), service_type: serviceType,
+        location: location ? location.trim() : (isMobile ? "Comes to your home" : null),
+        address: address || null, distance_km: 0, rating: 4.5, review_count: 0, wait_time_minutes: isMobile ? 0 : 15,
+        exterior_price: exteriorPrice, full_wash_addon: fullWashAddon || 0, points_rate: pointsRate || 1.0,
+        auto_accept: autoAccept !== false, concurrent_slots: concurrentSlots || (isMobile ? 1 : 2),
+        slot_interval_minutes: slotIntervalMinutes || (isMobile ? 45 : 15),
+        service_radius_km: isMobile ? (serviceRadiusKm || 15) : null,
+        operating_hours: operatingHours || { is24_7: true, schedule: {} },
+        gallery_images: [], image_url: imageUrl || null, description: description || null
+      };
+      db.carWashes.push(wash);
+      if (Array.isArray(extras)) {
+        extras.forEach(extra => {
+          if (!extra.name || extra.price == null) return;
+          db.addonServices.push({ id: db.nextId.addon++, car_wash_id: wash.id, name: extra.name, price: extra.price, applies_to: extra.appliesTo || "both" });
+        });
+      }
+      saveDB(db);
+      return { status: 201, data: wash };
+    }
+
+    if (method === "PATCH" && seg[0] === "seller" && seg[1] === "washes" && seg.length === 3) {
+      const user = requireSellerUser();
+      const wash = db.carWashes.find(w => w.id === parseInt(seg[2], 10) && w.owner_id === user.id);
+      if (!wash) throw apiError("Wash place not found.", 404);
+      const fields = body;
+      const map = {
+        name: "name", location: "location", address: "address", exteriorPrice: "exterior_price",
+        fullWashAddon: "full_wash_addon", pointsRate: "points_rate", autoAccept: "auto_accept",
+        concurrentSlots: "concurrent_slots", slotIntervalMinutes: "slot_interval_minutes",
+        serviceRadiusKm: "service_radius_km", operatingHours: "operating_hours",
+        description: "description", imageUrl: "image_url", galleryImages: "gallery_images"
+      };
+      Object.keys(map).forEach(key => {
+        if (fields[key] !== undefined) wash[map[key]] = fields[key];
+      });
+      saveDB(db);
+      return { status: 200, data: wash };
+    }
+
+    if (method === "GET" && seg[0] === "seller" && seg[1] === "washes" && seg[3] === "addons") {
+      const user = requireSellerUser();
+      const wash = db.carWashes.find(w => w.id === parseInt(seg[2], 10) && w.owner_id === user.id);
+      if (!wash) throw apiError("Wash place not found.", 404);
+      return { status: 200, data: db.addonServices.filter(a => a.car_wash_id === wash.id).sort((a, b) => a.price - b.price) };
+    }
+    if (method === "POST" && seg[0] === "seller" && seg[1] === "washes" && seg[3] === "addons") {
+      const user = requireSellerUser();
+      const wash = db.carWashes.find(w => w.id === parseInt(seg[2], 10) && w.owner_id === user.id);
+      if (!wash) throw apiError("Wash place not found.", 404);
+      const { name, price, appliesTo } = body;
+      if (!name || price == null) throw apiError("An extra needs a name and a price.");
+      const addon = { id: db.nextId.addon++, car_wash_id: wash.id, name, price, applies_to: appliesTo || "both" };
+      db.addonServices.push(addon);
+      saveDB(db);
+      return { status: 201, data: addon };
+    }
+    if (method === "DELETE" && seg[0] === "seller" && seg[1] === "washes" && seg[3] === "addons") {
+      const user = requireSellerUser();
+      const wash = db.carWashes.find(w => w.id === parseInt(seg[2], 10) && w.owner_id === user.id);
+      if (!wash) throw apiError("Wash place not found.", 404);
+      const idx = db.addonServices.findIndex(a => a.id === parseInt(seg[4], 10) && a.car_wash_id === wash.id);
+      if (idx !== -1) db.addonServices.splice(idx, 1);
+      saveDB(db);
+      return { status: 200, data: { deleted: true } };
+    }
+
     if (method === "GET" && pathname === "/seller/bookings") {
       const user = requireSellerUser();
       const ownedIds = new Set(db.carWashes.filter(w => w.owner_id === user.id).map(w => w.id));
-      const list = db.bookings.filter(b => ownedIds.has(b.car_wash_id)).map(b => {
+      let list = db.bookings.filter(b => ownedIds.has(b.car_wash_id)).map(b => {
         const wash = db.carWashes.find(w => w.id === b.car_wash_id) || {};
         const customer = db.users.find(u => u.id === b.user_id) || {};
         const vehicle = db.vehicles.find(v => v.id === b.vehicle_id) || {};
         return { ...b, car_wash_name: wash.name, service_type: wash.service_type, customer_name: customer.name, customer_email: customer.email, vehicle_nickname: vehicle.nickname, vehicle_type: vehicle.vehicle_type };
       });
+      if (query.status) list = list.filter(b => b.status === query.status);
+      if (query.date) list = list.filter(b => b.booking_date === query.date);
       list.sort((a, b) => (b.booking_date + b.booking_time).localeCompare(a.booking_date + a.booking_time));
       return { status: 200, data: list };
     }
-    if (method === "PATCH" && seg[0] === "seller" && seg[1] === "bookings" && seg[3] === "status") {
+
+    if (method === "PATCH" && seg[0] === "seller" && seg[1] === "bookings" && seg[3] === "accept") {
       const user = requireSellerUser();
-      const { status } = body;
-      if (!["confirmed", "completed", "cancelled"].includes(status)) throw apiError("Not a valid status.");
       const bookingId = parseInt(seg[2], 10);
       const booking = db.bookings.find(b => b.id === bookingId);
       const wash = booking ? db.carWashes.find(w => w.id === booking.car_wash_id) : null;
       if (!booking || !wash || wash.owner_id !== user.id) throw apiError("Booking not found.", 404);
-
-      if (status === "completed" && booking.status !== "completed") {
-        booking.points_earned = wash.points_per_visit;
-        const customer = db.users.find(u => u.id === booking.user_id);
-        if (customer) customer.points_balance += wash.points_per_visit;
-        db.pointTransactions.push({ id: db.nextId.pointTx++, user_id: booking.user_id, booking_id: booking.id, points: wash.points_per_visit, reason: `Wash completed at ${wash.name}`, created_at: new Date().toISOString() });
-      }
-      booking.status = status;
+      if (booking.status !== "pending") throw apiError("Only pending bookings can be accepted.");
+      booking.status = "confirmed";
       saveDB(db);
       return { status: 200, data: booking };
     }
+
+    if (method === "PATCH" && seg[0] === "seller" && seg[1] === "bookings" && seg[3] === "status") {
+      const user = requireSellerUser();
+      const { status, reason } = body;
+      if (!["completed", "cancelled"].includes(status)) throw apiError("Not a valid status.");
+      const bookingId = parseInt(seg[2], 10);
+      const booking = db.bookings.find(b => b.id === bookingId);
+      const wash = booking ? db.carWashes.find(w => w.id === booking.car_wash_id) : null;
+      if (!booking || !wash || wash.owner_id !== user.id) throw apiError("Booking not found.", 404);
+      if (["completed", "cancelled"].includes(booking.status)) throw apiError(`This booking is already ${booking.status}.`);
+
+      const customer = db.users.find(u => u.id === booking.user_id);
+
+      if (status === "completed") {
+        let pointsToAward = 0;
+        if (booking.payment_status === "unpaid") {
+          pointsToAward = Math.round(parseFloat(booking.total_price) * parseFloat(wash.points_rate || 1));
+          booking.payment_status = "paid";
+        }
+        booking.points_earned += pointsToAward;
+        booking.status = "completed";
+        if (pointsToAward > 0 && customer) {
+          customer.points_balance += pointsToAward;
+          db.pointTransactions.push({ id: db.nextId.pointTx++, user_id: booking.user_id, booking_id: booking.id, points: pointsToAward, reason: `Wash completed at ${wash.name}`, created_at: new Date().toISOString() });
+        }
+      } else {
+        if (booking.payment_status === "paid" && booking.points_earned > 0 && customer) {
+          customer.points_balance = Math.max(0, customer.points_balance - booking.points_earned);
+          db.pointTransactions.push({ id: db.nextId.pointTx++, user_id: booking.user_id, booking_id: booking.id, points: -booking.points_earned, reason: "Points reversed — booking cancelled by wash place", created_at: new Date().toISOString() });
+          booking.payment_status = "refunded";
+        }
+        booking.status = "cancelled";
+        booking.cancelled_by = "seller";
+        booking.cancellation_reason = reason || null;
+      }
+      saveDB(db);
+      return { status: 200, data: booking };
+    }
+
     if (method === "GET" && pathname === "/seller/stats") {
       const user = requireSellerUser();
       const ownedIds = new Set(db.carWashes.filter(w => w.owner_id === user.id).map(w => w.id));
       const owned = db.bookings.filter(b => ownedIds.has(b.car_wash_id));
+
+      if (query.date) {
+        const dayBookings = owned.filter(b => b.booking_date === query.date);
+        return {
+          status: 200,
+          data: {
+            date: query.date,
+            total_bookings: dayBookings.length,
+            pending: dayBookings.filter(b => b.status === "pending").length,
+            confirmed: dayBookings.filter(b => b.status === "confirmed").length,
+            completed: dayBookings.filter(b => b.status === "completed").length,
+            cancelled: dayBookings.filter(b => b.status === "cancelled").length,
+            revenue: dayBookings.filter(b => b.status === "completed").reduce((s, b) => s + parseFloat(b.total_price), 0)
+          }
+        };
+      }
+
       const today = new Date().toISOString().slice(0, 10);
       const cutoff = addDays(-30);
       const today_bookings = owned.filter(b => b.booking_date === today).length;
+      const pending = owned.filter(b => b.status === "pending").length;
       const revenue_30d = owned.filter(b => b.status === "completed" && b.booking_date >= cutoff).reduce((s, b) => s + parseFloat(b.total_price), 0);
       const upcoming = owned.filter(b => b.status === "confirmed").length;
       const completed = owned.filter(b => b.status === "completed").length;
-      return { status: 200, data: { today_bookings, revenue_30d, upcoming, completed } };
+      const cancelled = owned.filter(b => b.status === "cancelled").length;
+      return { status: 200, data: { today_bookings, pending, revenue_30d, upcoming, completed, cancelled } };
     }
 
     throw apiError(`Demo mode has no handler for ${method} ${pathname}`, 404);

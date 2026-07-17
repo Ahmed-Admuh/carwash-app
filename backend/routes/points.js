@@ -9,7 +9,7 @@ const router = express.Router();
 const TIERS = [
   { points: 500, label: "Free Basic Wash (Exterior Only)" },
   { points: 1000, label: "Free Full Detail (Exterior + Interior)" },
-  { points: 1500, label: "$25 Off Any Mobile Service" },
+  { points: 1500, label: "75 SAR Off Any Mobile Service" },
   { points: 2500, label: "Free Premium Detail + Priority Booking for a Month" }
 ];
 

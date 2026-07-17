@@ -59,10 +59,16 @@ CREATE TABLE car_washes (
   wait_time_minutes INTEGER DEFAULT 15,
   exterior_price NUMERIC(6,2) NOT NULL,
   full_wash_addon NUMERIC(6,2) NOT NULL DEFAULT 0,
-  concurrent_slots INTEGER DEFAULT 2,
-  slot_interval_minutes INTEGER DEFAULT 15,
+  concurrent_slots INTEGER DEFAULT 2,      -- how many bookings can share one time slot
+  slot_interval_minutes INTEGER DEFAULT 15, -- gap between bookable times, seller-configurable
   service_radius_km NUMERIC(4,1),
-  points_per_visit INTEGER NOT NULL DEFAULT 10, -- loyalty points earned per completed booking here
+  points_per_visit INTEGER NOT NULL DEFAULT 10, -- legacy flat value, kept for old data; points_rate below is used now
+  points_rate NUMERIC(4,2) NOT NULL DEFAULT 1.0, -- points earned per 1 SAR spent — pricier washes naturally earn more
+  auto_accept BOOLEAN NOT NULL DEFAULT true, -- true: bookings confirm instantly; false: seller must accept each one
+  -- operating_hours shape: { "is24_7": bool, "schedule": { "monday": [{"open":"09:00","close":"11:00"}, ...], ... } }
+  -- multiple periods per day are supported (e.g. morning + afternoon with a midday closure).
+  operating_hours JSONB NOT NULL DEFAULT '{"is24_7": true, "schedule": {}}',
+  gallery_images JSONB NOT NULL DEFAULT '[]', -- extra photos for the wash's About page
   image_url TEXT,
   description TEXT
 );
@@ -88,7 +94,7 @@ CREATE TABLE offers (
 CREATE TABLE payment_methods (
   id SERIAL PRIMARY KEY,
   user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-  type VARCHAR(20) NOT NULL, -- 'visa' | 'mastercard' | 'amex' | 'discover' | 'apple-pay'
+  type VARCHAR(20) NOT NULL, -- 'visa' | 'mastercard' | 'amex' | 'discover' | 'apple-pay' ('cash' is handled per-booking, not saved here)
   last4 VARCHAR(4),
   label VARCHAR(80),
   is_default BOOLEAN DEFAULT FALSE,
@@ -110,11 +116,15 @@ CREATE TABLE bookings (
   addons_price NUMERIC(6,2) NOT NULL DEFAULT 0,
   tax NUMERIC(6,2) NOT NULL DEFAULT 0,
   total_price NUMERIC(6,2) NOT NULL,
-  payment_method_id INTEGER REFERENCES payment_methods(id),
+  payment_method_id INTEGER REFERENCES payment_methods(id), -- null for cash
+  payment_method_type VARCHAR(20) NOT NULL DEFAULT 'cash',  -- denormalized copy, always set, incl. 'cash'
+  payment_status VARCHAR(20) NOT NULL DEFAULT 'unpaid',     -- 'unpaid' | 'paid' | 'refunded'
   address TEXT,
   special_requests TEXT,
   points_earned INTEGER NOT NULL DEFAULT 0,
-  status VARCHAR(20) DEFAULT 'confirmed', -- confirmed | completed | cancelled
+  status VARCHAR(20) DEFAULT 'confirmed', -- 'pending' | 'confirmed' | 'completed' | 'cancelled'
+  cancelled_by VARCHAR(20),               -- 'customer' | 'seller', null unless cancelled
+  cancellation_reason TEXT,
   created_at TIMESTAMP DEFAULT NOW()
 );
 

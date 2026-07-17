@@ -12,6 +12,7 @@ const VEHICLE_SURCHARGE = {
 };
 
 const TAX_RATE = 0.1;
+const VALID_PAYMENT_TYPES = ["visa", "mastercard", "amex", "discover", "apple-pay", "cash"];
 
 function generateBookingRef() {
   return "CW-" + Math.floor(100000 + Math.random() * 900000);
@@ -29,7 +30,8 @@ router.post("/", requireAuth, async (req, res) => {
       addonIds = [],
       date,
       time,
-      paymentMethodId,
+      paymentMethodId,   // null/omitted for cash
+      paymentMethodType, // 'visa' | 'mastercard' | 'amex' | 'discover' | 'apple-pay' | 'cash'
       specialRequests,
       address
     } = req.body;
@@ -39,6 +41,12 @@ router.post("/", requireAuth, async (req, res) => {
     }
     if (!["exterior", "full"].includes(washType)) {
       return res.status(400).json({ error: "washType must be 'exterior' or 'full'." });
+    }
+    if (!paymentMethodType || !VALID_PAYMENT_TYPES.includes(paymentMethodType)) {
+      return res.status(400).json({ error: "Please choose a payment method." });
+    }
+    if (paymentMethodType !== "cash" && !paymentMethodId) {
+      return res.status(400).json({ error: "Please choose a saved payment method, or select Cash." });
     }
 
     await client.query("BEGIN");
@@ -58,7 +66,7 @@ router.post("/", requireAuth, async (req, res) => {
     // Check slot capacity
     const bookedResult = await client.query(
       `SELECT COUNT(*) FROM bookings
-       WHERE car_wash_id = $1 AND booking_date = $2 AND booking_time = $3 AND status != 'cancelled'`,
+       WHERE car_wash_id = $1 AND booking_date = $2 AND booking_time = $3 AND status NOT IN ('cancelled')`,
       [carWashId, date, time]
     );
     const bookedCount = parseInt(bookedResult.rows[0].count, 10);
@@ -105,20 +113,45 @@ router.post("/", requireAuth, async (req, res) => {
     const tax = Math.round(subtotal * TAX_RATE * 100) / 100;
     const total = Math.round((subtotal + tax) * 100) / 100;
 
+    // Cash is settled in person later (unpaid until then); every other method
+    // is treated as paid immediately — there's no real payment gateway wired
+    // up yet, so this simulates an instant successful charge.
+    const paymentStatus = paymentMethodType === "cash" ? "unpaid" : "paid";
+
+    // Points are earned proportional to what's actually paid — pricier
+    // washes (or washes with a higher points_rate) earn more. They're only
+    // awarded once money has actually changed hands: immediately for
+    // card/Apple Pay, or later when a cash booking is completed and
+    // collected (see sellers.js).
+    const pointsEarned = paymentStatus === "paid" ? Math.round(total * parseFloat(wash.points_rate)) : 0;
+
+    // If the seller hasn't turned on auto-accept, new bookings need their
+    // explicit sign-off before they're confirmed.
+    const initialStatus = wash.auto_accept ? "confirmed" : "pending";
+
     const bookingRef = generateBookingRef();
 
     const insertResult = await client.query(
       `INSERT INTO bookings
         (booking_ref, user_id, car_wash_id, vehicle_id, wash_type, addons, booking_date, booking_time,
-         base_price, addons_price, tax, total_price, payment_method_id, address, special_requests, status)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'confirmed')
+         base_price, addons_price, tax, total_price, payment_method_id, payment_method_type, payment_status,
+         address, special_requests, points_earned, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
        RETURNING *`,
       [
         bookingRef, req.user.id, carWashId, vehicleId || null, washType, JSON.stringify(addons),
-        date, time, basePrice, addonsPrice, tax, total, paymentMethodId || null,
-        (address && address.trim()) || null, specialRequests || null
+        date, time, basePrice, addonsPrice, tax, total, paymentMethodId || null, paymentMethodType,
+        paymentStatus, (address && address.trim()) || null, specialRequests || null, pointsEarned, initialStatus
       ]
     );
+
+    if (pointsEarned > 0) {
+      await client.query("UPDATE users SET points_balance = points_balance + $1 WHERE id = $2", [pointsEarned, req.user.id]);
+      await client.query(
+        "INSERT INTO point_transactions (user_id, booking_id, points, reason) VALUES ($1,$2,$3,$4)",
+        [req.user.id, insertResult.rows[0].id, pointsEarned, `Paid booking at ${wash.name}`]
+      );
+    }
 
     await client.query("COMMIT");
     res.status(201).json({ ...insertResult.rows[0], carWashName: wash.name });
@@ -168,22 +201,51 @@ router.get("/:id", requireAuth, async (req, res) => {
   }
 });
 
-// PATCH /api/bookings/:id/cancel
+// PATCH /api/bookings/:id/cancel — customer-initiated cancellation
 router.patch("/:id/cancel", requireAuth, async (req, res) => {
+  const client = await pool.connect();
   try {
-    const result = await pool.query(
-      `UPDATE bookings SET status = 'cancelled'
-       WHERE id = $1 AND user_id = $2 AND status != 'cancelled'
-       RETURNING *`,
+    await client.query("BEGIN");
+
+    const bookingResult = await client.query(
+      `SELECT * FROM bookings WHERE id = $1 AND user_id = $2 AND status NOT IN ('cancelled', 'completed') FOR UPDATE`,
       [req.params.id, req.user.id]
     );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: "Booking not found or already cancelled." });
+    const booking = bookingResult.rows[0];
+    if (!booking) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Booking not found, already cancelled, or already completed." });
     }
+
+    // If this booking was already paid (card/Apple Pay, or cash already
+    // collected), the points it earned get taken back along with it.
+    if (booking.payment_status === "paid" && booking.points_earned > 0) {
+      await client.query(
+        "UPDATE users SET points_balance = GREATEST(0, points_balance - $1) WHERE id = $2",
+        [booking.points_earned, booking.user_id]
+      );
+      await client.query(
+        "INSERT INTO point_transactions (user_id, booking_id, points, reason) VALUES ($1,$2,$3,$4)",
+        [booking.user_id, booking.id, -booking.points_earned, "Points reversed — booking cancelled"]
+      );
+    }
+
+    const newPaymentStatus = booking.payment_status === "paid" ? "refunded" : booking.payment_status;
+
+    const result = await client.query(
+      `UPDATE bookings SET status = 'cancelled', cancelled_by = 'customer', payment_status = $2
+       WHERE id = $1 RETURNING *`,
+      [req.params.id, newPaymentStatus]
+    );
+
+    await client.query("COMMIT");
     res.json(result.rows[0]);
   } catch (err) {
+    await client.query("ROLLBACK");
     console.error(err);
     res.status(500).json({ error: "Could not cancel booking." });
+  } finally {
+    client.release();
   }
 });
 

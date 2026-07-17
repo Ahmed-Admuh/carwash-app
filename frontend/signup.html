@@ -117,7 +117,61 @@
           <label for="businessLocation" data-i18n="biz_location_label">Location / area</label>
           <input type="text" id="businessLocation" class="form-control" placeholder="e.g. Downtown">
         </div>
-        <p class="text-muted" style="font-size: 0.82rem; margin-top: -0.5rem; margin-bottom: 1rem;" data-i18n="biz_hint">
+
+        <div class="section-divider" data-i18n="biz_pricing_title">Pricing</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="bizExteriorPrice" data-i18n="biz_exterior_price_label">Exterior-only price (SAR)</label>
+            <input type="number" id="bizExteriorPrice" class="form-control" min="0" step="0.5" placeholder="15">
+            <div class="field-error" id="exteriorPriceError"></div>
+          </div>
+          <div class="form-group">
+            <label for="bizFullAddon" data-i18n="biz_full_addon_label">+ Extra for Exterior &amp; Interior (SAR)</label>
+            <input type="number" id="bizFullAddon" class="form-control" min="0" step="0.5" placeholder="8">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="bizPointsRate" data-i18n="biz_points_rate_label">Loyalty points rate (points per 1 SAR spent)</label>
+          <input type="number" id="bizPointsRate" class="form-control" min="0" step="0.1" value="1.0">
+        </div>
+
+        <div class="section-divider" data-i18n="biz_extras_title">Extra services (optional)</div>
+        <p class="text-muted" style="font-size: 0.8rem; margin-top: -0.5rem; margin-bottom: 0.75rem;" data-i18n="biz_extras_hint">
+          Only extras you add here will be offered to customers — leave any out that your business doesn't provide.
+        </p>
+        <div id="extrasList"></div>
+        <button type="button" class="btn btn-outline btn-block" id="addExtraBtn" style="margin-bottom: 1.1rem;">
+          <i class="fas fa-plus"></i> <span data-i18n="biz_add_extra">Add an Extra</span>
+        </button>
+
+        <div class="section-divider" data-i18n="biz_scheduling_title">Scheduling</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="bizConcurrentSlots" data-i18n="biz_concurrent_slots_label">Bookings allowed per time slot</label>
+            <input type="number" id="bizConcurrentSlots" class="form-control" min="1" step="1" value="2">
+          </div>
+          <div class="form-group">
+            <label for="bizSlotInterval" data-i18n="biz_slot_interval_label">Minutes between time slots</label>
+            <input type="number" id="bizSlotInterval" class="form-control" min="5" step="5" value="15">
+          </div>
+        </div>
+        <div class="form-group">
+          <label><input type="checkbox" id="bizAutoAccept" checked> <span data-i18n="biz_auto_accept_label">Automatically accept new bookings (recommended while you're open)</span></label>
+        </div>
+
+        <div class="section-divider" data-i18n="biz_hours_title">Operating hours</div>
+        <div class="form-group">
+          <label><input type="checkbox" id="biz24_7" checked> <span data-i18n="biz_24_7_label">Open 24/7</span></label>
+        </div>
+        <div id="hoursPeriods" style="display: none;"></div>
+        <button type="button" class="btn btn-outline btn-block" id="addPeriodBtn" style="display: none; margin-bottom: 1.1rem;">
+          <i class="fas fa-plus"></i> <span data-i18n="biz_add_period">Add Another Period</span>
+        </button>
+        <p class="text-muted" style="font-size: 0.78rem; margin-top: -0.6rem; margin-bottom: 1.1rem;" id="hoursHint" style="display:none;" data-i18n="biz_hours_hint">
+          These hours apply every day. You can set different hours per day later from your seller dashboard.
+        </p>
+
+        <p class="text-muted" style="font-size: 0.82rem; margin-top: 0.25rem; margin-bottom: 1rem;" data-i18n="biz_hint">
           You can fine-tune your pricing, add-ons, and details afterward from your seller dashboard.
         </p>
       </div>
@@ -134,6 +188,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="js/demo-mode.js"></script>
+<script src="js/currency.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/i18n.js"></script>
 <script src="js/menu.js"></script>
@@ -220,6 +275,12 @@
     const businessName = businessNameInput.value.trim();
     const serviceType = document.getElementById('serviceType').value;
     const businessLocation = document.getElementById('businessLocation').value.trim();
+    const exteriorPrice = parseFloat(document.getElementById('bizExteriorPrice').value);
+    const fullWashAddon = parseFloat(document.getElementById('bizFullAddon').value) || 0;
+    const pointsRate = parseFloat(document.getElementById('bizPointsRate').value) || 1.0;
+    const concurrentSlots = parseInt(document.getElementById('bizConcurrentSlots').value, 10) || 2;
+    const slotIntervalMinutes = parseInt(document.getElementById('bizSlotInterval').value, 10) || 15;
+    const autoAccept = document.getElementById('bizAutoAccept').checked;
 
     let hasError = false;
     if (!name) {
@@ -240,9 +301,15 @@
       fieldError(passwordInput, document.getElementById('passwordError'), t('val_password_length', 'Password must be at least 6 characters.'));
       hasError = true;
     }
-    if (selectedRole === 'seller' && !businessName) {
-      fieldError(businessNameInput, document.getElementById('businessNameError'), t('val_enter_business_name', 'Please enter your business name.'));
-      hasError = true;
+    if (selectedRole === 'seller') {
+      if (!businessName) {
+        fieldError(businessNameInput, document.getElementById('businessNameError'), t('val_enter_business_name', 'Please enter your business name.'));
+        hasError = true;
+      }
+      if (isNaN(exteriorPrice) || exteriorPrice < 0) {
+        fieldError(document.getElementById('bizExteriorPrice'), document.getElementById('exteriorPriceError'), t('val_enter_exterior_price', 'Please enter a price for an exterior-only wash.'));
+        hasError = true;
+      }
     }
     if (hasError) return;
 
@@ -250,7 +317,12 @@
 
     const payload = { name, email, password, role: selectedRole };
     if (selectedRole === 'seller') {
-      payload.business = { name: businessName, serviceType, location: businessLocation };
+      payload.business = {
+        name: businessName, serviceType, location: businessLocation,
+        exteriorPrice, fullWashAddon, pointsRate, concurrentSlots, slotIntervalMinutes, autoAccept,
+        operatingHours: buildOperatingHours(),
+        extras: collectExtras()
+      };
     }
 
     try {
@@ -266,6 +338,86 @@
       submitBtn.classList.remove("loading");
     }
   });
+
+  // ---------------- Extras list ----------------
+  let extraRowId = 0;
+  function addExtraRow(name = '', price = '') {
+    const id = extraRowId++;
+    const row = document.createElement('div');
+    row.className = 'form-row extra-row';
+    row.dataset.rowId = id;
+    row.style.marginBottom = '0.6rem';
+    row.innerHTML = `
+      <div class="form-group" style="flex: 2;">
+        <input type="text" class="form-control extra-name" placeholder="${t('biz_extra_name_placeholder', 'e.g. Tire Shine')}" value="${name}">
+      </div>
+      <div class="form-group" style="flex: 1;">
+        <input type="number" class="form-control extra-price" min="0" step="0.5" placeholder="${t('biz_extra_price_placeholder', 'Price')}" value="${price}">
+      </div>
+      <button type="button" class="item-delete-btn remove-extra-btn" style="flex: 0 0 auto;"><i class="fas fa-trash"></i></button>
+    `;
+    document.getElementById('extrasList').appendChild(row);
+    row.querySelector('.remove-extra-btn').addEventListener('click', () => row.remove());
+  }
+  document.getElementById('addExtraBtn').addEventListener('click', () => addExtraRow());
+
+  function collectExtras() {
+    return Array.from(document.querySelectorAll('#extrasList .extra-row')).map(row => ({
+      name: row.querySelector('.extra-name').value.trim(),
+      price: parseFloat(row.querySelector('.extra-price').value),
+      appliesTo: 'both'
+    })).filter(e => e.name && !isNaN(e.price));
+  }
+
+  // ---------------- Hours editor ----------------
+  const DAY_KEYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+  let periodRowId = 0;
+  function addPeriodRow(open = '09:00', close = '17:00') {
+    const id = periodRowId++;
+    const row = document.createElement('div');
+    row.className = 'form-row period-row';
+    row.dataset.rowId = id;
+    row.style.marginBottom = '0.6rem';
+    row.innerHTML = `
+      <div class="form-group">
+        <label style="font-size: 0.75rem;" data-i18n="biz_opens_label">Opens</label>
+        <input type="time" class="form-control period-open" value="${open}">
+      </div>
+      <div class="form-group">
+        <label style="font-size: 0.75rem;" data-i18n="biz_closes_label">Closes</label>
+        <input type="time" class="form-control period-close" value="${close}">
+      </div>
+      <button type="button" class="item-delete-btn remove-period-btn" style="flex: 0 0 auto; align-self: flex-end; margin-bottom: 0.9rem;"><i class="fas fa-trash"></i></button>
+    `;
+    document.getElementById('hoursPeriods').appendChild(row);
+    row.querySelector('.remove-period-btn').addEventListener('click', () => row.remove());
+    if (window.I18n) I18n.applyTranslations();
+  }
+  document.getElementById('addPeriodBtn').addEventListener('click', () => addPeriodRow());
+
+  document.getElementById('biz24_7').addEventListener('change', function() {
+    const isCustom = !this.checked;
+    document.getElementById('hoursPeriods').style.display = isCustom ? 'block' : 'none';
+    document.getElementById('addPeriodBtn').style.display = isCustom ? 'block' : 'none';
+    document.getElementById('hoursHint').style.display = isCustom ? 'block' : 'none';
+    if (isCustom && document.querySelectorAll('#hoursPeriods .period-row').length === 0) {
+      addPeriodRow();
+    }
+  });
+
+  function buildOperatingHours() {
+    const is24_7 = document.getElementById('biz24_7').checked;
+    if (is24_7) return { is24_7: true, schedule: {} };
+
+    const periods = Array.from(document.querySelectorAll('#hoursPeriods .period-row')).map(row => ({
+      open: row.querySelector('.period-open').value,
+      close: row.querySelector('.period-close').value
+    })).filter(p => p.open && p.close);
+
+    const schedule = {};
+    DAY_KEYS.forEach(day => { schedule[day] = periods; });
+    return { is24_7: false, schedule };
+  }
 </script>
 
 </body>

@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const pool = require("../db");
 const { requireAuth, JWT_SECRET } = require("../middleware/auth");
+const { isValidOperatingHours } = require("../utils/hoursUtil");
 
 const router = express.Router();
 
@@ -30,7 +31,11 @@ function publicUser(row) {
 
 // POST /api/auth/signup
 // body: { name, email, password, role: 'customer'|'seller', business? }
-// business (only for role='seller'): { name, serviceType, location }
+// business (only for role='seller'): {
+//   name, serviceType, location, exteriorPrice, fullWashAddon, pointsRate,
+//   autoAccept, concurrentSlots, slotIntervalMinutes, serviceRadiusKm,
+//   operatingHours, extras: [{ name, price, appliesTo }]
+// }
 router.post("/signup", async (req, res) => {
   try {
     const { name, email, password, role, business } = req.body;
@@ -52,6 +57,12 @@ router.post("/signup", async (req, res) => {
       if (!["location", "home-service", "moto-mobile"].includes(business.serviceType)) {
         return res.status(400).json({ error: "Please choose a valid service type for your business." });
       }
+      if (business.exteriorPrice == null || isNaN(business.exteriorPrice) || business.exteriorPrice < 0) {
+        return res.status(400).json({ error: "Please enter a price for an exterior-only wash." });
+      }
+      if (business.operatingHours && !isValidOperatingHours(business.operatingHours)) {
+        return res.status(400).json({ error: "Operating hours are in an unexpected format." });
+      }
     }
 
     const existing = await pool.query("SELECT id FROM users WHERE email = $1", [email.trim().toLowerCase()]);
@@ -68,18 +79,34 @@ router.post("/signup", async (req, res) => {
 
     if (accountRole === "seller") {
       const isMobile = business.serviceType !== "location";
-      await pool.query(
+      const washResult = await pool.query(
         `INSERT INTO car_washes
-          (owner_id, name, service_type, location, exterior_price, full_wash_addon,
-           concurrent_slots, slot_interval_minutes, service_radius_km, points_per_visit, description)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+          (owner_id, name, service_type, location, exterior_price, full_wash_addon, points_rate,
+           auto_accept, concurrent_slots, slot_interval_minutes, service_radius_km, operating_hours, description)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+         RETURNING id`,
         [
           user.id, business.name.trim(), business.serviceType,
           business.location ? business.location.trim() : (isMobile ? "Comes to your home" : null),
-          15.00, 8.00, isMobile ? 1 : 2, isMobile ? 45 : 15, isMobile ? 15 : null, 10,
-          "New on Car Wash Finder — set your pricing and details from your seller dashboard."
+          business.exteriorPrice, business.fullWashAddon || 0, business.pointsRate || 1.0,
+          business.autoAccept !== false,
+          business.concurrentSlots || (isMobile ? 1 : 2),
+          business.slotIntervalMinutes || (isMobile ? 45 : 15),
+          isMobile ? (business.serviceRadiusKm || 15) : null,
+          JSON.stringify(business.operatingHours || { is24_7: true, schedule: {} }),
+          "New on Car Wash Finder — add photos and fine-tune details from your seller dashboard."
         ]
       );
+
+      if (Array.isArray(business.extras)) {
+        for (const extra of business.extras) {
+          if (!extra.name || extra.price == null) continue;
+          await pool.query(
+            "INSERT INTO addon_services (car_wash_id, name, price, applies_to) VALUES ($1,$2,$3,$4)",
+            [washResult.rows[0].id, extra.name, extra.price, extra.appliesTo || "both"]
+          );
+        }
+      }
     }
 
     const token = signToken(user);

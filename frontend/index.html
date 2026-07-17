@@ -244,7 +244,7 @@
       <h3 data-i18n="pkg_exterior_title">Exterior Only</h3>
       <p class="meta" data-i18n="pkg_exterior_desc">A quick, thorough outside wash</p>
       <div class="price-distance">
-        <span><i class="fas fa-dollar-sign"></i> <span data-i18n="book_from">From</span> $8</span>
+        <span><i class="fas fa-coins"></i> <span data-i18n="book_from">From</span> 8.00 <span class="sar-symbol" aria-hidden="true">&#x20C1;</span><span class="sr-only">SAR</span></span>
         <span><i class="fas fa-clock"></i> ~15 <span data-i18n="pkg_min">min</span></span>
       </div>
       <button class="btn" data-i18n="pkg_find_wash">Find a Wash</button>
@@ -253,7 +253,7 @@
       <h3 data-i18n="pkg_full_title">Exterior + Interior</h3>
       <p class="meta" data-i18n="pkg_full_desc">Full wash plus interior vacuum & wipe-down</p>
       <div class="price-distance">
-        <span><i class="fas fa-dollar-sign"></i> <span data-i18n="book_from">From</span> $16</span>
+        <span><i class="fas fa-coins"></i> <span data-i18n="book_from">From</span> 16.00 <span class="sar-symbol" aria-hidden="true">&#x20C1;</span><span class="sr-only">SAR</span></span>
         <span><i class="fas fa-clock"></i> ~35 <span data-i18n="pkg_min">min</span></span>
       </div>
       <button class="btn" data-i18n="pkg_find_wash">Find a Wash</button>
@@ -262,7 +262,7 @@
       <h3 data-i18n="pkg_mobile_title">Mobile / Motorcycle</h3>
       <p class="meta" data-i18n="pkg_mobile_desc">We come to your home — car or bike</p>
       <div class="price-distance">
-        <span><i class="fas fa-dollar-sign"></i> <span data-i18n="book_from">From</span> $10</span>
+        <span><i class="fas fa-coins"></i> <span data-i18n="book_from">From</span> 10.00 <span class="sar-symbol" aria-hidden="true">&#x20C1;</span><span class="sr-only">SAR</span></span>
         <span><i class="fas fa-clock"></i> <span data-i18n="pkg_on_schedule">On your schedule</span></span>
       </div>
       <button class="btn" data-i18n="pkg_find_wash">Find a Wash</button>
@@ -333,6 +333,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="js/demo-mode.js"></script>
+<script src="js/currency.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/i18n.js"></script>
 <script src="js/menu.js"></script>
@@ -396,7 +397,7 @@
         <h3>${wash.name}</h3>
         <div class="meta">📍 ${wash.location} • ${'★'.repeat(Math.floor(wash.rating))}${'☆'.repeat(5-Math.floor(wash.rating))} ${wash.rating}</div>
         <div class="price-distance">
-          <span><i class="fas fa-dollar-sign"></i> ${t('book_from', 'From')} $${wash.exterior_price}</span>
+          <span><i class="fas fa-coins"></i> ${t('book_from', 'From')} ${formatPrice(wash.exterior_price)}</span>
           <span><i class="fas fa-map-marker-alt"></i> ${wash.distance_km} km</span>
         </div>
         <a class="btn" href="booking-details.html?id=${wash.id}">

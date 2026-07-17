@@ -80,6 +80,7 @@
 </div>
 
 <script src="js/demo-mode.js"></script>
+<script src="js/currency.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/i18n.js"></script>
 <script src="js/menu.js"></script>
@@ -126,6 +127,7 @@
     return key ? t(key, name) : name;
   }
   const STATUS_KEYS = { confirmed: 'bc_status_confirmed', completed: 'bc_status_completed', cancelled: 'bc_status_cancelled' };
+  const PAYMENT_STATUS_KEYS = { paid: 'bc_payment_paid', unpaid: 'bc_payment_unpaid', refunded: 'bc_payment_refunded' };
 
   function renderBooking(b) {
     const locale = (window.I18n && I18n.lang === 'ar') ? 'ar' : 'en-US';
@@ -135,6 +137,7 @@
     const addonsLabel = addons.length ? addons.map(a => addonLabel(a.name)).join(', ') : t('bc_none', 'None');
     const washTypeLabel = b.wash_type === 'full' ? t('bd_exterior_interior', 'Exterior + Interior') : t('bd_exterior_only', 'Exterior Only');
     const statusLabel = t(STATUS_KEYS[b.status] || 'bc_status_confirmed', b.status);
+    const paymentStatusLabel = t(PAYMENT_STATUS_KEYS[b.payment_status] || 'bc_payment_unpaid', b.payment_status);
 
     document.getElementById('pageContent').innerHTML = `
       <div class="confirmation-card">
@@ -159,7 +162,8 @@
         <div class="detail-item"><span class="detail-label">${t('bc_label_time', 'Time')}</span><span class="detail-value">${b.booking_time}</span></div>
         <div class="detail-item"><span class="detail-label">${t('bc_label_addons', 'Add-ons')}</span><span class="detail-value">${addonsLabel}</span></div>
         <div class="detail-item"><span class="detail-label">${t('bc_label_status', 'Status')}</span><span class="detail-value" style="text-transform:capitalize;">${statusLabel}</span></div>
-        <div class="detail-item"><span class="detail-label">${t('bc_label_total', 'Total')}</span><span class="detail-value price-total-value">$${parseFloat(b.total_price).toFixed(2)}</span></div>
+        <div class="detail-item"><span class="detail-label">${t('bc_label_payment_status', 'Payment')}</span><span class="detail-value payment-status-${b.payment_status}">${paymentStatusLabel}</span></div>
+        <div class="detail-item"><span class="detail-label">${t('bc_label_total', 'Total')}</span><span class="detail-value price-total-value">${formatPrice(b.total_price)}</span></div>
       </div>
 
       <div class="action-stack">

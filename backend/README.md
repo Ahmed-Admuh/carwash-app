@@ -87,7 +87,7 @@ your browser, or serve them with any static file server.
 | GET | `/api/offers` | – | Active offers |
 | GET / POST / DELETE | `/api/vehicles` | ✓ | Manage saved vehicles |
 | GET / POST / DELETE | `/api/payment-methods` | ✓ | Manage saved payment methods |
-| POST | `/api/bookings` | ✓ | Create a booking (price computed server-side) |
+| POST | `/api/bookings` | ✓ | Create a booking — price computed server-side; `paymentMethodType` is required (`visa`/`mastercard`/`amex`/`discover`/`apple-pay`/`cash`); cash starts `unpaid` and earns points later at completion, everything else is `paid` immediately and earns points right away |
 | GET | `/api/bookings` | ✓ | Order history |
 | GET | `/api/bookings/:id` | ✓ | One booking |
 | PATCH | `/api/bookings/:id/cancel` | ✓ | Cancel a booking |
@@ -97,9 +97,14 @@ your browser, or serve them with any static file server.
 | GET | `/api/reviews/booking/:id` | ✓ | Booking + existing review, for the rating page |
 | POST | `/api/reviews` | ✓ | Submit a review (only for a completed booking, once) |
 | GET | `/api/seller/washes` | ✓ (seller) | The washes this seller owns |
-| GET | `/api/seller/bookings` | ✓ (seller) | Bookings across owned washes |
-| PATCH | `/api/seller/bookings/:id/status` | ✓ (seller) | Mark completed/cancelled — completing awards the customer's points |
-| GET | `/api/seller/stats` | ✓ (seller) | Dashboard stats |
+| POST | `/api/seller/washes` | ✓ (seller) | Add another wash place (pricing, hours, extras, slot config) |
+| PATCH | `/api/seller/washes/:id` | ✓ (seller) | Update any subset of a wash's settings |
+| GET/POST | `/api/seller/washes/:id/addons` | ✓ (seller) | List / add extra services for a wash |
+| DELETE | `/api/seller/washes/:washId/addons/:addonId` | ✓ (seller) | Remove an extra service |
+| GET | `/api/seller/bookings?status=&date=` | ✓ (seller) | Bookings across owned washes, optionally filtered |
+| PATCH | `/api/seller/bookings/:id/accept` | ✓ (seller) | Accept a pending booking (only relevant when auto-accept is off) |
+| PATCH | `/api/seller/bookings/:id/status` | ✓ (seller) | Mark completed (awards points; cash is marked paid here too) or cancelled (`reason` optional — reverses points if already paid) |
+| GET | `/api/seller/stats?date=` | ✓ (seller) | Dashboard stats — omit `date` for the 30-day overview, or pass a specific day for a daily breakdown |
 
 Auth routes return a `token` — send it back on every protected request as
 `Authorization: Bearer <token>`. The frontend's `auth.js` already handles this.

@@ -43,6 +43,7 @@
       font-size: 0.72rem; font-weight: 700; text-transform: capitalize;
     }
     .status-pill.confirmed { background: var(--success-tint); color: var(--success); }
+    .status-pill.pending { background: var(--amber-tint); color: var(--amber); }
     .status-pill.completed { background: var(--teal-tint); color: var(--teal-dark); }
     .status-pill.cancelled { background: var(--danger-tint); color: var(--danger); }
 
@@ -69,7 +70,76 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- Add Wash Place Modal -->
+<div class="modal-overlay" id="addWashModal">
+  <div class="modal-panel" style="max-width: 520px; max-height: 85vh; overflow-y: auto;">
+    <div class="modal-header">
+      <h3 data-i18n="seller_add_wash">Add Wash Place</h3>
+      <button class="modal-close" id="closeAddWashModal">&times;</button>
+    </div>
+    <form id="addWashForm">
+      <div class="form-group">
+        <label data-i18n="biz_name_label">Business name</label>
+        <input type="text" id="nwName" class="form-control" placeholder="e.g. Sparkle Auto Wash">
+      </div>
+      <div class="form-group">
+        <label data-i18n="biz_service_type_label">Service type</label>
+        <select id="nwServiceType" class="form-control">
+          <option value="location" data-i18n="biz_opt_location">Fixed location — customers drive to you</option>
+          <option value="home-service" data-i18n="biz_opt_home">Home service — a van comes to them</option>
+          <option value="moto-mobile" data-i18n="biz_opt_moto">Moto-mobile — a water-tank motorcycle comes to them</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label data-i18n="biz_location_label">Location / area</label>
+        <input type="text" id="nwLocation" class="form-control" placeholder="e.g. Downtown">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label data-i18n="biz_exterior_price_label">Exterior-only price (SAR)</label>
+          <input type="number" id="nwExteriorPrice" class="form-control" min="0" step="0.5" placeholder="15">
+        </div>
+        <div class="form-group">
+          <label data-i18n="biz_full_addon_label">+ Extra for Exterior &amp; Interior (SAR)</label>
+          <input type="number" id="nwFullAddon" class="form-control" min="0" step="0.5" placeholder="8">
+        </div>
+      </div>
+      <div class="form-group">
+        <label data-i18n="biz_points_rate_label">Loyalty points rate (points per 1 SAR spent)</label>
+        <input type="number" id="nwPointsRate" class="form-control" min="0" step="0.1" value="1.0">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label data-i18n="biz_concurrent_slots_label">Bookings allowed per time slot</label>
+          <input type="number" id="nwConcurrentSlots" class="form-control" min="1" step="1" value="2">
+        </div>
+        <div class="form-group">
+          <label data-i18n="biz_slot_interval_label">Minutes between time slots</label>
+          <input type="number" id="nwSlotInterval" class="form-control" min="5" step="5" value="15">
+        </div>
+      </div>
+      <div class="form-group">
+        <label><input type="checkbox" id="nwAutoAccept" checked> <span data-i18n="biz_auto_accept_label">Automatically accept new bookings (recommended while you're open)</span></label>
+      </div>
+      <div class="form-group">
+        <label><input type="checkbox" id="nw24_7" checked> <span data-i18n="biz_24_7_label">Open 24/7</span></label>
+      </div>
+      <div id="nwHoursPeriods" style="display: none;"></div>
+      <button type="button" class="btn btn-outline btn-block" id="nwAddPeriodBtn" style="display: none; margin-bottom: 1.1rem;">
+        <i class="fas fa-plus"></i> <span data-i18n="biz_add_period">Add Another Period</span>
+      </button>
+      <div class="section-divider" data-i18n="biz_extras_title">Extra services (optional)</div>
+      <div id="nwExtrasList"></div>
+      <button type="button" class="btn btn-outline btn-block" id="nwAddExtraBtn" style="margin-bottom: 1.1rem;">
+        <i class="fas fa-plus"></i> <span data-i18n="biz_add_extra">Add an Extra</span>
+      </button>
+      <button type="submit" class="btn btn-block" id="nwSubmitBtn" data-i18n="seller_add_wash">Add Wash Place</button>
+    </form>
+  </div>
+</div>
+
 <script src="js/demo-mode.js"></script>
+<script src="js/currency.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/i18n.js"></script>
 <script src="js/menu.js"></script>
@@ -104,14 +174,18 @@
       <div class="eyebrow" data-i18n="seller_welcome">Welcome back</div>
       <div class="section-title" style="margin-bottom: 1.5rem;"><i class="fas fa-user-tie"></i> ${user.name}</div>
 
-      <div class="stats-grid">
-        <div class="stat-card"><div class="stat-label" data-i18n="seller_today_bookings">Today's Bookings</div><div class="stat-value">${stats.today_bookings}</div></div>
-        <div class="stat-card"><div class="stat-label" data-i18n="seller_revenue">Revenue (30 days)</div><div class="stat-value">$${parseFloat(stats.revenue_30d).toFixed(2)}</div></div>
-        <div class="stat-card"><div class="stat-label" data-i18n="seller_upcoming">Upcoming</div><div class="stat-value">${stats.upcoming}</div></div>
-        <div class="stat-card"><div class="stat-label" data-i18n="seller_completed">Completed</div><div class="stat-value">${stats.completed}</div></div>
+      <div class="stats-date-row">
+        <input type="date" id="statsDateFilter" class="form-control" style="max-width: 200px;">
+        <button class="btn btn-outline" id="clearStatsDateBtn" data-i18n="seller_show_overview">Show 30-Day Overview</button>
       </div>
+      <div class="stats-grid" id="statsGrid"></div>
 
-      <div class="section-title"><i class="fas fa-water"></i> <span data-i18n="seller_your_washes">Your Wash Places</span></div>
+      <div class="section-title" style="display:flex; align-items:center; justify-content:space-between;">
+        <span><i class="fas fa-water"></i> <span data-i18n="seller_your_washes">Your Wash Places</span></span>
+        <button class="btn" id="addWashBtn" style="width: auto; font-size: 0.82rem; padding: 0.5rem 0.9rem;">
+          <i class="fas fa-plus"></i> <span data-i18n="seller_add_wash">Add Wash Place</span>
+        </button>
+      </div>
       <div id="washList"></div>
 
       <div class="section-title" style="margin-top: 1.5rem;"><i class="fas fa-calendar-check"></i> <span data-i18n="seller_bookings_title">Bookings</span></div>
@@ -122,8 +196,49 @@
 
     if (window.I18n) I18n.applyTranslations();
 
+    renderStats(stats);
     renderWashes(washes);
     renderBookings(bookings);
+
+    document.getElementById('addWashBtn').addEventListener('click', () => openAddWashModal());
+
+    document.getElementById('statsDateFilter').addEventListener('change', async function() {
+      if (!this.value) return;
+      try {
+        const dayStats = await apiFetch(`/seller/stats?date=${this.value}`);
+        renderStats(dayStats, true);
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    });
+    document.getElementById('clearStatsDateBtn').addEventListener('click', async () => {
+      document.getElementById('statsDateFilter').value = '';
+      const overviewStats = await apiFetch('/seller/stats');
+      renderStats(overviewStats);
+    });
+  }
+
+  function renderStats(stats, isDaily) {
+    const grid = document.getElementById('statsGrid');
+    if (isDaily) {
+      grid.innerHTML = `
+        <div class="stat-card"><div class="stat-label" data-i18n="seller_col_status">Status</div><div class="stat-value">${stats.total_bookings}</div></div>
+        <div class="stat-card"><div class="stat-label" data-i18n="seller_status_pending">pending</div><div class="stat-value">${stats.pending}</div></div>
+        <div class="stat-card"><div class="stat-label" data-i18n="bc_status_confirmed">confirmed</div><div class="stat-value">${stats.confirmed}</div></div>
+        <div class="stat-card"><div class="stat-label" data-i18n="bc_status_completed">completed</div><div class="stat-value">${stats.completed}</div></div>
+        <div class="stat-card"><div class="stat-label" data-i18n="bc_status_cancelled">cancelled</div><div class="stat-value">${stats.cancelled}</div></div>
+        <div class="stat-card"><div class="stat-label" data-i18n="seller_revenue_day">Revenue this day</div><div class="stat-value">${formatPrice(stats.revenue)}</div></div>
+      `;
+    } else {
+      grid.innerHTML = `
+        <div class="stat-card"><div class="stat-label" data-i18n="seller_today_bookings">Today's Bookings</div><div class="stat-value">${stats.today_bookings}</div></div>
+        <div class="stat-card"><div class="stat-label" data-i18n="seller_status_pending">pending</div><div class="stat-value">${stats.pending}</div></div>
+        <div class="stat-card"><div class="stat-label" data-i18n="seller_revenue">Revenue (30 days)</div><div class="stat-value">${formatPrice(stats.revenue_30d)}</div></div>
+        <div class="stat-card"><div class="stat-label" data-i18n="seller_upcoming">Upcoming</div><div class="stat-value">${stats.upcoming}</div></div>
+        <div class="stat-card"><div class="stat-label" data-i18n="seller_completed">Completed</div><div class="stat-value">${stats.completed}</div></div>
+      `;
+    }
+    if (window.I18n) I18n.applyTranslations();
   }
 
   function renderWashes(washes) {
@@ -140,9 +255,9 @@
     el.innerHTML = washes.map(w => `
       <div class="wash-owned-card">
         ${w.image_url ? `<img src="${w.image_url}" alt="${w.name}">` : ''}
-        <div>
-          <h4>${w.name}</h4>
-          <div class="meta">${typeLabels[w.service_type] || w.service_type} • ${w.location || t('book_comes_to_you', 'Comes to you')} • ${w.points_per_visit} ${t('seller_pts_per_visit', 'pts/visit')} • $${parseFloat(w.exterior_price).toFixed(2)} ${t('seller_base', 'base')}</div>
+        <div style="flex:1;">
+          <h4>${w.name} ${w.is_open_now ? `<span class="open-now-badge" data-i18n="seller_open_now">Open</span>` : `<span class="closed-now-badge" data-i18n="seller_closed_now">Closed</span>`}</h4>
+          <div class="meta">${typeLabels[w.service_type] || w.service_type} • ${w.location || t('book_comes_to_you', 'Comes to you')} • ${t('seller_pts_rate', 'pts rate')}: ${w.points_rate}x • ${formatPrice(w.exterior_price)} ${t('seller_base', 'base')}</div>
         </div>
       </div>
     `).join('');
@@ -155,12 +270,13 @@
       return;
     }
     const locale = (window.I18n && I18n.lang === 'ar') ? 'ar' : 'en-US';
-    const STATUS_KEYS = { confirmed: 'bc_status_confirmed', completed: 'bc_status_completed', cancelled: 'bc_status_cancelled' };
+    const STATUS_KEYS = { pending: 'seller_status_pending', confirmed: 'bc_status_confirmed', completed: 'bc_status_completed', cancelled: 'bc_status_cancelled' };
+    const PAYMENT_STATUS_KEYS = { paid: 'bc_payment_paid', unpaid: 'bc_payment_unpaid', refunded: 'bc_payment_refunded' };
 
     table.innerHTML = `
       <thead>
         <tr>
-          <th>${t('seller_col_customer', 'Customer')}</th><th>${t('seller_col_wash', 'Wash')}</th><th>${t('seller_col_date', 'Date')}</th><th>${t('seller_col_time', 'Time')}</th><th>${t('seller_col_type', 'Type')}</th><th>${t('seller_col_total', 'Total')}</th><th>${t('seller_col_status', 'Status')}</th><th></th>
+          <th>${t('seller_col_customer', 'Customer')}</th><th>${t('seller_col_wash', 'Wash')}</th><th>${t('seller_col_date', 'Date')}</th><th>${t('seller_col_time', 'Time')}</th><th>${t('seller_col_type', 'Type')}</th><th>${t('seller_col_total', 'Total')}</th><th>${t('seller_col_payment', 'Payment')}</th><th>${t('seller_col_status', 'Status')}</th><th></th>
         </tr>
       </thead>
       <tbody>
@@ -168,11 +284,21 @@
           const date = new Date(b.booking_date).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
           const washTypeLabel = b.wash_type === 'full' ? t('bd_exterior_interior', 'Exterior + Interior') : t('bd_exterior_only', 'Exterior Only');
           const statusLabel = t(STATUS_KEYS[b.status] || 'bc_status_confirmed', b.status);
-          const actions = b.status === 'confirmed' ? `
-            <div class="row-actions">
-              <button class="complete" data-id="${b.id}" data-status="completed">${t('seller_complete_btn', 'Complete')}</button>
-              <button class="cancel" data-id="${b.id}" data-status="cancelled">${t('seller_cancel_btn', 'Cancel')}</button>
-            </div>` : '';
+          const paymentLabel = t(PAYMENT_STATUS_KEYS[b.payment_status] || 'bc_payment_unpaid', b.payment_status);
+          let actions = '';
+          if (b.status === 'pending') {
+            actions = `
+              <div class="row-actions">
+                <button class="complete" data-id="${b.id}" data-action="accept">${t('seller_accept_btn', 'Accept')}</button>
+                <button class="cancel" data-id="${b.id}" data-action="decline">${t('seller_decline_btn', 'Decline')}</button>
+              </div>`;
+          } else if (b.status === 'confirmed') {
+            actions = `
+              <div class="row-actions">
+                <button class="complete" data-id="${b.id}" data-status="completed">${t('seller_complete_btn', 'Complete')}</button>
+                <button class="cancel" data-id="${b.id}" data-status="cancelled">${t('seller_cancel_btn', 'Cancel')}</button>
+              </div>`;
+          }
           return `
             <tr>
               <td>${b.customer_name}</td>
@@ -180,7 +306,8 @@
               <td>${date}</td>
               <td>${b.booking_time}</td>
               <td>${washTypeLabel}</td>
-              <td>$${parseFloat(b.total_price).toFixed(2)}</td>
+              <td>${formatPrice(b.total_price)}</td>
+              <td><span class="payment-status-${b.payment_status}">${paymentLabel}</span></td>
               <td><span class="status-pill ${b.status}">${statusLabel}</span></td>
               <td>${actions}</td>
             </tr>`;
@@ -188,15 +315,48 @@
       </tbody>
     `;
 
+    table.querySelectorAll('button[data-action="accept"]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        try {
+          await apiFetch(`/seller/bookings/${btn.dataset.id}/accept`, { method: 'PATCH' });
+          showToast(t('seller_accepted', 'Booking accepted.'));
+          await loadDashboard();
+        } catch (err) {
+          showToast(err.message, true);
+        }
+      });
+    });
+
+    table.querySelectorAll('button[data-action="decline"]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const reason = prompt(t('seller_decline_reason_prompt', "Let the customer know why (optional):"));
+        if (reason === null) return; // they hit Cancel on the prompt itself
+        try {
+          await apiFetch(`/seller/bookings/${btn.dataset.id}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status: 'cancelled', reason })
+          });
+          showToast(t('seller_declined', 'Booking declined.'));
+          await loadDashboard();
+        } catch (err) {
+          showToast(err.message, true);
+        }
+      });
+    });
+
     table.querySelectorAll('button[data-status]').forEach(btn => {
       btn.addEventListener('click', async () => {
         const id = btn.dataset.id;
         const status = btn.dataset.status;
-        if (status === 'cancelled' && !confirm(t('profile_confirm_cancel_booking', 'Cancel this booking?'))) return;
+        let reason = null;
+        if (status === 'cancelled') {
+          if (!confirm(t('profile_confirm_cancel_booking', 'Cancel this booking?'))) return;
+          reason = prompt(t('seller_decline_reason_prompt', "Let the customer know why (optional):")) || null;
+        }
         try {
           await apiFetch(`/seller/bookings/${id}/status`, {
             method: 'PATCH',
-            body: JSON.stringify({ status })
+            body: JSON.stringify({ status, reason })
           });
           showToast(status === 'completed' ? t('seller_marked_complete', 'Marked complete — points awarded to customer.') : t('profile_booking_cancelled', 'Booking cancelled.'));
           await loadDashboard();
@@ -206,6 +366,135 @@
       });
     });
   }
+
+  // ---------------- Add Wash Place modal ----------------
+  function openAddWashModal() {
+    document.getElementById('addWashModal').classList.add('active');
+    if (window.I18n) I18n.applyTranslations();
+  }
+  document.getElementById('closeAddWashModal').addEventListener('click', () => {
+    document.getElementById('addWashModal').classList.remove('active');
+  });
+  document.getElementById('addWashModal').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) e.currentTarget.classList.remove('active');
+  });
+
+  // Extras rows
+  let nwExtraRowId = 0;
+  function nwAddExtraRow() {
+    const id = nwExtraRowId++;
+    const row = document.createElement('div');
+    row.className = 'form-row nw-extra-row';
+    row.dataset.rowId = id;
+    row.style.marginBottom = '0.6rem';
+    row.innerHTML = `
+      <div class="form-group" style="flex: 2;">
+        <input type="text" class="form-control nw-extra-name" placeholder="${t('biz_extra_name_placeholder', 'e.g. Tire Shine')}">
+      </div>
+      <div class="form-group" style="flex: 1;">
+        <input type="number" class="form-control nw-extra-price" min="0" step="0.5" placeholder="${t('biz_extra_price_placeholder', 'Price')}">
+      </div>
+      <button type="button" class="item-delete-btn nw-remove-extra-btn" style="flex: 0 0 auto;"><i class="fas fa-trash"></i></button>
+    `;
+    document.getElementById('nwExtrasList').appendChild(row);
+    row.querySelector('.nw-remove-extra-btn').addEventListener('click', () => row.remove());
+  }
+  document.getElementById('nwAddExtraBtn').addEventListener('click', nwAddExtraRow);
+
+  function nwCollectExtras() {
+    return Array.from(document.querySelectorAll('#nwExtrasList .nw-extra-row')).map(row => ({
+      name: row.querySelector('.nw-extra-name').value.trim(),
+      price: parseFloat(row.querySelector('.nw-extra-price').value),
+      appliesTo: 'both'
+    })).filter(e => e.name && !isNaN(e.price));
+  }
+
+  // Hours periods
+  const NW_DAY_KEYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+  let nwPeriodRowId = 0;
+  function nwAddPeriodRow(open = '09:00', close = '17:00') {
+    const id = nwPeriodRowId++;
+    const row = document.createElement('div');
+    row.className = 'form-row nw-period-row';
+    row.dataset.rowId = id;
+    row.style.marginBottom = '0.6rem';
+    row.innerHTML = `
+      <div class="form-group">
+        <label style="font-size: 0.75rem;" data-i18n="biz_opens_label">Opens</label>
+        <input type="time" class="form-control nw-period-open" value="${open}">
+      </div>
+      <div class="form-group">
+        <label style="font-size: 0.75rem;" data-i18n="biz_closes_label">Closes</label>
+        <input type="time" class="form-control nw-period-close" value="${close}">
+      </div>
+      <button type="button" class="item-delete-btn nw-remove-period-btn" style="flex: 0 0 auto; align-self: flex-end; margin-bottom: 0.9rem;"><i class="fas fa-trash"></i></button>
+    `;
+    document.getElementById('nwHoursPeriods').appendChild(row);
+    row.querySelector('.nw-remove-period-btn').addEventListener('click', () => row.remove());
+    if (window.I18n) I18n.applyTranslations();
+  }
+  document.getElementById('nwAddPeriodBtn').addEventListener('click', () => nwAddPeriodRow());
+
+  document.getElementById('nw24_7').addEventListener('change', function() {
+    const isCustom = !this.checked;
+    document.getElementById('nwHoursPeriods').style.display = isCustom ? 'block' : 'none';
+    document.getElementById('nwAddPeriodBtn').style.display = isCustom ? 'block' : 'none';
+    if (isCustom && document.querySelectorAll('#nwHoursPeriods .nw-period-row').length === 0) {
+      nwAddPeriodRow();
+    }
+  });
+
+  function nwBuildOperatingHours() {
+    const is24_7 = document.getElementById('nw24_7').checked;
+    if (is24_7) return { is24_7: true, schedule: {} };
+    const periods = Array.from(document.querySelectorAll('#nwHoursPeriods .nw-period-row')).map(row => ({
+      open: row.querySelector('.nw-period-open').value,
+      close: row.querySelector('.nw-period-close').value
+    })).filter(p => p.open && p.close);
+    const schedule = {};
+    NW_DAY_KEYS.forEach(day => { schedule[day] = periods; });
+    return { is24_7: false, schedule };
+  }
+
+  document.getElementById('addWashForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('nwName').value.trim();
+    const serviceType = document.getElementById('nwServiceType').value;
+    const location = document.getElementById('nwLocation').value.trim();
+    const exteriorPrice = parseFloat(document.getElementById('nwExteriorPrice').value);
+    const fullWashAddon = parseFloat(document.getElementById('nwFullAddon').value) || 0;
+    const pointsRate = parseFloat(document.getElementById('nwPointsRate').value) || 1.0;
+    const concurrentSlots = parseInt(document.getElementById('nwConcurrentSlots').value, 10) || 2;
+    const slotIntervalMinutes = parseInt(document.getElementById('nwSlotInterval').value, 10) || 15;
+    const autoAccept = document.getElementById('nwAutoAccept').checked;
+
+    if (!name) { showToast(t('val_enter_business_name', 'Please enter your business name.'), true); return; }
+    if (isNaN(exteriorPrice) || exteriorPrice < 0) { showToast(t('val_enter_exterior_price', 'Please enter a price for an exterior-only wash.'), true); return; }
+
+    const btn = document.getElementById('nwSubmitBtn');
+    btn.classList.add('loading');
+    try {
+      await apiFetch('/seller/washes', {
+        method: 'POST',
+        body: JSON.stringify({
+          name, serviceType, location, exteriorPrice, fullWashAddon, pointsRate,
+          concurrentSlots, slotIntervalMinutes, autoAccept,
+          operatingHours: nwBuildOperatingHours(),
+          extras: nwCollectExtras()
+        })
+      });
+      showToast(t('seller_wash_added', 'Wash place added.'));
+      document.getElementById('addWashModal').classList.remove('active');
+      e.target.reset();
+      document.getElementById('nwExtrasList').innerHTML = '';
+      document.getElementById('nwHoursPeriods').innerHTML = '';
+      await loadDashboard();
+    } catch (err) {
+      showToast(err.message, true);
+    } finally {
+      btn.classList.remove('loading');
+    }
+  });
 </script>
 
 </body>

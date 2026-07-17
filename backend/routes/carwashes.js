@@ -1,12 +1,13 @@
 const express = require("express");
 const pool = require("../db");
+const { isOpenNow } = require("../utils/hoursUtil");
 
 const router = express.Router();
 
-// GET /api/carwashes?type=location|home-service|moto-mobile
+// GET /api/carwashes?type=location|home-service|moto-mobile&openNow=true
 router.get("/", async (req, res) => {
   try {
-    const { type } = req.query;
+    const { type, openNow } = req.query;
     let query = "SELECT * FROM car_washes";
     const params = [];
 
@@ -17,7 +18,13 @@ router.get("/", async (req, res) => {
     query += " ORDER BY id ASC";
 
     const result = await pool.query(query, params);
-    res.json(result.rows);
+    let washes = result.rows.map(w => ({ ...w, is_open_now: isOpenNow(w.operating_hours) }));
+
+    if (openNow === "true") {
+      washes = washes.filter(w => w.is_open_now);
+    }
+
+    res.json(washes);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Could not load car washes." });
@@ -37,7 +44,7 @@ router.get("/:id", async (req, res) => {
       [id]
     );
 
-    res.json({ ...wash, addons: addonsResult.rows });
+    res.json({ ...wash, is_open_now: isOpenNow(wash.operating_hours), addons: addonsResult.rows });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Could not load car wash." });

@@ -72,6 +72,11 @@
         <button class="chip sort-btn" data-sort="rating" data-i18n="book_sort_rating">Rating</button>
       </div>
     </div>
+    <div class="filter-group">
+      <div class="filter-options">
+        <button class="chip" id="openNowChip"><i class="fas fa-clock"></i> <span data-i18n="book_open_now">Open Now</span></button>
+      </div>
+    </div>
   </div>
 
   <div class="section-title">
@@ -101,6 +106,7 @@
 </div>
 
 <script src="js/demo-mode.js"></script>
+<script src="js/currency.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/i18n.js"></script>
 <script src="js/menu.js"></script>
@@ -126,6 +132,7 @@
   let allWashes = [];
   let currentType = "";
   let currentSort = "distance";
+  let openNowOnly = false;
 
   document.addEventListener('DOMContentLoaded', function() {
     const params = new URLSearchParams(window.location.search);
@@ -140,6 +147,7 @@
     loadCarWashes();
     setupTabs();
     setupSortButtons();
+    setupOpenNowToggle();
   });
 
   function setupTabs() {
@@ -164,10 +172,22 @@
     });
   }
 
+  function setupOpenNowToggle() {
+    document.getElementById('openNowChip').addEventListener('click', function() {
+      openNowOnly = !openNowOnly;
+      this.classList.toggle('active', openNowOnly);
+      loadCarWashes();
+    });
+  }
+
   async function loadCarWashes() {
     document.getElementById('result-count').textContent = t('book_loading', 'Loading…');
     try {
-      const path = currentType ? `/carwashes?type=${currentType}` : '/carwashes';
+      const params = new URLSearchParams();
+      if (currentType) params.set('type', currentType);
+      if (openNowOnly) params.set('openNow', 'true');
+      const qs = params.toString();
+      const path = qs ? `/carwashes?${qs}` : '/carwashes';
       allWashes = await apiFetch(path);
     } catch (err) {
       console.warn('Backend not reachable, using sample data.', err);
@@ -221,7 +241,7 @@
           ${'★'.repeat(Math.floor(wash.rating))}${'☆'.repeat(5-Math.floor(wash.rating))} ${wash.rating}
         </div>
         <div class="price-distance">
-          <span><i class="fas fa-dollar-sign"></i> ${t('book_from', 'From')} $${wash.exterior_price}</span>
+          <span><i class="fas fa-coins"></i> ${t('book_from', 'From')} ${formatPrice(wash.exterior_price)}</span>
           ${distanceLabel}
         </div>
         <a class="btn" href="booking-details.html?id=${wash.id}">

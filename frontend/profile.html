@@ -242,6 +242,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="js/demo-mode.js"></script>
+<script src="js/currency.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/i18n.js"></script>
 <script src="js/menu.js"></script>
@@ -343,7 +344,7 @@
   const TIER_LABEL_KEYS = {
     "Free Basic Wash (Exterior Only)": "tier_500",
     "Free Full Detail (Exterior + Interior)": "tier_1000",
-    "$25 Off Any Mobile Service": "tier_1500",
+    "75 SAR Off Any Mobile Service": "tier_1500",
     "Free Premium Detail + Priority Booking for a Month": "tier_2500"
   };
   function tierLabel(label) {
@@ -407,6 +408,7 @@
     }
     const locale = (window.I18n && I18n.lang === 'ar') ? 'ar' : 'en-US';
     const STATUS_KEYS = { confirmed: 'bc_status_confirmed', completed: 'bc_status_completed', cancelled: 'bc_status_cancelled' };
+    const PAYMENT_STATUS_KEYS = { paid: 'bc_payment_paid', unpaid: 'bc_payment_unpaid', refunded: 'bc_payment_refunded' };
 
     list.innerHTML = bookings.map(b => {
       const date = new Date(b.booking_date).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
@@ -426,9 +428,10 @@
                 ${b.address ? `<span><i class="fas fa-location-dot"></i> ${b.address}</span>` : ''}
               </div>
             </div>
-            <div class="booking-price">$${parseFloat(b.total_price).toFixed(2)}</div>
+            <div class="booking-price">${formatPrice(b.total_price)}</div>
           </div>
           <span class="booking-status ${b.status}">${statusLabel}</span>
+          <span class="payment-status-${b.payment_status}" style="font-size: 0.72rem; margin-left: 0.5rem;">${t(PAYMENT_STATUS_KEYS[b.payment_status] || 'bc_payment_unpaid', b.payment_status)}</span>
           ${b.points_earned > 0 ? `<span class="booking-points"><i class="fas fa-star"></i> +${b.points_earned} ${t('profile_pts_short', 'pts')}</span>` : ''}
           ${cancelable ? `<button class="booking-link-btn danger" data-cancel-id="${b.id}" data-i18n="cancel_booking">${t('cancel_booking', 'Cancel booking')}</button>` : ''}
           ${rateable ? `<a href="rate-wash.html?bookingId=${b.id}" class="booking-link-btn" data-i18n="rate_this_wash">${t('rate_this_wash', 'Rate this wash')}</a>` : ''}

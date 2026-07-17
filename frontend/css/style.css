@@ -1266,3 +1266,70 @@ html[dir="rtl"] .nav-drawer-link { text-align: right; }
   height: 32px;
   border-radius: 9px;
 }
+
+/* ============================================================
+   Currency (SAR)
+   ============================================================ */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+.sar-symbol {
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+/* ============================================================
+   Payment status labels
+   ============================================================ */
+.payment-status-paid { color: var(--success); font-weight: 700; }
+.payment-status-unpaid { color: var(--amber); font-weight: 700; }
+.payment-status-refunded { color: var(--text-muted); font-weight: 700; }
+
+/* ============================================================
+   Add Payment Method modal (shared between profile.html and booking-details.html)
+   ============================================================ */
+.payment-type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 1.1rem; }
+.payment-type-btn {
+  border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 0.7rem 0.5rem;
+  text-align: center; cursor: pointer; font-size: 1.3rem; color: var(--text-muted);
+}
+.payment-type-btn.selected { border-color: var(--teal); background: var(--teal-tint); color: var(--teal-dark); }
+.last4-group { display: none; }
+.last4-group.visible { display: block; }
+
+/* ============================================================
+   Section divider (shared between signup.html and seller-dashboard.html)
+   ============================================================ */
+.section-divider {
+  border-top: 1px dashed var(--border);
+  margin: 1.25rem 0;
+  padding-top: 1.25rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* Seller dashboard: stats date filter and open/closed badges */
+.stats-date-row {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.stats-date-row .form-control { margin: 0; }
+.stats-date-row button { font-size: 0.8rem; padding: 0.5rem 0.9rem; width: auto; }
+.open-now-badge, .closed-now-badge {
+  font-size: 0.68rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 999px;
+  text-transform: uppercase; letter-spacing: 0.02em; vertical-align: middle;
+}
+.open-now-badge { background: var(--success-tint); color: var(--success); }
+.closed-now-badge { background: var(--danger-tint); color: var(--danger); }

@@ -26,6 +26,68 @@ If the backend isn't running, most pages will still render using built-in
 sample data so you can see the design — but signup, login, real bookings,
 and order history all require the backend + database to be up.
 
+## Newest: Launch-readiness round (payments, currency, points, and seller controls)
+
+This was a big one — getting the app ready for real customers and real wash
+businesses to try.
+
+### Customer side
+- **Add a payment method from the booking page itself**, not just from
+  Profile — there's now an "Add Payment Method" button right in the
+  checkout flow.
+- **Cash is a real payment option** — always available alongside saved
+  cards, no setup needed. Cash bookings are marked "unpaid" until the wash
+  place marks them complete (that's when the money actually changes
+  hands).
+- **Payment status is now visible** on the booking confirmation page and in
+  your order history (Paid / Unpaid — pay on arrival / Refunded).
+- **Currency changed to Saudi Riyal (SAR)** throughout, using the new
+  official Riyal symbol (Unicode `U+20C1`, approved by SAMA in Feb 2025,
+  added to Unicode 17.0 in Sept 2025). Since it's a very new character with
+  uneven font support, every price also carries a screen-reader-only "SAR"
+  label as a safety net.
+- **Loyalty points now scale with what you actually pay**, not a flat
+  amount per wash — a pricier wash (or a wash with a higher points rate)
+  earns more. Points are awarded the moment money changes hands (instantly
+  for cards, at completion for cash) and are **automatically reversed** if
+  a paid booking gets cancelled.
+
+### Seller side — this got a real overhaul
+- **Operating hours with multiple periods per day** (e.g. open 9-11am,
+  closed, open again 3pm-midnight) or a simple **Open 24/7** toggle, set at
+  signup and editable later. A live "Open now" badge shows on the seller's
+  own wash cards, and customers can now filter Book results to **Open Now**
+  only.
+- **Add more than one wash place** — sellers aren't limited to the single
+  business they signed up with; there's a real "Add Wash Place" flow in
+  the dashboard with its own pricing, hours, and extras.
+- **Accept or decline bookings** — turning off "auto-accept" means new
+  bookings start as "pending" until the seller explicitly accepts them;
+  declining lets the seller leave a reason, which the customer sees.
+- **Revenue and booking stats, filterable by day** — the dashboard defaults
+  to a 30-day overview, or pick any specific date for that day's
+  breakdown (pending/confirmed/completed/cancelled counts and revenue).
+- **Full pricing and extras configuration at signup** — exterior price, the
+  upgrade cost for Exterior + Interior, and an open-ended list of optional
+  extras (only what a seller actually adds shows up on the customer side —
+  nothing forced).
+- **Slot configuration at signup** — how many bookings fit in one time
+  slot, and how many minutes apart slots are, both seller-configurable
+  instead of fixed defaults.
+
+### Known simplifications (given the scope of this round)
+- The hours editor applies **the same schedule to every day of the week**
+  rather than letting each day differ independently — the multi-period
+  part (the actual "9-11am then 3pm-midnight" scenario) works fully; true
+  per-day-of-week variation would need a bigger UI and wasn't built this
+  round.
+- **Photo galleries** for wash profiles: the data model supports it
+  (`gallery_images` on each wash), but there's no dashboard UI yet to
+  manage photos beyond the single main image — happy to add this next if
+  useful.
+- Demo Mode (`js/demo-mode.js`) mirrors all of the above faithfully, so
+  everything above works identically with zero backend running.
+
 ## Newest: Demo Mode (no server or database needed)
 
 There's now a real way to try the whole app with **zero setup** — no
