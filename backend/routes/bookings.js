@@ -90,7 +90,10 @@ router.post("/", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "This motorcycle-delivered wash can only service sedans and SUVs — try a home-service (van) or a fixed location for larger vehicles." });
     }
 
-    const vehicleSurcharge = VEHICLE_SURCHARGE[resolvedVehicleType] ?? 0;
+    if (wash.require_cash_only && paymentMethodType !== "cash") {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "This wash only accepts cash paid in person — please select Cash to continue." });
+    }
 
     // Resolve addons (validated against DB, not trusted from client)
     let addons = [];
@@ -104,10 +107,17 @@ router.post("/", requireAuth, async (req, res) => {
       addonsPrice = addons.reduce((sum, a) => sum + a.price, 0);
     }
 
-    const basePrice =
-      parseFloat(wash.exterior_price) +
-      (washType === "full" ? parseFloat(wash.full_wash_addon) : 0) +
-      vehicleSurcharge;
+    // Prefer the seller's own per-vehicle-type pricing when they've set it;
+    // otherwise fall back to the old exterior_price + flat surcharge model
+    // (only relevant for washes that predate this feature).
+    let basePrice;
+    const vp = wash.vehicle_pricing && wash.vehicle_pricing[resolvedVehicleType];
+    if (vp) {
+      basePrice = parseFloat(washType === "full" ? vp.full : vp.exterior);
+    } else {
+      const vehicleSurcharge = VEHICLE_SURCHARGE[resolvedVehicleType] ?? 0;
+      basePrice = parseFloat(wash.exterior_price) + (washType === "full" ? parseFloat(wash.full_wash_addon) : 0) + vehicleSurcharge;
+    }
 
     const subtotal = basePrice + addonsPrice;
     const tax = Math.round(subtotal * TAX_RATE * 100) / 100;

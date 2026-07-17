@@ -65,6 +65,15 @@ CREATE TABLE car_washes (
   points_per_visit INTEGER NOT NULL DEFAULT 10, -- legacy flat value, kept for old data; points_rate below is used now
   points_rate NUMERIC(4,2) NOT NULL DEFAULT 1.0, -- points earned per 1 SAR spent — pricier washes naturally earn more
   auto_accept BOOLEAN NOT NULL DEFAULT true, -- true: bookings confirm instantly; false: seller must accept each one
+  -- vehicle_pricing shape: { "sedan": {"exterior":15,"full":22}, "suv": {...}, "truck": {...}, "van": {...} }
+  -- The seller sets a real price per vehicle type directly (no more fixed
+  -- global surcharge added on top) — moto-mobile washes only need
+  -- sedan/suv keys since they can't service larger vehicles. NULL means
+  -- this wash hasn't been migrated to per-vehicle pricing yet — the app
+  -- falls back to exterior_price/full_wash_addon plus a flat legacy
+  -- surcharge in that case, for old data only.
+  vehicle_pricing JSONB,
+  require_cash_only BOOLEAN NOT NULL DEFAULT false, -- seller can force in-person cash payment only
   -- operating_hours shape: { "is24_7": bool, "schedule": { "monday": [{"open":"09:00","close":"11:00"}, ...], ... } }
   -- multiple periods per day are supported (e.g. morning + afternoon with a midday closure).
   operating_hours JSONB NOT NULL DEFAULT '{"is24_7": true, "schedule": {}}',

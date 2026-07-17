@@ -1,5 +1,11 @@
 # Car Wash Finder — Backend
 
+> **⚠️ Schema changed this round.** Two new columns were added to
+> `car_washes` (`vehicle_pricing`, `require_cash_only`) plus a new
+> `PATCH /api/payment-methods/:id/default` route. If you're updating a
+> live database, re-run `schema.sql` before pushing this code — see
+> `UPDATE-LIVE-APP.md` (or ask me) for the exact steps.
+
 A real Express + PostgreSQL API: signup/login, car washes (fixed locations + mobile
 home/motorcycle services), bookings with live slot availability, offers, vehicles,
 and payment methods.

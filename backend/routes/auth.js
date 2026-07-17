@@ -82,8 +82,9 @@ router.post("/signup", async (req, res) => {
       const washResult = await pool.query(
         `INSERT INTO car_washes
           (owner_id, name, service_type, location, exterior_price, full_wash_addon, points_rate,
-           auto_accept, concurrent_slots, slot_interval_minutes, service_radius_km, operating_hours, description)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+           auto_accept, concurrent_slots, slot_interval_minutes, service_radius_km, operating_hours, description,
+           vehicle_pricing, require_cash_only)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
          RETURNING id`,
         [
           user.id, business.name.trim(), business.serviceType,
@@ -94,7 +95,9 @@ router.post("/signup", async (req, res) => {
           business.slotIntervalMinutes || (isMobile ? 45 : 15),
           isMobile ? (business.serviceRadiusKm || 15) : null,
           JSON.stringify(business.operatingHours || { is24_7: true, schedule: {} }),
-          "New on Car Wash Finder — add photos and fine-tune details from your seller dashboard."
+          "New on Car Wash Finder — add photos and fine-tune details from your seller dashboard.",
+          business.vehiclePricing ? JSON.stringify(business.vehiclePricing) : null,
+          !!business.requireCashOnly
         ]
       );
 

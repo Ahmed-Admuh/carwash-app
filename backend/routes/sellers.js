@@ -39,7 +39,8 @@ router.post("/washes", async (req, res) => {
     const {
       name, serviceType, location, address, exteriorPrice, fullWashAddon,
       pointsRate, autoAccept, concurrentSlots, slotIntervalMinutes,
-      serviceRadiusKm, operatingHours, description, imageUrl, extras
+      serviceRadiusKm, operatingHours, description, imageUrl, extras,
+      vehiclePricing, requireCashOnly
     } = req.body;
 
     if (!name || !name.trim()) return res.status(400).json({ error: "Please name your wash place." });
@@ -60,8 +61,8 @@ router.post("/washes", async (req, res) => {
       `INSERT INTO car_washes
         (owner_id, name, service_type, location, address, exterior_price, full_wash_addon,
          points_rate, auto_accept, concurrent_slots, slot_interval_minutes, service_radius_km,
-         operating_hours, description, image_url)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+         operating_hours, description, image_url, vehicle_pricing, require_cash_only)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
        RETURNING *`,
       [
         req.user.id, name.trim(), serviceType,
@@ -70,7 +71,9 @@ router.post("/washes", async (req, res) => {
         pointsRate || 1.0, autoAccept !== false, concurrentSlots || (isMobile ? 1 : 2),
         slotIntervalMinutes || (isMobile ? 45 : 15), isMobile ? (serviceRadiusKm || 15) : null,
         JSON.stringify(operatingHours || { is24_7: true, schedule: {} }),
-        description || null, imageUrl || null
+        description || null, imageUrl || null,
+        vehiclePricing ? JSON.stringify(vehiclePricing) : null,
+        !!requireCashOnly
       ]
     );
     const wash = result.rows[0];
@@ -105,7 +108,8 @@ router.patch("/washes/:id", async (req, res) => {
     const {
       name, location, address, exteriorPrice, fullWashAddon, pointsRate,
       autoAccept, concurrentSlots, slotIntervalMinutes, serviceRadiusKm,
-      operatingHours, description, imageUrl, galleryImages
+      operatingHours, description, imageUrl, galleryImages,
+      vehiclePricing, requireCashOnly
     } = req.body;
 
     if (operatingHours && !isValidOperatingHours(operatingHours)) {
@@ -117,8 +121,8 @@ router.patch("/washes/:id", async (req, res) => {
          name = $1, location = $2, address = $3, exterior_price = $4, full_wash_addon = $5,
          points_rate = $6, auto_accept = $7, concurrent_slots = $8, slot_interval_minutes = $9,
          service_radius_km = $10, operating_hours = $11, description = $12, image_url = $13,
-         gallery_images = $14
-       WHERE id = $15 RETURNING *`,
+         gallery_images = $14, vehicle_pricing = $15, require_cash_only = $16
+       WHERE id = $17 RETURNING *`,
       [
         name ?? current.name, location ?? current.location, address ?? current.address,
         exteriorPrice ?? current.exterior_price, fullWashAddon ?? current.full_wash_addon,
@@ -128,6 +132,8 @@ router.patch("/washes/:id", async (req, res) => {
         JSON.stringify(operatingHours || current.operating_hours),
         description ?? current.description, imageUrl ?? current.image_url,
         JSON.stringify(galleryImages || current.gallery_images),
+        vehiclePricing ? JSON.stringify(vehiclePricing) : (current.vehicle_pricing ? JSON.stringify(current.vehicle_pricing) : null),
+        requireCashOnly ?? current.require_cash_only,
         req.params.id
       ]
     );

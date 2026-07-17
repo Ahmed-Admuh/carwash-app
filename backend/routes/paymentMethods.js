@@ -60,6 +60,35 @@ router.post("/", requireAuth, async (req, res) => {
   }
 });
 
+// PATCH /api/payment-methods/:id/default — make this one the default
+router.patch("/:id/default", requireAuth, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const ownedCheck = await client.query(
+      "SELECT id FROM payment_methods WHERE id = $1 AND user_id = $2",
+      [req.params.id, req.user.id]
+    );
+    if (ownedCheck.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Payment method not found." });
+    }
+    await client.query("UPDATE payment_methods SET is_default = FALSE WHERE user_id = $1", [req.user.id]);
+    const result = await client.query(
+      "UPDATE payment_methods SET is_default = TRUE WHERE id = $1 RETURNING *",
+      [req.params.id]
+    );
+    await client.query("COMMIT");
+    res.json(result.rows[0]);
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error(err);
+    res.status(500).json({ error: "Could not update default payment method." });
+  } finally {
+    client.release();
+  }
+});
+
 // DELETE /api/payment-methods/:id
 router.delete("/:id", requireAuth, async (req, res) => {
   try {
