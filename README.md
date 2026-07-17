@@ -26,6 +26,51 @@ If the backend isn't running, most pages will still render using built-in
 sample data so you can see the design — but signup, login, real bookings,
 and order history all require the backend + database to be up.
 
+## Newest: Bug fixes + real seller controls (this round)
+
+### Fixed
+- **The new Riyal symbol didn't render on some browsers** (reported on
+  Samsung Internet). There's no reliable way to feature-detect font
+  support for a brand-new Unicode character across every browser, so
+  rather than risk a broken glyph in front of customers, prices now show
+  plain **"SAR" text** everywhere — guaranteed to render correctly on any
+  device.
+- **"Add Payment Method" on the booking page silently did nothing.** Root
+  cause: the button's click listener was being attached before the button
+  actually existed in the page (it's inserted dynamically after the wash
+  data loads) — this threw an error that also silently broke the modal's
+  close button and form submission. Fixed by attaching the listeners at
+  the right time.
+- **Seller settings couldn't be changed after signup.** Every wash place
+  now has a real **"Edit Settings"** button in the Seller Dashboard,
+  opening the same form used at signup, pre-filled with current values —
+  pricing, hours, extras, everything.
+- **Payment method defaults were stuck once set.** Added a real "Set as
+  Default" button next to any non-default saved payment method.
+
+### New
+- **Store owners now set their own price per vehicle size** — sedan, SUV,
+  truck, van each get their own exterior/full price, no fixed markup added
+  on top. This replaces the old flat surcharge model going forward (older
+  washes that haven't been edited yet still work via the old model
+  automatically, so nothing broke).
+- **A booked/unbooked time slots table** — "View Time Slots" on any wash
+  shows a color-coded grid (green/amber/red) for any date, so a seller can
+  see at a glance which times are open, partially booked, or full.
+- **Cash-only mode** — a seller can force in-person cash payment only for
+  a wash; the booking page then only offers Cash, with a clear notice
+  explaining why.
+- **A dropdown of common extras** (Tire Shine, Wax Coating, Ceramic
+  Coating, etc.) when adding services, with a "Custom…" option for
+  anything not listed — faster than typing from scratch, without forcing
+  any particular pricing.
+
+### Explicitly deferred (as requested)
+- **Google Maps location picking** — this needs a Google Maps API key,
+  which isn't something to set up without you providing your own key. The
+  address/location fields remain plain text inputs for now; wiring in a
+  real map picker is a quick follow-up once you have a key.
+
 ## Newest: Launch-readiness round (payments, currency, points, and seller controls)
 
 This was a big one — getting the app ready for real customers and real wash

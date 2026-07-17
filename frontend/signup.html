@@ -119,20 +119,18 @@
         </div>
 
         <div class="section-divider" data-i18n="biz_pricing_title">Pricing</div>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="bizExteriorPrice" data-i18n="biz_exterior_price_label">Exterior-only price (SAR)</label>
-            <input type="number" id="bizExteriorPrice" class="form-control" min="0" step="0.5" placeholder="15">
-            <div class="field-error" id="exteriorPriceError"></div>
-          </div>
-          <div class="form-group">
-            <label for="bizFullAddon" data-i18n="biz_full_addon_label">+ Extra for Exterior &amp; Interior (SAR)</label>
-            <input type="number" id="bizFullAddon" class="form-control" min="0" step="0.5" placeholder="8">
-          </div>
-        </div>
-        <div class="form-group">
+        <p class="text-muted" style="font-size: 0.8rem; margin-top: -0.5rem; margin-bottom: 0.9rem;" data-i18n="biz_pricing_hint">
+          Set your own price for each vehicle size — no fixed markup is added on top.
+        </p>
+        <div class="vehicle-pricing-grid" id="vehiclePricingGrid"></div>
+        <div class="field-error" id="exteriorPriceError"></div>
+
+        <div class="form-group" style="margin-top: 1rem;">
           <label for="bizPointsRate" data-i18n="biz_points_rate_label">Loyalty points rate (points per 1 SAR spent)</label>
           <input type="number" id="bizPointsRate" class="form-control" min="0" step="0.1" value="1.0">
+        </div>
+        <div class="form-group">
+          <label><input type="checkbox" id="bizCashOnly"> <span data-i18n="biz_cash_only_label">Only accept cash paid in person (no cards or Apple Pay)</span></label>
         </div>
 
         <div class="section-divider" data-i18n="biz_extras_title">Extra services (optional)</div>
@@ -226,12 +224,60 @@
       if (selectedRole === 'seller') {
         authTitle.textContent = 'Register your wash business';
         authSubtitle.textContent = 'List your car wash and start taking bookings.';
+        buildVehiclePricingGrid();
       } else {
         authTitle.textContent = 'Create your account';
         authSubtitle.textContent = 'Save vehicles, payment methods, and booking history.';
       }
     });
   });
+
+  document.getElementById('serviceType').addEventListener('change', () => buildVehiclePricingGrid());
+
+  // ---------------- Per-vehicle-type pricing grid ----------------
+  const VEHICLE_TYPES_FOR_PRICING = [
+    { key: 'sedan', icon: 'fa-car-side', labelKey: 'vehicle_sedan' },
+    { key: 'suv', icon: 'fa-truck-monster', labelKey: 'vehicle_suv' },
+    { key: 'truck', icon: 'fa-truck-pickup', labelKey: 'vehicle_truck' },
+    { key: 'van', icon: 'fa-shuttle-van', labelKey: 'vehicle_van' }
+  ];
+  function buildVehiclePricingGrid(existing) {
+    const serviceType = document.getElementById('serviceType').value;
+    const types = serviceType === 'moto-mobile'
+      ? VEHICLE_TYPES_FOR_PRICING.filter(v => v.key === 'sedan' || v.key === 'suv')
+      : VEHICLE_TYPES_FOR_PRICING;
+
+    const grid = document.getElementById('vehiclePricingGrid');
+    grid.innerHTML = `
+      <div class="vehicle-pricing-row" style="background:none; padding: 0 0.75rem;">
+        <span></span>
+        <span class="vp-col-label" data-i18n="biz_vp_exterior">Exterior only</span>
+        <span class="vp-col-label" data-i18n="biz_vp_full">Exterior + Interior</span>
+      </div>
+      ${types.map(v => `
+        <div class="vehicle-pricing-row" data-vehicle="${v.key}">
+          <span class="vp-label"><i class="fas ${v.icon}"></i> <span data-i18n="${v.labelKey}">${v.key}</span></span>
+          <input type="number" class="form-control vp-exterior" min="0" step="0.5" placeholder="15" value="${existing?.[v.key]?.exterior ?? ''}">
+          <input type="number" class="form-control vp-full" min="0" step="0.5" placeholder="22" value="${existing?.[v.key]?.full ?? ''}">
+        </div>
+      `).join('')}
+    `;
+    if (window.I18n) I18n.applyTranslations();
+  }
+  buildVehiclePricingGrid();
+
+  function collectVehiclePricing() {
+    const pricing = {};
+    document.querySelectorAll('#vehiclePricingGrid .vehicle-pricing-row[data-vehicle]').forEach(row => {
+      const key = row.dataset.vehicle;
+      const ext = parseFloat(row.querySelector('.vp-exterior').value);
+      const full = parseFloat(row.querySelector('.vp-full').value);
+      if (!isNaN(ext)) {
+        pricing[key] = { exterior: ext, full: !isNaN(full) ? full : ext };
+      }
+    });
+    return pricing;
+  }
 
   function clearErrors() {
     errorBox.classList.remove("visible");
@@ -275,12 +321,12 @@
     const businessName = businessNameInput.value.trim();
     const serviceType = document.getElementById('serviceType').value;
     const businessLocation = document.getElementById('businessLocation').value.trim();
-    const exteriorPrice = parseFloat(document.getElementById('bizExteriorPrice').value);
-    const fullWashAddon = parseFloat(document.getElementById('bizFullAddon').value) || 0;
+    const vehiclePricing = collectVehiclePricing();
     const pointsRate = parseFloat(document.getElementById('bizPointsRate').value) || 1.0;
     const concurrentSlots = parseInt(document.getElementById('bizConcurrentSlots').value, 10) || 2;
     const slotIntervalMinutes = parseInt(document.getElementById('bizSlotInterval').value, 10) || 15;
     const autoAccept = document.getElementById('bizAutoAccept').checked;
+    const requireCashOnly = document.getElementById('bizCashOnly').checked;
 
     let hasError = false;
     if (!name) {
@@ -306,8 +352,9 @@
         fieldError(businessNameInput, document.getElementById('businessNameError'), t('val_enter_business_name', 'Please enter your business name.'));
         hasError = true;
       }
-      if (isNaN(exteriorPrice) || exteriorPrice < 0) {
-        fieldError(document.getElementById('bizExteriorPrice'), document.getElementById('exteriorPriceError'), t('val_enter_exterior_price', 'Please enter a price for an exterior-only wash.'));
+      if (!vehiclePricing.sedan) {
+        document.getElementById('exteriorPriceError').textContent = t('val_enter_exterior_price', 'Please enter at least a sedan price.');
+        document.getElementById('exteriorPriceError').classList.add('visible');
         hasError = true;
       }
     }
@@ -317,9 +364,13 @@
 
     const payload = { name, email, password, role: selectedRole };
     if (selectedRole === 'seller') {
+      // exteriorPrice/fullWashAddon are kept for backward-compatible display
+      // ("From X SAR" badges) — derived from the sedan tier, the cheapest
+      // and most universally-applicable vehicle type.
       payload.business = {
         name: businessName, serviceType, location: businessLocation,
-        exteriorPrice, fullWashAddon, pointsRate, concurrentSlots, slotIntervalMinutes, autoAccept,
+        exteriorPrice: vehiclePricing.sedan.exterior, fullWashAddon: vehiclePricing.sedan.full - vehiclePricing.sedan.exterior,
+        vehiclePricing, pointsRate, concurrentSlots, slotIntervalMinutes, autoAccept, requireCashOnly,
         operatingHours: buildOperatingHours(),
         extras: collectExtras()
       };
@@ -340,6 +391,13 @@
   });
 
   // ---------------- Extras list ----------------
+  // Common preset options so sellers don't have to type from scratch —
+  // "Custom..." still lets them add anything not on the list.
+  const COMMON_EXTRAS = [
+    'Tire Shine', 'Undercarriage Wash', 'Wax Coating', 'Headlight Restoration',
+    'Engine Bay Clean', 'Pet Hair Removal', 'Air Freshener', 'Clay Bar Treatment',
+    'Ceramic Coating', 'Interior Deep Clean', 'Leather Conditioning', 'Odor Removal'
+  ];
   let extraRowId = 0;
   function addExtraRow(name = '', price = '') {
     const id = extraRowId++;
@@ -347,9 +405,15 @@
     row.className = 'form-row extra-row';
     row.dataset.rowId = id;
     row.style.marginBottom = '0.6rem';
+    const isCustom = name && !COMMON_EXTRAS.includes(name);
     row.innerHTML = `
       <div class="form-group" style="flex: 2;">
-        <input type="text" class="form-control extra-name" placeholder="${t('biz_extra_name_placeholder', 'e.g. Tire Shine')}" value="${name}">
+        <select class="form-control extra-preset">
+          <option value="" data-i18n="biz_extra_choose">Choose an extra…</option>
+          ${COMMON_EXTRAS.map(n => `<option value="${n}" ${n === name ? 'selected' : ''}>${n}</option>`).join('')}
+          <option value="__custom__" ${isCustom ? 'selected' : ''} data-i18n="biz_extra_custom">Custom…</option>
+        </select>
+        <input type="text" class="form-control extra-name-custom" style="margin-top: 0.4rem; ${isCustom ? '' : 'display:none;'}" placeholder="${t('biz_extra_name_placeholder', 'e.g. Interior Perfume')}" value="${isCustom ? name : ''}">
       </div>
       <div class="form-group" style="flex: 1;">
         <input type="number" class="form-control extra-price" min="0" step="0.5" placeholder="${t('biz_extra_price_placeholder', 'Price')}" value="${price}">
@@ -357,16 +421,27 @@
       <button type="button" class="item-delete-btn remove-extra-btn" style="flex: 0 0 auto;"><i class="fas fa-trash"></i></button>
     `;
     document.getElementById('extrasList').appendChild(row);
+    const presetSelect = row.querySelector('.extra-preset');
+    const customInput = row.querySelector('.extra-name-custom');
+    presetSelect.addEventListener('change', () => {
+      customInput.style.display = presetSelect.value === '__custom__' ? 'block' : 'none';
+      if (presetSelect.value === '__custom__') customInput.focus();
+    });
+    if (window.I18n) I18n.applyTranslations();
     row.querySelector('.remove-extra-btn').addEventListener('click', () => row.remove());
   }
   document.getElementById('addExtraBtn').addEventListener('click', () => addExtraRow());
 
   function collectExtras() {
-    return Array.from(document.querySelectorAll('#extrasList .extra-row')).map(row => ({
-      name: row.querySelector('.extra-name').value.trim(),
-      price: parseFloat(row.querySelector('.extra-price').value),
-      appliesTo: 'both'
-    })).filter(e => e.name && !isNaN(e.price));
+    return Array.from(document.querySelectorAll('#extrasList .extra-row')).map(row => {
+      const presetVal = row.querySelector('.extra-preset').value;
+      const name = presetVal === '__custom__' ? row.querySelector('.extra-name-custom').value.trim() : presetVal;
+      return {
+        name,
+        price: parseFloat(row.querySelector('.extra-price').value),
+        appliesTo: 'both'
+      };
+    }).filter(e => e.name && !isNaN(e.price));
   }
 
   // ---------------- Hours editor ----------------

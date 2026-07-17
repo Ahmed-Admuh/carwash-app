@@ -199,7 +199,7 @@
 <!-- Sticky Price Footer -->
 <div class="sticky-price-footer" id="stickyFooter">
   <div class="sticky-price-label">Total:</div>
-  <div class="sticky-price-value" id="sticky-total">0.00 <span class="sar-symbol" aria-hidden="true">&#x20C1;</span><span class="sr-only">SAR</span></div>
+  <div class="sticky-price-value" id="sticky-total">0.00 <span class="sar-symbol">SAR</span></div>
 </div>
 
 <script src="js/demo-mode.js"></script>
@@ -325,6 +325,7 @@
         </div>
 
         <h3 class="section-title" style="margin-top: 1.75rem; font-size: 1.15rem;"><i class="fas fa-credit-card"></i> <span data-i18n="booking_step_payment">Payment Method</span></h3>
+        <div id="cashOnlyNotice"></div>
         <div class="payment-methods" id="paymentMethods"></div>
         <button type="button" class="btn btn-outline btn-block" id="addPaymentBtnBD" style="margin-top: 0.6rem;">
           <i class="fas fa-plus-circle"></i> <span data-i18n="btn_add_payment">Add Payment Method</span>
@@ -336,10 +337,10 @@
         </div>
 
         <div class="price-summary" id="priceSummary">
-          <div class="price-line"><span data-i18n="bd_base_price">Base Price:</span><span id="base-price">0.00 <span class="sar-symbol" aria-hidden="true">&#x20C1;</span><span class="sr-only">SAR</span></span></div>
-          <div class="price-line"><span data-i18n="bd_addons_price">Add-ons:</span><span id="addons-price-line">0.00 <span class="sar-symbol" aria-hidden="true">&#x20C1;</span><span class="sr-only">SAR</span></span></div>
-          <div class="price-line"><span data-i18n="bd_tax">Tax:</span><span id="tax">0.00 <span class="sar-symbol" aria-hidden="true">&#x20C1;</span><span class="sr-only">SAR</span></span></div>
-          <div class="price-line price-total"><span data-i18n="booking_total">Total:</span><span id="total">0.00 <span class="sar-symbol" aria-hidden="true">&#x20C1;</span><span class="sr-only">SAR</span></span></div>
+          <div class="price-line"><span data-i18n="bd_base_price">Base Price:</span><span id="base-price">0.00 <span class="sar-symbol">SAR</span></span></div>
+          <div class="price-line"><span data-i18n="bd_addons_price">Add-ons:</span><span id="addons-price-line">0.00 <span class="sar-symbol">SAR</span></span></div>
+          <div class="price-line"><span data-i18n="bd_tax">Tax:</span><span id="tax">0.00 <span class="sar-symbol">SAR</span></span></div>
+          <div class="price-line price-total"><span data-i18n="booking_total">Total:</span><span id="total">0.00 <span class="sar-symbol">SAR</span></span></div>
         </div>
 
         <button class="btn btn-block" id="confirm-booking">
@@ -363,6 +364,7 @@
     });
 
     document.getElementById('confirm-booking').addEventListener('click', confirmBooking);
+    setupAddPaymentModalBD();
 
     if (window.I18n) I18n.applyTranslations();
   }
@@ -407,10 +409,23 @@
     return v ? v.surcharge : 0;
   }
 
-  function renderWashChoices() {
+  // Prefers the seller's own per-vehicle-type pricing when set (the current
+  // model — no fixed markup on top); falls back to the legacy
+  // exterior_price + flat surcharge calculation for washes that haven't
+  // been edited/created under the new pricing model yet.
+  function getVehiclePrices() {
+    const vp = wash.vehicle_pricing && wash.vehicle_pricing[state.vehicleType];
+    if (vp) {
+      return { exteriorPrice: parseFloat(vp.exterior), fullPrice: parseFloat(vp.full) };
+    }
     const surcharge = currentVehicleSurcharge();
     const exteriorPrice = parseFloat(wash.exterior_price) + surcharge;
     const fullPrice = exteriorPrice + parseFloat(wash.full_wash_addon);
+    return { exteriorPrice, fullPrice };
+  }
+
+  function renderWashChoices() {
+    const { exteriorPrice, fullPrice } = getVehiclePrices();
 
     const grid = document.getElementById('choiceGrid');
     grid.innerHTML = `
@@ -502,9 +517,17 @@
     // Cash is always offered, even with no saved cards — settled in person,
     // not tied to any saved payment method.
     const cashOption = { id: 'cash', type: 'cash', label: t('bd_cash_label', 'Cash (pay on arrival)'), is_default: false };
-    const allMethods = [...methods, cashOption];
 
-    const defaultMethod = methods.find(m => m.is_default) || methods[0] || cashOption;
+    // Some sellers only accept cash in person — if so, that's the only
+    // option offered here, regardless of what's saved on the account.
+    const allMethods = wash.require_cash_only ? [cashOption] : [...methods, cashOption];
+
+    document.getElementById('cashOnlyNotice').innerHTML = wash.require_cash_only
+      ? `<div class="text-muted" style="font-size: 0.85rem; background: var(--amber-tint); color: var(--amber); padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); margin-bottom: 0.75rem;"><i class="fas fa-info-circle"></i> ${t('bd_cash_only_notice', 'This wash only accepts cash paid in person.')}</div>`
+      : '';
+
+    const defaultMethod = wash.require_cash_only ? cashOption : (methods.find(m => m.is_default) || methods[0] || cashOption);
+    document.getElementById('addPaymentBtnBD').style.display = wash.require_cash_only ? 'none' : '';
     state.selectedPayment = defaultMethod.id;
     state.selectedPaymentType = defaultMethod.type;
 
@@ -533,16 +556,26 @@
   }
 
   // ---- Add Payment Method modal (right from the booking flow) ----
+  // IMPORTANT: this must run AFTER renderPage() has inserted the button
+  // into the DOM (it lives inside the dynamic template), not at top-level
+  // script scope — calling this before that would throw immediately
+  // (getElementById returns null) and silently break every listener below
+  // it too. setupAddPaymentModalBD() is called from renderPage() itself.
   let selectedNewPaymentType = null;
-  document.getElementById('addPaymentBtnBD').addEventListener('click', () => {
-    document.getElementById('paymentModalBD').classList.add('active');
-  });
-  document.getElementById('closePaymentModalBD').addEventListener('click', () => {
-    document.getElementById('paymentModalBD').classList.remove('active');
-  });
-  document.getElementById('paymentModalBD').addEventListener('click', (e) => {
-    if (e.target === document.getElementById('paymentModalBD')) e.currentTarget.classList.remove('active');
-  });
+  let paymentModalBDInitialized = false;
+  function setupAddPaymentModalBD() {
+    if (paymentModalBDInitialized) return; // avoid double-binding on re-render
+    paymentModalBDInitialized = true;
+
+    document.getElementById('addPaymentBtnBD').addEventListener('click', () => {
+      document.getElementById('paymentModalBD').classList.add('active');
+    });
+    document.getElementById('closePaymentModalBD').addEventListener('click', () => {
+      document.getElementById('paymentModalBD').classList.remove('active');
+    });
+    document.getElementById('paymentModalBD').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('paymentModalBD')) e.currentTarget.classList.remove('active');
+    });
   document.querySelectorAll('#paymentTypeGridBD .payment-type-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('#paymentTypeGridBD .payment-type-btn').forEach(b => b.classList.remove('selected'));
@@ -579,6 +612,7 @@
       showToast(err.message, true);
     }
   });
+  }
 
   async function loadSlots() {
     const grid = document.getElementById('slotGrid');
@@ -642,8 +676,8 @@
   }
 
   function updatePriceSummary() {
-    const surcharge = currentVehicleSurcharge();
-    const basePrice = parseFloat(wash.exterior_price) + surcharge + (state.washType === 'full' ? parseFloat(wash.full_wash_addon) : 0);
+    const { exteriorPrice, fullPrice } = getVehiclePrices();
+    const basePrice = state.washType === 'full' ? fullPrice : exteriorPrice;
     const addonsTotal = computeAddonsTotal();
     const subtotal = basePrice + addonsTotal;
     const tax = subtotal * TAX_RATE;

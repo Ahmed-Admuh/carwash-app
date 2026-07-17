@@ -1281,7 +1281,9 @@ html[dir="rtl"] .nav-drawer-link { text-align: right; }
 }
 .sar-symbol {
   font-weight: 600;
-  opacity: 0.85;
+  font-size: 0.82em;
+  opacity: 0.8;
+  letter-spacing: 0.02em;
 }
 
 /* ============================================================
@@ -1333,3 +1335,81 @@ html[dir="rtl"] .nav-drawer-link { text-align: right; }
 }
 .open-now-badge { background: var(--success-tint); color: var(--success); }
 .closed-now-badge { background: var(--danger-tint); color: var(--danger); }
+
+/* ============================================================
+   Per-vehicle-type pricing grid (signup + seller dashboard)
+   ============================================================ */
+.vehicle-pricing-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.vehicle-pricing-row {
+  display: grid;
+  grid-template-columns: 90px 1fr 1fr;
+  gap: 0.6rem;
+  align-items: center;
+  background: var(--surface-alt);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.75rem;
+}
+.vehicle-pricing-row .vp-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.vehicle-pricing-row input {
+  padding: 0.5rem 0.6rem;
+  font-size: 0.88rem;
+}
+.vp-col-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-bottom: 0.2rem;
+  display: block;
+}
+
+/* ============================================================
+   Seller dashboard: wash card actions and time slots table
+   ============================================================ */
+.wash-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+  flex-wrap: wrap;
+}
+.btn-small {
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.btn-small:hover { background: var(--teal-tint); border-color: var(--teal); color: var(--teal-dark); }
+
+.slots-table-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+.slot-cell {
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.4rem;
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: 1px solid var(--border-soft);
+}
+.slot-cell.slot-free { background: var(--success-tint); color: var(--success); }
+.slot-cell.slot-partial { background: var(--amber-tint); color: var(--amber); }
+.slot-cell.slot-full { background: var(--danger-tint); color: var(--danger); }
+.slot-cell .slot-cell-count { display: block; font-size: 0.68rem; font-weight: 500; opacity: 0.85; }

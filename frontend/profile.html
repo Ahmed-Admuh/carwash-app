@@ -469,9 +469,23 @@
           <h4>${m.label || m.type}</h4>
           ${m.last4 ? `<p class="payment-meta">•••• ${m.last4}</p>` : ''}
         </div>
-        ${m.is_default ? `<span class="default-badge">${t('profile_default_badge', 'Default')}</span>` : ''}
+        ${m.is_default
+          ? `<span class="default-badge">${t('profile_default_badge', 'Default')}</span>`
+          : `<button class="booking-link-btn" data-set-default="${m.id}" style="margin-left:auto; white-space: nowrap;">${t('profile_set_default', 'Set as Default')}</button>`}
         <button class="item-delete-btn" data-delete-payment="${m.id}" title="Remove"><i class="fas fa-trash"></i></button>
       </li>`).join('');
+
+    list.querySelectorAll('[data-set-default]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        try {
+          await apiFetch(`/payment-methods/${btn.dataset.setDefault}/default`, { method: 'PATCH' });
+          showToast(t('profile_default_updated', 'Default payment method updated.'));
+          await loadProfile();
+        } catch (err) {
+          showToast(err.message, true);
+        }
+      });
+    });
 
     list.querySelectorAll('[data-delete-payment]').forEach(btn => {
       btn.addEventListener('click', async () => {

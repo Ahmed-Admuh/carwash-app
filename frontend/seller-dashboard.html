@@ -94,19 +94,18 @@
         <label data-i18n="biz_location_label">Location / area</label>
         <input type="text" id="nwLocation" class="form-control" placeholder="e.g. Downtown">
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label data-i18n="biz_exterior_price_label">Exterior-only price (SAR)</label>
-          <input type="number" id="nwExteriorPrice" class="form-control" min="0" step="0.5" placeholder="15">
-        </div>
-        <div class="form-group">
-          <label data-i18n="biz_full_addon_label">+ Extra for Exterior &amp; Interior (SAR)</label>
-          <input type="number" id="nwFullAddon" class="form-control" min="0" step="0.5" placeholder="8">
-        </div>
-      </div>
-      <div class="form-group">
+      <div class="section-divider" data-i18n="biz_pricing_title">Pricing</div>
+      <p class="text-muted" style="font-size: 0.78rem; margin-top: -0.5rem; margin-bottom: 0.75rem;" data-i18n="biz_pricing_hint">
+        Set your own price for each vehicle size — no fixed markup is added on top.
+      </p>
+      <div class="vehicle-pricing-grid" id="nwVehiclePricingGrid"></div>
+      <div class="field-error" id="nwExteriorPriceError"></div>
+      <div class="form-group" style="margin-top: 1rem;">
         <label data-i18n="biz_points_rate_label">Loyalty points rate (points per 1 SAR spent)</label>
         <input type="number" id="nwPointsRate" class="form-control" min="0" step="0.1" value="1.0">
+      </div>
+      <div class="form-group">
+        <label><input type="checkbox" id="nwCashOnly"> <span data-i18n="biz_cash_only_label">Only accept cash paid in person (no cards or Apple Pay)</span></label>
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -135,6 +134,21 @@
       </button>
       <button type="submit" class="btn btn-block" id="nwSubmitBtn" data-i18n="seller_add_wash">Add Wash Place</button>
     </form>
+  </div>
+</div>
+
+<!-- View Time Slots Modal -->
+<div class="modal-overlay" id="slotsModal">
+  <div class="modal-panel" style="max-width: 480px; max-height: 85vh; overflow-y: auto;">
+    <div class="modal-header">
+      <h3 data-i18n="seller_view_slots">View Time Slots</h3>
+      <button class="modal-close" id="closeSlotsModal">&times;</button>
+    </div>
+    <div class="form-group">
+      <label data-i18n="seller_pick_date" style="font-size: 0.85rem;">Pick a date</label>
+      <input type="date" id="slotsDateInput" class="form-control">
+    </div>
+    <div id="slotsResult"></div>
   </div>
 </div>
 
@@ -241,7 +255,9 @@
     if (window.I18n) I18n.applyTranslations();
   }
 
+  let ownedWashesCache = [];
   function renderWashes(washes) {
+    ownedWashesCache = washes;
     const el = document.getElementById('washList');
     if (washes.length === 0) {
       el.innerHTML = `<div class="empty-state"><i class="fas fa-water"></i><p>${t('seller_no_washes', 'No wash places yet.')}</p></div>`;
@@ -256,11 +272,23 @@
       <div class="wash-owned-card">
         ${w.image_url ? `<img src="${w.image_url}" alt="${w.name}">` : ''}
         <div style="flex:1;">
-          <h4>${w.name} ${w.is_open_now ? `<span class="open-now-badge" data-i18n="seller_open_now">Open</span>` : `<span class="closed-now-badge" data-i18n="seller_closed_now">Closed</span>`}</h4>
+          <h4>${w.name} ${w.is_open_now ? `<span class="open-now-badge" data-i18n="seller_open_now">Open</span>` : `<span class="closed-now-badge" data-i18n="seller_closed_now">Closed</span>`} ${w.require_cash_only ? `<span class="closed-now-badge" data-i18n="seller_cash_only_badge">Cash Only</span>` : ''}</h4>
           <div class="meta">${typeLabels[w.service_type] || w.service_type} • ${w.location || t('book_comes_to_you', 'Comes to you')} • ${t('seller_pts_rate', 'pts rate')}: ${w.points_rate}x • ${formatPrice(w.exterior_price)} ${t('seller_base', 'base')}</div>
+          <div class="wash-card-actions">
+            <button class="btn-small edit-wash-btn" data-id="${w.id}"><i class="fas fa-pen"></i> <span data-i18n="seller_edit_wash">Edit Settings</span></button>
+            <button class="btn-small view-slots-btn" data-id="${w.id}"><i class="fas fa-calendar-days"></i> <span data-i18n="seller_view_slots">View Time Slots</span></button>
+          </div>
         </div>
       </div>
     `).join('');
+
+    el.querySelectorAll('.edit-wash-btn').forEach(btn => {
+      btn.addEventListener('click', () => openEditWashModal(parseInt(btn.dataset.id, 10)));
+    });
+    el.querySelectorAll('.view-slots-btn').forEach(btn => {
+      btn.addEventListener('click', () => openSlotsModal(parseInt(btn.dataset.id, 10)));
+    });
+    if (window.I18n) I18n.applyTranslations();
   }
 
   function renderBookings(bookings) {
@@ -367,11 +395,69 @@
     });
   }
 
-  // ---------------- Add Wash Place modal ----------------
+  // ---------------- Add/Edit Wash Place modal (shared) ----------------
+  let currentEditWashId = null; // null = adding a new wash; set = editing that one
+
   function openAddWashModal() {
+    currentEditWashId = null;
+    document.getElementById('addWashForm').reset();
+    document.getElementById('nwExtrasList').innerHTML = '';
+    document.getElementById('nwHoursPeriods').innerHTML = '';
+    document.getElementById('nwHoursPeriods').style.display = 'none';
+    document.getElementById('nwAddPeriodBtn').style.display = 'none';
+    document.querySelector('#addWashModal h3').textContent = t('seller_add_wash', 'Add Wash Place');
+    document.getElementById('nwSubmitBtn').textContent = t('seller_add_wash', 'Add Wash Place');
+    nwBuildVehiclePricingGrid();
     document.getElementById('addWashModal').classList.add('active');
     if (window.I18n) I18n.applyTranslations();
   }
+
+  async function openEditWashModal(washId) {
+    const wash = ownedWashesCache.find(w => w.id === washId);
+    if (!wash) return;
+    currentEditWashId = washId;
+
+    document.getElementById('nwName').value = wash.name || '';
+    document.getElementById('nwServiceType').value = wash.service_type;
+    document.getElementById('nwLocation').value = wash.location || '';
+    document.getElementById('nwPointsRate').value = wash.points_rate;
+    document.getElementById('nwCashOnly').checked = !!wash.require_cash_only;
+    document.getElementById('nwConcurrentSlots').value = wash.concurrent_slots;
+    document.getElementById('nwSlotInterval').value = wash.slot_interval_minutes;
+    document.getElementById('nwAutoAccept').checked = wash.auto_accept;
+    document.getElementById('nw24_7').checked = !wash.operating_hours || wash.operating_hours.is24_7;
+
+    nwBuildVehiclePricingGrid(wash.vehicle_pricing);
+
+    // Hours periods
+    document.getElementById('nwHoursPeriods').innerHTML = '';
+    const isCustomHours = wash.operating_hours && !wash.operating_hours.is24_7;
+    document.getElementById('nwHoursPeriods').style.display = isCustomHours ? 'block' : 'none';
+    document.getElementById('nwAddPeriodBtn').style.display = isCustomHours ? 'block' : 'none';
+    if (isCustomHours) {
+      const anyDay = Object.values(wash.operating_hours.schedule || {})[0] || [];
+      if (anyDay.length > 0) {
+        anyDay.forEach(p => nwAddPeriodRow(p.open, p.close));
+      } else {
+        nwAddPeriodRow();
+      }
+    }
+
+    // Extras (fetch this wash's actual add-ons)
+    document.getElementById('nwExtrasList').innerHTML = '';
+    try {
+      const addons = await apiFetch(`/seller/washes/${washId}/addons`);
+      addons.forEach(a => nwAddExtraRow(a.name, a.price));
+    } catch (err) {
+      // non-fatal — just start with an empty extras list if this fails
+    }
+
+    document.querySelector('#addWashModal h3').textContent = t('seller_edit_wash', 'Edit Settings');
+    document.getElementById('nwSubmitBtn').textContent = t('seller_save_changes', 'Save Changes');
+    document.getElementById('addWashModal').classList.add('active');
+    if (window.I18n) I18n.applyTranslations();
+  }
+
   document.getElementById('closeAddWashModal').addEventListener('click', () => {
     document.getElementById('addWashModal').classList.remove('active');
   });
@@ -379,34 +465,94 @@
     if (e.target === e.currentTarget) e.currentTarget.classList.remove('active');
   });
 
-  // Extras rows
+  // ---- Per-vehicle-type pricing grid ----
+  const NW_VEHICLE_TYPES = [
+    { key: 'sedan', icon: 'fa-car-side', labelKey: 'vehicle_sedan' },
+    { key: 'suv', icon: 'fa-truck-monster', labelKey: 'vehicle_suv' },
+    { key: 'truck', icon: 'fa-truck-pickup', labelKey: 'vehicle_truck' },
+    { key: 'van', icon: 'fa-shuttle-van', labelKey: 'vehicle_van' }
+  ];
+  function nwBuildVehiclePricingGrid(existing) {
+    const serviceType = document.getElementById('nwServiceType').value;
+    const types = serviceType === 'moto-mobile'
+      ? NW_VEHICLE_TYPES.filter(v => v.key === 'sedan' || v.key === 'suv')
+      : NW_VEHICLE_TYPES;
+    const grid = document.getElementById('nwVehiclePricingGrid');
+    grid.innerHTML = `
+      <div class="vehicle-pricing-row" style="background:none; padding: 0 0.75rem;">
+        <span></span>
+        <span class="vp-col-label" data-i18n="biz_vp_exterior">Exterior only</span>
+        <span class="vp-col-label" data-i18n="biz_vp_full">Exterior + Interior</span>
+      </div>
+      ${types.map(v => `
+        <div class="vehicle-pricing-row" data-vehicle="${v.key}">
+          <span class="vp-label"><i class="fas ${v.icon}"></i> <span data-i18n="${v.labelKey}">${v.key}</span></span>
+          <input type="number" class="form-control nw-vp-exterior" min="0" step="0.5" placeholder="15" value="${existing?.[v.key]?.exterior ?? ''}">
+          <input type="number" class="form-control nw-vp-full" min="0" step="0.5" placeholder="22" value="${existing?.[v.key]?.full ?? ''}">
+        </div>
+      `).join('')}
+    `;
+    if (window.I18n) I18n.applyTranslations();
+  }
+  document.getElementById('nwServiceType').addEventListener('change', () => nwBuildVehiclePricingGrid());
+
+  function nwCollectVehiclePricing() {
+    const pricing = {};
+    document.querySelectorAll('#nwVehiclePricingGrid .vehicle-pricing-row[data-vehicle]').forEach(row => {
+      const key = row.dataset.vehicle;
+      const ext = parseFloat(row.querySelector('.nw-vp-exterior').value);
+      const full = parseFloat(row.querySelector('.nw-vp-full').value);
+      if (!isNaN(ext)) pricing[key] = { exterior: ext, full: !isNaN(full) ? full : ext };
+    });
+    return pricing;
+  }
+
+  // Extras rows — preset dropdown + custom option
+  const NW_COMMON_EXTRAS = [
+    'Tire Shine', 'Undercarriage Wash', 'Wax Coating', 'Headlight Restoration',
+    'Engine Bay Clean', 'Pet Hair Removal', 'Air Freshener', 'Clay Bar Treatment',
+    'Ceramic Coating', 'Interior Deep Clean', 'Leather Conditioning', 'Odor Removal'
+  ];
   let nwExtraRowId = 0;
-  function nwAddExtraRow() {
+  function nwAddExtraRow(name = '', price = '') {
     const id = nwExtraRowId++;
     const row = document.createElement('div');
     row.className = 'form-row nw-extra-row';
     row.dataset.rowId = id;
     row.style.marginBottom = '0.6rem';
+    const isCustom = name && !NW_COMMON_EXTRAS.includes(name);
     row.innerHTML = `
       <div class="form-group" style="flex: 2;">
-        <input type="text" class="form-control nw-extra-name" placeholder="${t('biz_extra_name_placeholder', 'e.g. Tire Shine')}">
+        <select class="form-control nw-extra-preset">
+          <option value="" data-i18n="biz_extra_choose">Choose an extra…</option>
+          ${NW_COMMON_EXTRAS.map(n => `<option value="${n}" ${n === name ? 'selected' : ''}>${n}</option>`).join('')}
+          <option value="__custom__" ${isCustom ? 'selected' : ''} data-i18n="biz_extra_custom">Custom…</option>
+        </select>
+        <input type="text" class="form-control nw-extra-name-custom" style="margin-top: 0.4rem; ${isCustom ? '' : 'display:none;'}" placeholder="${t('biz_extra_name_placeholder', 'e.g. Interior Perfume')}" value="${isCustom ? name : ''}">
       </div>
       <div class="form-group" style="flex: 1;">
-        <input type="number" class="form-control nw-extra-price" min="0" step="0.5" placeholder="${t('biz_extra_price_placeholder', 'Price')}">
+        <input type="number" class="form-control nw-extra-price" min="0" step="0.5" placeholder="${t('biz_extra_price_placeholder', 'Price')}" value="${price}">
       </div>
       <button type="button" class="item-delete-btn nw-remove-extra-btn" style="flex: 0 0 auto;"><i class="fas fa-trash"></i></button>
     `;
     document.getElementById('nwExtrasList').appendChild(row);
     row.querySelector('.nw-remove-extra-btn').addEventListener('click', () => row.remove());
+    const presetSelect = row.querySelector('.nw-extra-preset');
+    const customInput = row.querySelector('.nw-extra-name-custom');
+    presetSelect.addEventListener('change', () => {
+      customInput.style.display = presetSelect.value === '__custom__' ? 'block' : 'none';
+      if (presetSelect.value === '__custom__') customInput.focus();
+    });
+    if (window.I18n) I18n.applyTranslations();
   }
-  document.getElementById('nwAddExtraBtn').addEventListener('click', nwAddExtraRow);
+  document.getElementById('nwAddExtraBtn').addEventListener('click', () => nwAddExtraRow());
 
   function nwCollectExtras() {
-    return Array.from(document.querySelectorAll('#nwExtrasList .nw-extra-row')).map(row => ({
-      name: row.querySelector('.nw-extra-name').value.trim(),
-      price: parseFloat(row.querySelector('.nw-extra-price').value),
-      appliesTo: 'both'
-    })).filter(e => e.name && !isNaN(e.price));
+    return Array.from(document.querySelectorAll('#nwExtrasList .nw-extra-row')).map(row => {
+      const presetVal = row.querySelector('.nw-extra-preset').value;
+      const name = presetVal === '__custom__' ? row.querySelector('.nw-extra-name-custom').value.trim() : presetVal;
+      return { name, price: parseFloat(row.querySelector('.nw-extra-price').value), appliesTo: 'both' };
+    }).filter(e => e.name && !isNaN(e.price));
   }
 
   // Hours periods
@@ -461,33 +607,39 @@
     const name = document.getElementById('nwName').value.trim();
     const serviceType = document.getElementById('nwServiceType').value;
     const location = document.getElementById('nwLocation').value.trim();
-    const exteriorPrice = parseFloat(document.getElementById('nwExteriorPrice').value);
-    const fullWashAddon = parseFloat(document.getElementById('nwFullAddon').value) || 0;
+    const vehiclePricing = nwCollectVehiclePricing();
     const pointsRate = parseFloat(document.getElementById('nwPointsRate').value) || 1.0;
     const concurrentSlots = parseInt(document.getElementById('nwConcurrentSlots').value, 10) || 2;
     const slotIntervalMinutes = parseInt(document.getElementById('nwSlotInterval').value, 10) || 15;
     const autoAccept = document.getElementById('nwAutoAccept').checked;
+    const requireCashOnly = document.getElementById('nwCashOnly').checked;
 
     if (!name) { showToast(t('val_enter_business_name', 'Please enter your business name.'), true); return; }
-    if (isNaN(exteriorPrice) || exteriorPrice < 0) { showToast(t('val_enter_exterior_price', 'Please enter a price for an exterior-only wash.'), true); return; }
+    if (!vehiclePricing.sedan) {
+      document.getElementById('nwExteriorPriceError').textContent = t('val_enter_exterior_price', 'Please enter at least a sedan price.');
+      document.getElementById('nwExteriorPriceError').classList.add('visible');
+      return;
+    }
 
     const btn = document.getElementById('nwSubmitBtn');
     btn.classList.add('loading');
+    const body = {
+      name, serviceType, location,
+      exteriorPrice: vehiclePricing.sedan.exterior, fullWashAddon: vehiclePricing.sedan.full - vehiclePricing.sedan.exterior,
+      vehiclePricing, pointsRate, concurrentSlots, slotIntervalMinutes, autoAccept, requireCashOnly,
+      operatingHours: nwBuildOperatingHours(),
+      extras: nwCollectExtras()
+    };
+
     try {
-      await apiFetch('/seller/washes', {
-        method: 'POST',
-        body: JSON.stringify({
-          name, serviceType, location, exteriorPrice, fullWashAddon, pointsRate,
-          concurrentSlots, slotIntervalMinutes, autoAccept,
-          operatingHours: nwBuildOperatingHours(),
-          extras: nwCollectExtras()
-        })
-      });
-      showToast(t('seller_wash_added', 'Wash place added.'));
+      if (currentEditWashId) {
+        await apiFetch(`/seller/washes/${currentEditWashId}`, { method: 'PATCH', body: JSON.stringify(body) });
+        showToast(t('seller_wash_updated', 'Wash settings updated.'));
+      } else {
+        await apiFetch('/seller/washes', { method: 'POST', body: JSON.stringify(body) });
+        showToast(t('seller_wash_added', 'Wash place added.'));
+      }
       document.getElementById('addWashModal').classList.remove('active');
-      e.target.reset();
-      document.getElementById('nwExtrasList').innerHTML = '';
-      document.getElementById('nwHoursPeriods').innerHTML = '';
       await loadDashboard();
     } catch (err) {
       showToast(err.message, true);
@@ -495,6 +647,52 @@
       btn.classList.remove('loading');
     }
   });
+
+  // ---------------- View Time Slots modal ----------------
+  let currentSlotsWashId = null;
+  async function openSlotsModal(washId) {
+    currentSlotsWashId = washId;
+    const dateInput = document.getElementById('slotsDateInput');
+    dateInput.value = new Date().toISOString().slice(0, 10);
+    document.getElementById('slotsModal').classList.add('active');
+    await loadSlotsForModal();
+  }
+  document.getElementById('closeSlotsModal').addEventListener('click', () => {
+    document.getElementById('slotsModal').classList.remove('active');
+  });
+  document.getElementById('slotsModal').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) e.currentTarget.classList.remove('active');
+  });
+  document.getElementById('slotsDateInput').addEventListener('change', loadSlotsForModal);
+
+  async function loadSlotsForModal() {
+    const result = document.getElementById('slotsResult');
+    const date = document.getElementById('slotsDateInput').value;
+    if (!currentSlotsWashId || !date) return;
+    result.innerHTML = `<div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>${t('book_loading', 'Loading…')}</p></div>`;
+    try {
+      const data = await apiFetch(`/carwashes/${currentSlotsWashId}/slots?date=${date}`);
+      result.innerHTML = `
+        <div class="slots-table-grid">
+          ${data.slots.map(s => {
+            const left = s.capacity - s.booked;
+            const cls = left <= 0 ? 'slot-full' : (left < s.capacity ? 'slot-partial' : 'slot-free');
+            return `
+              <div class="slot-cell ${cls}">
+                ${s.time}
+                <span class="slot-cell-count">${s.booked}/${s.capacity}</span>
+              </div>`;
+          }).join('')}
+        </div>
+        <p class="text-muted" style="font-size: 0.78rem; margin-top: 1rem;" data-i18n="seller_slots_legend">
+          Green = fully open, amber = partially booked, red = fully booked.
+        </p>
+      `;
+      if (window.I18n) I18n.applyTranslations();
+    } catch (err) {
+      result.innerHTML = `<div class="empty-state"><i class="fas fa-triangle-exclamation"></i><p>${err.message}</p></div>`;
+    }
+  }
 </script>
 
 </body>

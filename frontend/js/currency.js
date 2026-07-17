@@ -1,19 +1,20 @@
 // currency.js — shared SAR (Saudi Riyal) formatting.
 //
-// Uses the new official Saudi Riyal symbol (Unicode U+20C1, "SAUDI RIYAL
-// SIGN", approved February 2025 by the Saudi Central Bank, added to
-// Unicode 17.0 in September 2025). Since it's a very new character, font
-// support varies by device — this always pairs the symbol with the plain
-// text "SAR" for accessibility (screen readers) and as a safety net in
-// case a device's font can't render the glyph yet.
+// Earlier versions of this file used the new official Saudi Riyal Unicode
+// symbol (U+20C1, approved by SAMA in Feb 2025). In real-world testing it
+// didn't render on several mobile browsers (reported: Samsung Internet) —
+// there's no reliable way to feature-detect font support for a brand-new
+// character across every browser from plain client-side JS, so rather than
+// risk a broken/missing glyph in front of customers, this now uses plain
+// "SAR" text everywhere. It's guaranteed to render correctly on every
+// device, immediately understood, and matches what's commonly used in
+// Saudi apps and receipts today anyway.
 
-const SAR_SYMBOL = "\u20C1"; // ⃁ SAUDI RIYAL SIGN
-
-// Formats a number as a price string with the Riyal symbol, e.g. "25.30 ⃁"
+// Formats a number as a price string with the SAR suffix, e.g. "25.30 SAR"
 function formatPrice(amount) {
   const n = parseFloat(amount);
   const value = isNaN(n) ? "0.00" : n.toFixed(2);
-  return `${value} <span class="sar-symbol" aria-hidden="true">${SAR_SYMBOL}</span><span class="sr-only">SAR</span>`;
+  return `${value} <span class="sar-symbol">SAR</span>`;
 }
 
 // Plain-text version (no HTML) for places that can't render markup, like

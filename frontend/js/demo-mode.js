@@ -272,6 +272,7 @@ const DemoAPI = {
           slot_interval_minutes: business.slotIntervalMinutes || (isMobile ? 45 : 15),
           service_radius_km: isMobile ? (business.serviceRadiusKm || 15) : null,
           operating_hours: business.operatingHours || { is24_7: true, schedule: {} },
+          vehicle_pricing: business.vehiclePricing || null, require_cash_only: !!business.requireCashOnly,
           gallery_images: [], image_url: null,
           description: "New on Car Wash Finder — add photos and fine-tune details from your seller dashboard."
         };
@@ -415,6 +416,16 @@ const DemoAPI = {
       saveDB(db);
       return { status: 200, data: { deleted: true } };
     }
+    if (method === "PATCH" && seg[0] === "payment-methods" && seg[2] === "default") {
+      const user = requireUser();
+      const id = parseInt(seg[1], 10);
+      const target = db.paymentMethods.find(p => p.id === id && p.user_id === user.id);
+      if (!target) throw apiError("Payment method not found.", 404);
+      db.paymentMethods.forEach(p => { if (p.user_id === user.id) p.is_default = false; });
+      target.is_default = true;
+      saveDB(db);
+      return { status: 200, data: target };
+    }
 
     // ---------- BOOKINGS ----------
     if (method === "POST" && pathname === "/bookings") {
@@ -440,7 +451,9 @@ const DemoAPI = {
       if (wash.service_type === "moto-mobile" && !["sedan", "suv"].includes(resolvedVehicleType)) {
         throw apiError("This motorcycle-delivered wash can only service sedans and SUVs — try a home-service (van) or a fixed location for larger vehicles.");
       }
-      const vehicleSurcharge = VEHICLE_SURCHARGE[resolvedVehicleType] ?? 0;
+      if (wash.require_cash_only && paymentMethodType !== "cash") {
+        throw apiError("This wash only accepts cash paid in person — please select Cash to continue.");
+      }
 
       let addons = [];
       if (addonIds.length > 0) {
@@ -448,7 +461,18 @@ const DemoAPI = {
           .map(a => ({ id: a.id, name: a.name, price: parseFloat(a.price) }));
       }
       const addonsPrice = addons.reduce((sum, a) => sum + a.price, 0);
-      const basePrice = parseFloat(wash.exterior_price) + (washType === "full" ? parseFloat(wash.full_wash_addon) : 0) + vehicleSurcharge;
+
+      // Prefer the seller's own per-vehicle pricing when set; otherwise
+      // fall back to the legacy flat-surcharge model.
+      let basePrice;
+      const vp = wash.vehicle_pricing && wash.vehicle_pricing[resolvedVehicleType];
+      if (vp) {
+        basePrice = parseFloat(washType === "full" ? vp.full : vp.exterior);
+      } else {
+        const vehicleSurcharge = VEHICLE_SURCHARGE[resolvedVehicleType] ?? 0;
+        basePrice = parseFloat(wash.exterior_price) + (washType === "full" ? parseFloat(wash.full_wash_addon) : 0) + vehicleSurcharge;
+      }
+
       const subtotal = basePrice + addonsPrice;
       const tax = Math.round(subtotal * TAX_RATE * 100) / 100;
       const total = Math.round((subtotal + tax) * 100) / 100;
@@ -576,7 +600,8 @@ const DemoAPI = {
       const {
         name, serviceType, location, address, exteriorPrice, fullWashAddon,
         pointsRate, autoAccept, concurrentSlots, slotIntervalMinutes,
-        serviceRadiusKm, operatingHours, description, imageUrl, extras
+        serviceRadiusKm, operatingHours, description, imageUrl, extras,
+        vehiclePricing, requireCashOnly
       } = body;
       if (!name || !name.trim()) throw apiError("Please name your wash place.");
       if (!["location", "home-service", "moto-mobile"].includes(serviceType)) throw apiError("Please choose a valid service type.");
@@ -592,6 +617,7 @@ const DemoAPI = {
         slot_interval_minutes: slotIntervalMinutes || (isMobile ? 45 : 15),
         service_radius_km: isMobile ? (serviceRadiusKm || 15) : null,
         operating_hours: operatingHours || { is24_7: true, schedule: {} },
+        vehicle_pricing: vehiclePricing || null, require_cash_only: !!requireCashOnly,
         gallery_images: [], image_url: imageUrl || null, description: description || null
       };
       db.carWashes.push(wash);
@@ -615,7 +641,8 @@ const DemoAPI = {
         fullWashAddon: "full_wash_addon", pointsRate: "points_rate", autoAccept: "auto_accept",
         concurrentSlots: "concurrent_slots", slotIntervalMinutes: "slot_interval_minutes",
         serviceRadiusKm: "service_radius_km", operatingHours: "operating_hours",
-        description: "description", imageUrl: "image_url", galleryImages: "gallery_images"
+        description: "description", imageUrl: "image_url", galleryImages: "gallery_images",
+        vehiclePricing: "vehicle_pricing", requireCashOnly: "require_cash_only"
       };
       Object.keys(map).forEach(key => {
         if (fields[key] !== undefined) wash[map[key]] = fields[key];
