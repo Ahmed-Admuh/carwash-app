@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Log In | Car Wash Finder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .role-toggle {
+      display: flex;
+      background: var(--surface-alt);
+      border-radius: var(--radius);
+      padding: 4px;
+      margin-bottom: 1.5rem;
+    }
+    .role-toggle button {
+      flex: 1;
+      background: none;
+      border: none;
+      padding: 0.6rem 0.5rem;
+      border-radius: calc(var(--radius) - 4px);
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      transition: all 0.2s var(--ease);
+    }
+    .role-toggle button.active {
+      background: var(--surface);
+      color: var(--ink);
+      box-shadow: var(--shadow-sm);
+    }
+    .field-error {
+      color: var(--danger);
+      font-size: 0.78rem;
+      margin-top: 0.35rem;
+      display: none;
+    }
+    .field-error.visible { display: block; }
+    .form-control.invalid { border-color: var(--danger); }
+  </style>
+</head>
+<body>
+
+<div class="auth-shell">
+  <div class="auth-card">
+    <div class="auth-logo"><i class="fas fa-car-side"></i> Car Wash Finder</div>
+    <h1 id="authTitle" data-i18n="auth_welcome_back">Welcome back</h1>
+    <p class="auth-subtitle" id="authSubtitle" data-i18n="auth_login_subtitle">Log in to book, track, and manage your washes.</p>
+
+    <div class="demo-try-card">
+      <div class="demo-try-title" data-i18n="demo_try_title"><i class="fas fa-flask"></i> Try it instantly — no server needed</div>
+      <div class="demo-try-buttons">
+        <button type="button" class="btn btn-outline" id="tryDemoCustomerBtn"><i class="fas fa-user"></i> <span data-i18n="demo_try_customer">Explore as Customer</span></button>
+        <button type="button" class="btn btn-outline" id="tryDemoSellerBtn"><i class="fas fa-store"></i> <span data-i18n="demo_try_seller">Explore as Wash Owner</span></button>
+      </div>
+      <p class="demo-try-caption" data-i18n="demo_try_caption">Runs entirely in your browser — no backend, no database. Changes aren't saved anywhere beyond this browser.</p>
+    </div>
+
+    <div class="auth-divider"><span data-i18n="demo_or_login">or log in with a real account</span></div>
+
+    <div class="role-toggle">
+      <button type="button" class="active" data-role="customer"><i class="fas fa-user"></i> <span data-i18n="auth_customer">Customer</span></button>
+      <button type="button" data-role="seller"><i class="fas fa-store"></i> <span data-i18n="auth_wash_owner">Wash Owner</span></button>
+    </div>
+
+    <div class="demo-hint" id="demoHint">
+      <i class="fas fa-info-circle"></i> <span data-i18n="demo_hint_prefix">Demo login (needs the backend running):</span> <strong>demo.customer@carwash.app</strong> / <strong>demo1234</strong>
+    </div>
+
+    <div class="auth-error" id="authError"></div>
+
+    <form id="loginForm" novalidate>
+      <div class="form-group">
+        <label for="email" data-i18n="auth_email">Email</label>
+        <input type="email" id="email" class="form-control" placeholder="you@example.com" data-i18n-placeholder="auth_email_placeholder">
+        <div class="field-error" id="emailError"></div>
+      </div>
+      <div class="form-group">
+        <label for="password" data-i18n="auth_password">Password</label>
+        <input type="password" id="password" class="form-control" placeholder="••••••••" data-i18n-placeholder="auth_password_placeholder">
+        <div class="field-error" id="passwordError"></div>
+      </div>
+      <button type="submit" class="btn btn-block" id="submitBtn">
+        <i class="fas fa-arrow-right-to-bracket"></i> <span data-i18n="btn_log_in">Log In</span>
+      </button>
+    </form>
+
+    <p class="auth-footer-link" id="signupLink"><span data-i18n="auth_no_account">Don't have an account?</span> <a href="signup.html" data-i18n="link_sign_up">Sign up</a></p>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/demo-mode.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/menu.js"></script>
+<script>
+  function t(key, fallback) { return window.I18n ? I18n.t(key) : fallback; }
+
+  // Already logged in? Skip straight to the right home.
+  if (Auth.isLoggedIn()) {
+    const user = Auth.getUser();
+    window.location.href = (user && user.role === 'seller') ? 'seller-dashboard.html' : 'index.html';
+  }
+
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  const form = document.getElementById("loginForm");
+  const errorBox = document.getElementById("authError");
+  const submitBtn = document.getElementById("submitBtn");
+  const emailInput = document.getElementById("email");
+  const passwordInput = document.getElementById("password");
+  const emailError = document.getElementById("emailError");
+  const passwordError = document.getElementById("passwordError");
+  const demoHint = document.getElementById("demoHint");
+  const authTitle = document.getElementById("authTitle");
+  const authSubtitle = document.getElementById("authSubtitle");
+
+  let selectedRole = 'customer';
+
+  document.getElementById('tryDemoCustomerBtn').addEventListener('click', async () => {
+    await launchDemo('customer', 'tryDemoCustomerBtn');
+  });
+  document.getElementById('tryDemoSellerBtn').addEventListener('click', async () => {
+    await launchDemo('seller', 'tryDemoSellerBtn');
+  });
+
+  async function launchDemo(role, btnId) {
+    const btn = document.getElementById(btnId);
+    btn.classList.add('loading');
+    try {
+      const user = await Auth.startDemo(role);
+      window.location.href = user.role === 'seller' ? 'seller-dashboard.html' : 'index.html';
+    } catch (err) {
+      showToast(err.message, true);
+      btn.classList.remove('loading');
+    }
+  }
+
+  document.querySelectorAll('.role-toggle button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.role-toggle button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedRole = btn.dataset.role;
+      clearErrors();
+
+      if (selectedRole === 'seller') {
+        authTitle.textContent = t('demo_seller_signin_title', 'Wash owner sign in');
+        authSubtitle.textContent = t('demo_seller_signin_subtitle', 'Manage your bookings, pricing, and customers.');
+        demoHint.innerHTML = `<i class="fas fa-info-circle"></i> ${t('demo_hint_prefix', 'Demo login (needs the backend running):')} <strong>demo.admin@carwash.app</strong> / <strong>demo1234</strong>`;
+      } else {
+        authTitle.textContent = t('auth_welcome_back', 'Welcome back');
+        authSubtitle.textContent = t('auth_login_subtitle', 'Log in to book, track, and manage your washes.');
+        demoHint.innerHTML = `<i class="fas fa-info-circle"></i> ${t('demo_hint_prefix', 'Demo login (needs the backend running):')} <strong>demo.customer@carwash.app</strong> / <strong>demo1234</strong>`;
+      }
+    });
+  });
+
+  function clearErrors() {
+    errorBox.classList.remove("visible");
+    [emailInput, passwordInput].forEach(el => el.classList.remove('invalid'));
+    [emailError, passwordError].forEach(el => el.classList.remove('visible'));
+  }
+
+  function fieldError(input, errorEl, message) {
+    input.classList.add('invalid');
+    errorEl.textContent = message;
+    errorEl.classList.add('visible');
+  }
+
+  // Validate as the person types, once they've interacted with a field —
+  // avoids yelling "invalid" before they've typed anything.
+  emailInput.addEventListener('blur', () => {
+    if (emailInput.value && !EMAIL_RE.test(emailInput.value.trim())) {
+      fieldError(emailInput, emailError, t('val_invalid_email', 'That doesn\'t look like a valid email address.'));
+    } else {
+      emailInput.classList.remove('invalid');
+      emailError.classList.remove('visible');
+    }
+  });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearErrors();
+
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+
+    let hasError = false;
+    if (!email) {
+      fieldError(emailInput, emailError, t('val_enter_email', 'Please enter your email.'));
+      hasError = true;
+    } else if (!EMAIL_RE.test(email)) {
+      fieldError(emailInput, emailError, t('val_invalid_email', 'That doesn\'t look like a valid email address.'));
+      hasError = true;
+    }
+    if (!password) {
+      fieldError(passwordInput, passwordError, t('val_enter_password', 'Please enter your password.'));
+      hasError = true;
+    }
+    if (hasError) return;
+
+    submitBtn.classList.add("loading");
+
+    try {
+      const data = await apiFetch("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password, expectRole: selectedRole })
+      });
+      Auth.setSession(data.token, data.user);
+
+      const params = new URLSearchParams(window.location.search);
+      const returnTo = params.get("returnTo");
+      if (returnTo) {
+        window.location.href = decodeURIComponent(returnTo);
+      } else {
+        window.location.href = data.user.role === 'seller' ? 'seller-dashboard.html' : 'index.html';
+      }
+    } catch (err) {
+      errorBox.textContent = err.message;
+      errorBox.classList.add("visible");
+      submitBtn.classList.remove("loading");
+    }
+  });
+</script>
+
+</body>
+</html>

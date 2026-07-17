@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign Up | Car Wash Finder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .role-toggle {
+      display: flex;
+      background: var(--surface-alt);
+      border-radius: var(--radius);
+      padding: 4px;
+      margin-bottom: 1.5rem;
+    }
+    .role-toggle button {
+      flex: 1;
+      background: none;
+      border: none;
+      padding: 0.6rem 0.5rem;
+      border-radius: calc(var(--radius) - 4px);
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      transition: all 0.2s var(--ease);
+    }
+    .role-toggle button.active {
+      background: var(--surface);
+      color: var(--ink);
+      box-shadow: var(--shadow-sm);
+    }
+    .field-error {
+      color: var(--danger);
+      font-size: 0.78rem;
+      margin-top: 0.35rem;
+      display: none;
+    }
+    .field-error.visible { display: block; }
+    .form-control.invalid { border-color: var(--danger); }
+    #businessFields { display: none; }
+    #businessFields.visible { display: block; }
+    .section-divider {
+      border-top: 1px dashed var(--border);
+      margin: 1.25rem 0;
+      padding-top: 1.25rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+  </style>
+</head>
+<body>
+
+<div class="auth-shell">
+  <div class="auth-card">
+    <div class="auth-logo"><i class="fas fa-car-side"></i> Car Wash Finder</div>
+    <h1 id="authTitle" data-i18n="auth_create_account">Create your account</h1>
+    <p class="auth-subtitle" id="authSubtitle" data-i18n="auth_signup_subtitle">Save vehicles, payment methods, and booking history.</p>
+
+    <div class="role-toggle">
+      <button type="button" class="active" data-role="customer"><i class="fas fa-user"></i> <span data-i18n="auth_customer">Customer</span></button>
+      <button type="button" data-role="seller"><i class="fas fa-store"></i> <span data-i18n="auth_wash_owner">Wash Owner</span></button>
+    </div>
+
+    <div class="auth-error" id="authError"></div>
+
+    <form id="signupForm" novalidate>
+      <div class="form-group">
+        <label for="name" data-i18n="auth_full_name">Full name</label>
+        <input type="text" id="name" class="form-control" placeholder="Jane Smith" data-i18n-placeholder="auth_name_placeholder">
+        <div class="field-error" id="nameError"></div>
+      </div>
+      <div class="form-group">
+        <label for="email" data-i18n="auth_email">Email</label>
+        <input type="email" id="email" class="form-control" placeholder="you@example.com" data-i18n-placeholder="auth_email_placeholder">
+        <div class="field-error" id="emailError"></div>
+      </div>
+      <div class="form-group">
+        <label for="password" data-i18n="auth_password">Password</label>
+        <input type="password" id="password" class="form-control" placeholder="At least 6 characters" data-i18n-placeholder="auth_password_placeholder_signup">
+        <div class="field-error" id="passwordError"></div>
+      </div>
+
+      <div id="businessFields">
+        <div class="section-divider" data-i18n="biz_section_title">Your wash business</div>
+        <div class="form-group">
+          <label for="businessName" data-i18n="biz_name_label">Business name</label>
+          <input type="text" id="businessName" class="form-control" placeholder="e.g. Sparkle Auto Wash">
+          <div class="field-error" id="businessNameError"></div>
+        </div>
+        <div class="form-group">
+          <label for="serviceType" data-i18n="biz_service_type_label">Service type</label>
+          <select id="serviceType" class="form-control">
+            <option value="location" data-i18n="biz_opt_location">Fixed location — customers drive to you</option>
+            <option value="home-service" data-i18n="biz_opt_home">Home service — a van comes to them</option>
+            <option value="moto-mobile" data-i18n="biz_opt_moto">Moto-mobile — a water-tank motorcycle comes to them</option>
+          </select>
+        </div>
+        <div class="form-group" id="locationFieldGroup">
+          <label for="businessLocation" data-i18n="biz_location_label">Location / area</label>
+          <input type="text" id="businessLocation" class="form-control" placeholder="e.g. Downtown">
+        </div>
+        <p class="text-muted" style="font-size: 0.82rem; margin-top: -0.5rem; margin-bottom: 1rem;" data-i18n="biz_hint">
+          You can fine-tune your pricing, add-ons, and details afterward from your seller dashboard.
+        </p>
+      </div>
+
+      <button type="submit" class="btn btn-block" id="submitBtn">
+        <i class="fas fa-user-plus"></i> <span data-i18n="btn_create_account">Create Account</span>
+      </button>
+    </form>
+
+    <p class="auth-footer-link"><span data-i18n="auth_have_account">Already have an account?</span> <a href="login.html" data-i18n="link_log_in">Log in</a></p>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/demo-mode.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/menu.js"></script>
+<script>
+  function t(key, fallback) { return window.I18n ? I18n.t(key) : fallback; }
+
+  if (Auth.isLoggedIn()) {
+    const user = Auth.getUser();
+    window.location.href = (user && user.role === 'seller') ? 'seller-dashboard.html' : 'index.html';
+  }
+
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  const form = document.getElementById("signupForm");
+  const errorBox = document.getElementById("authError");
+  const submitBtn = document.getElementById("submitBtn");
+  const nameInput = document.getElementById("name");
+  const emailInput = document.getElementById("email");
+  const passwordInput = document.getElementById("password");
+  const businessNameInput = document.getElementById("businessName");
+  const businessFields = document.getElementById("businessFields");
+  const authTitle = document.getElementById("authTitle");
+  const authSubtitle = document.getElementById("authSubtitle");
+
+  let selectedRole = 'customer';
+
+  document.querySelectorAll('.role-toggle button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.role-toggle button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedRole = btn.dataset.role;
+      businessFields.classList.toggle('visible', selectedRole === 'seller');
+      clearErrors();
+
+      if (selectedRole === 'seller') {
+        authTitle.textContent = 'Register your wash business';
+        authSubtitle.textContent = 'List your car wash and start taking bookings.';
+      } else {
+        authTitle.textContent = 'Create your account';
+        authSubtitle.textContent = 'Save vehicles, payment methods, and booking history.';
+      }
+    });
+  });
+
+  function clearErrors() {
+    errorBox.classList.remove("visible");
+    document.querySelectorAll('.form-control').forEach(el => el.classList.remove('invalid'));
+    document.querySelectorAll('.field-error').forEach(el => el.classList.remove('visible'));
+  }
+
+  function fieldError(input, errorEl, message) {
+    input.classList.add('invalid');
+    errorEl.textContent = message;
+    errorEl.classList.add('visible');
+  }
+
+  emailInput.addEventListener('blur', () => {
+    const emailError = document.getElementById('emailError');
+    if (emailInput.value && !EMAIL_RE.test(emailInput.value.trim())) {
+      fieldError(emailInput, emailError, t('val_invalid_email', 'That doesn\'t look like a valid email address.'));
+    } else {
+      emailInput.classList.remove('invalid');
+      emailError.classList.remove('visible');
+    }
+  });
+
+  passwordInput.addEventListener('blur', () => {
+    const passwordError = document.getElementById('passwordError');
+    if (passwordInput.value && passwordInput.value.length < 6) {
+      fieldError(passwordInput, passwordError, t('val_password_length', 'Password must be at least 6 characters.'));
+    } else {
+      passwordInput.classList.remove('invalid');
+      passwordError.classList.remove('visible');
+    }
+  });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearErrors();
+
+    const name = nameInput.value.trim();
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+    const businessName = businessNameInput.value.trim();
+    const serviceType = document.getElementById('serviceType').value;
+    const businessLocation = document.getElementById('businessLocation').value.trim();
+
+    let hasError = false;
+    if (!name) {
+      fieldError(nameInput, document.getElementById('nameError'), t('val_enter_name', 'Please enter your name.'));
+      hasError = true;
+    }
+    if (!email) {
+      fieldError(emailInput, document.getElementById('emailError'), t('val_enter_email', 'Please enter your email.'));
+      hasError = true;
+    } else if (!EMAIL_RE.test(email)) {
+      fieldError(emailInput, document.getElementById('emailError'), t('val_invalid_email', 'That doesn\'t look like a valid email address.'));
+      hasError = true;
+    }
+    if (!password) {
+      fieldError(passwordInput, document.getElementById('passwordError'), t('val_enter_password_signup', 'Please enter a password.'));
+      hasError = true;
+    } else if (password.length < 6) {
+      fieldError(passwordInput, document.getElementById('passwordError'), t('val_password_length', 'Password must be at least 6 characters.'));
+      hasError = true;
+    }
+    if (selectedRole === 'seller' && !businessName) {
+      fieldError(businessNameInput, document.getElementById('businessNameError'), t('val_enter_business_name', 'Please enter your business name.'));
+      hasError = true;
+    }
+    if (hasError) return;
+
+    submitBtn.classList.add("loading");
+
+    const payload = { name, email, password, role: selectedRole };
+    if (selectedRole === 'seller') {
+      payload.business = { name: businessName, serviceType, location: businessLocation };
+    }
+
+    try {
+      const data = await apiFetch("/auth/signup", {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+      Auth.setSession(data.token, data.user);
+      window.location.href = data.user.role === 'seller' ? 'seller-dashboard.html' : 'index.html';
+    } catch (err) {
+      errorBox.textContent = err.message;
+      errorBox.classList.add("visible");
+      submitBtn.classList.remove("loading");
+    }
+  });
+</script>
+
+</body>
+</html>

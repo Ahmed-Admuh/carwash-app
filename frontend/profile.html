@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Profile | Car Wash Finder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .profile-header { display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 1.75rem; }
+    .profile-avatar {
+      width: 92px; height: 92px; border-radius: 50%;
+      background: var(--ink); color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Space Grotesk', sans-serif; font-size: 1.8rem; font-weight: 700;
+      box-shadow: 0 0 0 3px var(--teal);
+      margin-bottom: 1rem;
+    }
+    .profile-name { font-size: 1.3rem; font-weight: 600; margin-bottom: 0.3rem; color: var(--ink); }
+    .profile-email { color: var(--text-muted); margin-bottom: 1.25rem; font-size: 0.9rem; }
+    .profile-stats { display: flex; justify-content: center; gap: 2.5rem; width: 100%; margin-bottom: 1.5rem; }
+    .stat-item { text-align: center; }
+    .stat-value { font-size: 1.4rem; font-weight: 700; color: var(--ink); font-family: 'Space Grotesk', sans-serif; }
+    .stat-label { font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.03em; }
+    .profile-actions { display: flex; gap: 0.75rem; width: 100%; max-width: 360px; }
+    .profile-actions .btn { flex: 1; }
+
+    .profile-section {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border-soft);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 1.25rem;
+    }
+    .profile-section h3 { margin-bottom: 1rem; color: var(--ink); font-size: 1.05rem; display: flex; align-items: center; gap: 0.5rem; }
+    .profile-section h3 i { color: var(--teal); }
+
+    .booking-history, .payment-methods, .vehicle-list { list-style: none; }
+
+    .booking-item { padding: 1rem 0; border-bottom: 1px solid var(--border-soft); }
+    .booking-item:last-child { border-bottom: none; }
+    .booking-item-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.4rem; }
+    .booking-info h4 { margin-bottom: 0.3rem; font-size: 0.95rem; color: var(--text); font-weight: 600; }
+    .booking-meta { font-size: 0.82rem; color: var(--text-muted); display: flex; gap: 1rem; flex-wrap: wrap; }
+    .booking-price { font-weight: 700; color: var(--teal-dark); white-space: nowrap; }
+    .booking-status {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.55rem;
+      border-radius: 999px; text-transform: capitalize; margin-top: 0.5rem; margin-right: 0.5rem;
+    }
+    .booking-status.confirmed { background: var(--success-tint); color: var(--success); }
+    .booking-status.cancelled { background: var(--danger-tint); color: var(--danger); }
+    .booking-status.completed { background: var(--teal-tint); color: var(--teal-dark); }
+    .booking-points { font-size: 0.72rem; color: var(--amber); font-weight: 700; margin-top: 0.5rem; display: inline-block; }
+    .booking-link-btn {
+      background: none; border: none; color: var(--teal-dark); font-size: 0.78rem;
+      cursor: pointer; margin-left: 0.6rem; text-decoration: underline; font-weight: 600;
+    }
+    .booking-link-btn.danger { color: var(--text-faint); }
+    .booking-link-btn.danger:hover { color: var(--danger); }
+
+    .payment-method { padding: 1rem 0; border-bottom: 1px solid var(--border-soft); display: flex; align-items: center; gap: 1rem; }
+    .payment-method:last-child { border-bottom: none; }
+    .payment-icon, .vehicle-icon { font-size: 1.5rem; color: var(--ink); width: 32px; text-align: center; }
+    .payment-info h4, .vehicle-info h4 { margin-bottom: 0.25rem; font-size: 0.92rem; font-weight: 600; color: var(--text); }
+    .payment-meta, .vehicle-meta { font-size: 0.82rem; color: var(--text-muted); }
+    .default-badge {
+      background: var(--teal-tint); color: var(--teal-dark);
+      padding: 0.25rem 0.6rem; border-radius: 999px; font-size: 0.7rem; font-weight: 700;
+      margin-left: auto; text-transform: uppercase; letter-spacing: 0.03em;
+    }
+    .item-delete-btn {
+      background: none; border: none; color: var(--text-faint); cursor: pointer;
+      font-size: 0.95rem; margin-left: 0.5rem; padding: 0.3rem;
+    }
+    .item-delete-btn:hover { color: var(--danger); }
+    .vehicle-item { padding: 0.9rem 0; border-bottom: 1px solid var(--border-soft); display: flex; align-items: center; gap: 1rem; }
+    .vehicle-item:last-child { border-bottom: none; }
+
+    /* Points & rewards */
+    .points-hero {
+      background: linear-gradient(135deg, var(--ink), var(--ink-2));
+      color: white; border-radius: var(--radius); padding: 1.5rem;
+      margin-bottom: 1rem; text-align: center;
+    }
+    .points-hero .points-value { font-size: 2.2rem; font-weight: 700; font-family: 'Space Grotesk', sans-serif; color: var(--teal); }
+    .points-hero .points-label { font-size: 0.82rem; opacity: 0.8; margin-bottom: 0.5rem; }
+    .tier-progress-track {
+      background: rgba(255,255,255,0.15); border-radius: 999px; height: 8px; margin-top: 1rem; overflow: hidden;
+    }
+    .tier-progress-fill { background: var(--teal); height: 100%; border-radius: 999px; transition: width 0.4s var(--ease); }
+    .tier-progress-caption { font-size: 0.78rem; opacity: 0.85; margin-top: 0.5rem; }
+
+    .tier-list { display: flex; flex-direction: column; gap: 0.6rem; }
+    .tier-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.85rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-soft);
+    }
+    .tier-row.unlocked { border-color: var(--teal); background: var(--teal-tint); }
+    .tier-row-label { font-size: 0.88rem; font-weight: 600; color: var(--text); }
+    .tier-row-points { font-size: 0.78rem; color: var(--text-muted); }
+    .tier-row button {
+      background: var(--teal); color: white; border: none; padding: 0.4rem 0.85rem;
+      border-radius: 999px; font-size: 0.78rem; font-weight: 700; cursor: pointer;
+    }
+    .tier-row button:disabled { background: var(--border); color: var(--text-faint); cursor: not-allowed; }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(11,30,51,0.55);
+      display: flex; align-items: center; justify-content: center; z-index: 1000;
+      opacity: 0; visibility: hidden; transition: all 0.25s var(--ease); padding: 1.25rem;
+    }
+    .modal-overlay.active { opacity: 1; visibility: visible; }
+    .modal-panel {
+      background: var(--surface); border-radius: var(--radius-lg); width: 100%; max-width: 440px;
+      padding: 1.75rem; box-shadow: var(--shadow-lg); transform: translateY(-16px); transition: transform 0.25s var(--ease);
+    }
+    .modal-overlay.active .modal-panel { transform: translateY(0); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+    .modal-header h3 { color: var(--ink); font-size: 1.1rem; }
+    .modal-close { background: var(--surface-alt); border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; color: var(--text-muted); }
+    .payment-type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 1.1rem; }
+    .payment-type-btn {
+      border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 0.7rem 0.5rem;
+      text-align: center; cursor: pointer; font-size: 1.3rem; color: var(--text-muted);
+    }
+    .payment-type-btn.selected { border-color: var(--teal); background: var(--teal-tint); color: var(--teal-dark); }
+    .last4-group { display: none; }
+    .last4-group.visible { display: block; }
+
+    @media (max-width: 480px) {
+      .profile-actions { flex-direction: column; }
+      .profile-stats { gap: 1.5rem; }
+    }
+  </style>
+</head>
+<body class="has-bottom-nav">
+
+<header class="appbar">
+  <button class="appbar-btn" onclick="window.history.back()" aria-label="Back"><i class="fas fa-arrow-left"></i></button>
+  <div class="appbar-title" data-i18n="profile_title">My Profile</div>
+</header>
+
+<div class="section" id="pageContent">
+  <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading your profile…</p></div>
+</div>
+
+<footer class="site-footer">
+  <div data-i18n="footer_payment">Payment Methods Accepted</div>
+  <div class="payment-icons">
+    <i class="fab fa-cc-visa"></i>
+    <i class="fab fa-cc-mastercard"></i>
+    <i class="fas fa-credit-card"></i>
+    <i class="fab fa-apple-pay"></i>
+  </div>
+  <p data-i18n="footer_rights">&copy; 2025 Car Wash Finder. All rights reserved.</p>
+</footer>
+
+<div class="bottom-nav">
+  <a href="index.html" class="nav-item"><i class="fas fa-home"></i><span data-i18n="nav_home">Home</span></a>
+  <a href="book.html" class="nav-item"><i class="fas fa-search"></i><span data-i18n="nav_search">Search</span></a>
+  <a href="about.html" class="nav-item"><i class="fas fa-circle-info"></i><span data-i18n="nav_about">About</span></a>
+  <a href="profile.html" class="nav-item active"><i class="fas fa-user"></i><span data-i18n="nav_profile">Profile</span></a>
+</div>
+
+<!-- Add Vehicle Modal -->
+<div class="modal-overlay" id="vehicleModal">
+  <div class="modal-panel">
+    <div class="modal-header">
+      <h3 data-i18n="modal_add_vehicle_title">Add a Vehicle</h3>
+      <button class="modal-close" data-close="vehicleModal">&times;</button>
+    </div>
+    <form id="vehicleForm">
+      <div class="form-group">
+        <label for="vNickname" data-i18n="modal_nickname">Nickname (optional)</label>
+        <input type="text" id="vNickname" class="form-control" placeholder="e.g. My Camry">
+      </div>
+      <div class="form-group">
+        <label for="vMake" data-i18n="modal_make">Make</label>
+        <input type="text" id="vMake" class="form-control" placeholder="e.g. Toyota">
+      </div>
+      <div class="form-group">
+        <label for="vModel" data-i18n="modal_model">Model</label>
+        <input type="text" id="vModel" class="form-control" placeholder="e.g. Camry">
+      </div>
+      <div class="form-group">
+        <label for="vPlate" data-i18n="modal_plate">License plate (optional)</label>
+        <input type="text" id="vPlate" class="form-control" placeholder="ABC-1234">
+      </div>
+      <div class="form-group">
+        <label for="vType" data-i18n="modal_vehicle_type">Vehicle type</label>
+        <select id="vType" class="form-control">
+          <option value="sedan" data-i18n="vehicle_sedan">Sedan</option>
+          <option value="suv" data-i18n="vehicle_suv">SUV</option>
+          <option value="truck" data-i18n="vehicle_truck">Truck</option>
+          <option value="van" data-i18n="vehicle_van">Van</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-block" data-i18n="btn_add_vehicle">Add Vehicle</button>
+    </form>
+  </div>
+</div>
+
+<!-- Add Payment Method Modal -->
+<div class="modal-overlay" id="paymentModal">
+  <div class="modal-panel">
+    <div class="modal-header">
+      <h3 data-i18n="modal_add_payment_title">Add Payment Method</h3>
+      <button class="modal-close" data-close="paymentModal">&times;</button>
+    </div>
+    <form id="paymentForm">
+      <div class="payment-type-grid" id="paymentTypeGrid">
+        <div class="payment-type-btn" data-type="visa"><i class="fab fa-cc-visa"></i></div>
+        <div class="payment-type-btn" data-type="mastercard"><i class="fab fa-cc-mastercard"></i></div>
+        <div class="payment-type-btn" data-type="amex"><i class="fab fa-cc-amex"></i></div>
+        <div class="payment-type-btn" data-type="discover"><i class="fab fa-cc-discover"></i></div>
+        <div class="payment-type-btn" data-type="apple-pay"><i class="fab fa-apple-pay"></i></div>
+      </div>
+      <div class="form-group last4-group" id="last4Group">
+        <label for="pLast4" data-i18n="modal_last4">Last 4 digits of card</label>
+        <input type="text" id="pLast4" class="form-control" maxlength="4" placeholder="1234">
+      </div>
+      <div class="form-group">
+        <label><input type="checkbox" id="pDefault"> <span data-i18n="modal_set_default">Set as default</span></label>
+      </div>
+      <button type="submit" class="btn btn-block" id="paymentSubmitBtn" disabled data-i18n="btn_add_payment">Add Payment Method</button>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/demo-mode.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/menu.js"></script>
+<script>
+  function t(key, fallback) { return window.I18n ? I18n.t(key) : fallback; }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (!Auth.requireAuth()) return;
+    const user = Auth.getUser();
+    if (user && user.role === 'seller') {
+      window.location.href = 'seller-dashboard.html';
+      return;
+    }
+    await loadProfile();
+    setupModals();
+  });
+
+  async function loadProfile() {
+    let me, bookings, vehicles, paymentMethods, points;
+    try {
+      [me, bookings, vehicles, paymentMethods, points] = await Promise.all([
+        apiFetch('/auth/me'),
+        apiFetch('/bookings'),
+        apiFetch('/vehicles'),
+        apiFetch('/payment-methods'),
+        apiFetch('/points')
+      ]);
+    } catch (err) {
+      document.getElementById('pageContent').innerHTML = `
+        <div class="empty-state"><i class="fas fa-triangle-exclamation"></i><p>${err.message}</p></div>`;
+      return;
+    }
+    renderProfile(me, bookings, vehicles, paymentMethods, points);
+  }
+
+  function renderProfile(me, bookings, vehicles, paymentMethods, points) {
+    const user = me.user;
+    const stats = me.stats;
+
+    document.getElementById('pageContent').innerHTML = `
+      <div class="profile-header">
+        <div class="profile-avatar">${Auth.initials(user.name)}</div>
+        <h2 class="profile-name">${user.name}</h2>
+        <p class="profile-email">${user.email}</p>
+        <div class="profile-stats">
+          <div class="stat-item"><div class="stat-value">${stats.bookings}</div><div class="stat-label" data-i18n="profile_bookings_stat">Bookings</div></div>
+          <div class="stat-item"><div class="stat-value">${stats.vehicles}</div><div class="stat-label" data-i18n="profile_vehicles_stat">Vehicles</div></div>
+          <div class="stat-item"><div class="stat-value">${stats.payments}</div><div class="stat-label" data-i18n="profile_payments_stat">Payments</div></div>
+        </div>
+        <div class="profile-actions">
+          <button class="btn btn-outline" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> <span data-i18n="btn_log_out">Log Out</span></button>
+        </div>
+      </div>
+
+      <div class="profile-section" id="points">
+        <h3><i class="fas fa-star"></i> <span data-i18n="profile_points_title">Points &amp; Rewards</span></h3>
+        <div id="pointsSection"></div>
+      </div>
+
+      <div class="profile-section" id="history">
+        <h3><i class="fas fa-history"></i> <span data-i18n="profile_history_title">Booking History</span></h3>
+        <ul class="booking-history" id="bookingList"></ul>
+      </div>
+
+      <div class="profile-section">
+        <h3><i class="fas fa-credit-card"></i> <span data-i18n="profile_payment_title">Payment Methods</span></h3>
+        <ul class="payment-methods" id="paymentList"></ul>
+        <button class="btn btn-outline btn-block" id="addPaymentBtn" style="margin-top: 1rem;">
+          <i class="fas fa-plus-circle"></i> <span data-i18n="btn_add_payment">Add Payment Method</span>
+        </button>
+      </div>
+
+      <div class="profile-section">
+        <h3><i class="fas fa-car"></i> <span data-i18n="profile_vehicles_title">My Vehicles</span></h3>
+        <ul class="vehicle-list" id="vehicleList"></ul>
+        <button class="btn btn-outline btn-block" id="addVehicleBtn" style="margin-top: 1rem;">
+          <i class="fas fa-plus-circle"></i> <span data-i18n="btn_add_vehicle">Add Vehicle</span>
+        </button>
+      </div>
+    `;
+
+    renderPoints(points);
+    renderBookings(bookings);
+    renderPaymentMethods(paymentMethods);
+    renderVehicles(vehicles);
+
+    if (window.I18n) I18n.applyTranslations();
+
+    document.getElementById('logoutBtn').addEventListener('click', () => Auth.logout());
+    document.getElementById('addPaymentBtn').addEventListener('click', () => openModal('paymentModal'));
+    document.getElementById('addVehicleBtn').addEventListener('click', () => openModal('vehicleModal'));
+
+    if (window.location.hash === '#history' || window.location.hash === '#points') {
+      const target = document.getElementById(window.location.hash.slice(1));
+      if (target) target.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+
+  const TIER_LABEL_KEYS = {
+    "Free Basic Wash (Exterior Only)": "tier_500",
+    "Free Full Detail (Exterior + Interior)": "tier_1000",
+    "$25 Off Any Mobile Service": "tier_1500",
+    "Free Premium Detail + Priority Booking for a Month": "tier_2500"
+  };
+  function tierLabel(label) {
+    const key = TIER_LABEL_KEYS[label];
+    return key ? t(key, label) : label;
+  }
+
+  function renderPoints(points) {
+    const el = document.getElementById('pointsSection');
+    const nextTier = points.tiers.find(tier => !tier.unlocked);
+    const prevTierPoints = points.tiers.filter(tier => tier.unlocked).slice(-1)[0]?.points || 0;
+    const progressPct = nextTier
+      ? Math.min(100, Math.round(((points.balance - prevTierPoints) / (nextTier.points - prevTierPoints)) * 100))
+      : 100;
+
+    el.innerHTML = `
+      <div class="points-hero">
+        <div class="points-label" data-i18n="profile_your_balance">Your balance</div>
+        <div class="points-value">${points.balance} <span data-i18n="profile_pts_short">pts</span></div>
+        <div class="tier-progress-track"><div class="tier-progress-fill" style="width:${progressPct}%"></div></div>
+        <div class="tier-progress-caption">
+          ${nextTier ? `${nextTier.points - points.balance} ${t('profile_points_to_next', 'points to')} "${tierLabel(nextTier.label)}"` : t('profile_all_unlocked', "You've unlocked every reward tier!")}
+        </div>
+      </div>
+      <div class="tier-list">
+        ${points.tiers.map(tier => `
+          <div class="tier-row ${tier.unlocked ? 'unlocked' : ''}">
+            <div>
+              <div class="tier-row-label">${tierLabel(tier.label)}</div>
+              <div class="tier-row-points">${tier.points} ${t('profile_points_suffix', 'points')}</div>
+            </div>
+            <button data-tier="${tier.points}" ${tier.unlocked ? '' : 'disabled'}>${tier.unlocked ? t('profile_redeem', 'Redeem') : t('profile_locked', 'Locked')}</button>
+          </div>
+        `).join('')}
+      </div>
+    `;
+
+    el.querySelectorAll('button[data-tier]:not(:disabled)').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const tierPoints = parseInt(btn.dataset.tier, 10);
+        if (!confirm(`${t('profile_confirm_redeem', 'Redeem')} ${tierPoints} ${t('profile_confirm_redeem_suffix', 'points for this reward?')}`)) return;
+        try {
+          const redemption = await apiFetch('/points/redeem', {
+            method: 'POST',
+            body: JSON.stringify({ tierPoints })
+          });
+          showToast(`${t('profile_redeemed', 'Redeemed! Your code:')} ${redemption.code}`);
+          await loadProfile();
+        } catch (err) {
+          showToast(err.message, true);
+        }
+      });
+    });
+  }
+
+  function renderBookings(bookings) {
+    const list = document.getElementById('bookingList');
+    if (bookings.length === 0) {
+      list.innerHTML = `<div class="empty-state"><i class="fas fa-receipt"></i><p>${t('profile_no_bookings', "No bookings yet — go book your first wash!")}</p></div>`;
+      return;
+    }
+    const locale = (window.I18n && I18n.lang === 'ar') ? 'ar' : 'en-US';
+    const STATUS_KEYS = { confirmed: 'bc_status_confirmed', completed: 'bc_status_completed', cancelled: 'bc_status_cancelled' };
+
+    list.innerHTML = bookings.map(b => {
+      const date = new Date(b.booking_date).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
+      const washTypeLabel = b.wash_type === 'full' ? t('bd_exterior_interior', 'Exterior + Interior') : t('bd_exterior_only', 'Exterior Only');
+      const statusLabel = t(STATUS_KEYS[b.status] || 'bc_status_confirmed', b.status);
+      const cancelable = b.status === 'confirmed';
+      const rateable = b.status === 'completed';
+      return `
+        <li class="booking-item" data-booking-id="${b.id}">
+          <div class="booking-item-top">
+            <div class="booking-info">
+              <h4><a href="wash-about.html?id=${b.car_wash_id}" style="color:inherit;">${b.car_wash_name}</a></h4>
+              <div class="booking-meta">
+                <span><i class="fas fa-calendar-alt"></i> ${date}</span>
+                <span><i class="fas fa-clock"></i> ${b.booking_time}</span>
+                <span><i class="fas fa-soap"></i> ${washTypeLabel}</span>
+                ${b.address ? `<span><i class="fas fa-location-dot"></i> ${b.address}</span>` : ''}
+              </div>
+            </div>
+            <div class="booking-price">$${parseFloat(b.total_price).toFixed(2)}</div>
+          </div>
+          <span class="booking-status ${b.status}">${statusLabel}</span>
+          ${b.points_earned > 0 ? `<span class="booking-points"><i class="fas fa-star"></i> +${b.points_earned} ${t('profile_pts_short', 'pts')}</span>` : ''}
+          ${cancelable ? `<button class="booking-link-btn danger" data-cancel-id="${b.id}" data-i18n="cancel_booking">${t('cancel_booking', 'Cancel booking')}</button>` : ''}
+          ${rateable ? `<a href="rate-wash.html?bookingId=${b.id}" class="booking-link-btn" data-i18n="rate_this_wash">${t('rate_this_wash', 'Rate this wash')}</a>` : ''}
+        </li>`;
+    }).join('');
+
+    list.querySelectorAll('.booking-link-btn.danger').forEach(btn => {
+      btn.addEventListener('click', async function() {
+        const id = this.dataset.cancelId;
+        if (!confirm(t('profile_confirm_cancel_booking', 'Cancel this booking?'))) return;
+        try {
+          await apiFetch(`/bookings/${id}/cancel`, { method: 'PATCH' });
+          showToast(t('profile_booking_cancelled', 'Booking cancelled.'));
+          await loadProfile();
+        } catch (err) {
+          showToast(err.message, true);
+        }
+      });
+    });
+  }
+
+  function renderPaymentMethods(methods) {
+    const list = document.getElementById('paymentList');
+    const iconMap = { visa: 'fab fa-cc-visa', mastercard: 'fab fa-cc-mastercard', amex: 'fab fa-cc-amex', discover: 'fab fa-cc-discover', 'apple-pay': 'fab fa-apple-pay' };
+
+    if (methods.length === 0) {
+      list.innerHTML = `<div class="text-muted" style="font-size: 0.85rem;">${t('profile_no_payments', 'No payment methods saved yet.')}</div>`;
+      return;
+    }
+
+    list.innerHTML = methods.map(m => `
+      <li class="payment-method">
+        <i class="${iconMap[m.type] || 'fas fa-credit-card'} payment-icon"></i>
+        <div class="payment-info">
+          <h4>${m.label || m.type}</h4>
+          ${m.last4 ? `<p class="payment-meta">•••• ${m.last4}</p>` : ''}
+        </div>
+        ${m.is_default ? `<span class="default-badge">${t('profile_default_badge', 'Default')}</span>` : ''}
+        <button class="item-delete-btn" data-delete-payment="${m.id}" title="Remove"><i class="fas fa-trash"></i></button>
+      </li>`).join('');
+
+    list.querySelectorAll('[data-delete-payment]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm(t('profile_confirm_remove_payment', 'Remove this payment method?'))) return;
+        try {
+          await apiFetch(`/payment-methods/${btn.dataset.deletePayment}`, { method: 'DELETE' });
+          showToast(t('profile_payment_removed', 'Payment method removed.'));
+          await loadProfile();
+        } catch (err) {
+          showToast(err.message, true);
+        }
+      });
+    });
+  }
+
+  function renderVehicles(vehicles) {
+    const list = document.getElementById('vehicleList');
+    const iconMap = { sedan: 'fa-car-side', suv: 'fa-truck-monster', truck: 'fa-truck-pickup', van: 'fa-shuttle-van' };
+    const VEHICLE_TYPE_KEYS = { sedan: 'vehicle_sedan', suv: 'vehicle_suv', truck: 'vehicle_truck', van: 'vehicle_van' };
+
+    if (vehicles.length === 0) {
+      list.innerHTML = `<div class="text-muted" style="font-size: 0.85rem;">${t('profile_no_vehicles', 'No vehicles saved yet.')}</div>`;
+      return;
+    }
+
+    list.innerHTML = vehicles.map(v => `
+      <li class="vehicle-item">
+        <i class="fas ${iconMap[v.vehicle_type] || 'fa-car'} vehicle-icon"></i>
+        <div class="vehicle-info">
+          <h4>${v.nickname || `${v.make || ''} ${v.model || ''}`.trim() || t('profile_my_vehicle', 'My Vehicle')}</h4>
+          <p class="vehicle-meta">${v.plate ? v.plate + ' • ' : ''}${t(VEHICLE_TYPE_KEYS[v.vehicle_type] || 'vehicle_sedan', v.vehicle_type)}</p>
+        </div>
+        <button class="item-delete-btn" data-delete-vehicle="${v.id}" title="Remove" style="margin-left:auto;"><i class="fas fa-trash"></i></button>
+      </li>`).join('');
+
+    list.querySelectorAll('[data-delete-vehicle]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm(t('profile_confirm_remove_vehicle', 'Remove this vehicle?'))) return;
+        try {
+          await apiFetch(`/vehicles/${btn.dataset.deleteVehicle}`, { method: 'DELETE' });
+          showToast(t('profile_vehicle_removed', 'Vehicle removed.'));
+          await loadProfile();
+        } catch (err) {
+          showToast(err.message, true);
+        }
+      });
+    });
+  }
+
+  // ---------------- Modals ----------------
+  function openModal(id) { document.getElementById(id).classList.add('active'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+  function setupModals() {
+    document.querySelectorAll('.modal-close').forEach(btn => {
+      btn.addEventListener('click', () => closeModal(btn.dataset.close));
+    });
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('active'); });
+    });
+
+    // Vehicle form
+    document.getElementById('vehicleForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        await apiFetch('/vehicles', {
+          method: 'POST',
+          body: JSON.stringify({
+            nickname: document.getElementById('vNickname').value.trim() || null,
+            make: document.getElementById('vMake').value.trim() || null,
+            model: document.getElementById('vModel').value.trim() || null,
+            plate: document.getElementById('vPlate').value.trim() || null,
+            vehicleType: document.getElementById('vType').value
+          })
+        });
+        showToast(t('profile_vehicle_added', 'Vehicle added.'));
+        closeModal('vehicleModal');
+        e.target.reset();
+        await loadProfile();
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    });
+
+    // Payment type selection
+    let selectedPaymentType = null;
+    const last4Group = document.getElementById('last4Group');
+    const submitBtn = document.getElementById('paymentSubmitBtn');
+
+    document.querySelectorAll('.payment-type-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.payment-type-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        selectedPaymentType = btn.dataset.type;
+        last4Group.classList.toggle('visible', selectedPaymentType !== 'apple-pay');
+        submitBtn.disabled = false;
+      });
+    });
+
+    document.getElementById('paymentForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!selectedPaymentType) return;
+
+      const last4 = document.getElementById('pLast4').value.trim();
+      if (selectedPaymentType !== 'apple-pay' && !/^\d{4}$/.test(last4)) {
+        showToast(t('profile_enter_4_digits', 'Please enter exactly 4 digits.'), true);
+        return;
+      }
+
+      const labelMap = { visa: 'Visa', mastercard: 'Mastercard', amex: 'Amex', discover: 'Discover', 'apple-pay': 'Apple Pay' };
+      const label = selectedPaymentType === 'apple-pay'
+        ? 'Apple Pay'
+        : `${labelMap[selectedPaymentType]} •••• ${last4}`;
+
+      try {
+        await apiFetch('/payment-methods', {
+          method: 'POST',
+          body: JSON.stringify({
+            type: selectedPaymentType,
+            last4: selectedPaymentType === 'apple-pay' ? null : last4,
+            label,
+            isDefault: document.getElementById('pDefault').checked
+          })
+        });
+        showToast(t('profile_payment_added', 'Payment method added.'));
+        closeModal('paymentModal');
+        e.target.reset();
+        document.querySelectorAll('.payment-type-btn').forEach(b => b.classList.remove('selected'));
+        last4Group.classList.remove('visible');
+        submitBtn.disabled = true;
+        selectedPaymentType = null;
+        await loadProfile();
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    });
+  }
+</script>
+
+</body>
+</html>

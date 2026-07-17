@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Booking Details | Car Wash Finder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body { padding-bottom: 90px; }
+
+    .wash-details {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border-soft);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 1.25rem;
+    }
+    .wash-details h2 { color: var(--ink); margin-bottom: 0.35rem; font-size: 1.3rem; }
+    .meta-info { display: flex; flex-wrap: wrap; gap: 1.1rem; margin: 0.75rem 0; }
+    .meta-item { display: flex; align-items: center; gap: 0.45rem; font-size: 0.88rem; color: var(--text-muted); }
+    .meta-item i { color: var(--teal); }
+
+    .booking-form {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border-soft);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 1.25rem;
+    }
+
+    .step-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--teal-dark);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.4rem;
+    }
+
+    .vehicle-type-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(85px, 1fr));
+      gap: 0.6rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .vehicle-type-btn {
+      background: var(--surface-alt);
+      border: 1.5px solid transparent;
+      border-radius: var(--radius-sm);
+      padding: 0.8rem 0.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s var(--ease);
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .vehicle-type-btn i { display: block; font-size: 1.2rem; margin-bottom: 0.35rem; color: var(--teal); }
+    .vehicle-type-btn:hover { border-color: var(--border); }
+    .vehicle-type-btn.selected { background: var(--ink); color: white; border-color: var(--ink); }
+    .vehicle-type-btn.selected i { color: var(--teal); }
+
+    .addons-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 0.65rem;
+      margin-top: 0.6rem;
+    }
+
+    .addon-item {
+      background: var(--surface-alt);
+      padding: 0.8rem;
+      border-radius: var(--radius-sm);
+      text-align: center;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1.5px solid transparent;
+      transition: all 0.2s var(--ease);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .addon-item:hover { border-color: var(--teal); }
+    .addon-item.selected { background: var(--ink); color: white; border-color: var(--ink); }
+    .addon-price { font-weight: 700; font-size: 0.78rem; color: var(--amber); }
+    .addon-item.selected .addon-price { color: var(--teal); }
+
+    .slot-note {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 0.4rem;
+    }
+
+    .payment-methods { display: flex; flex-direction: column; gap: 0.65rem; margin-top: 0.8rem; }
+    .payment-method {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.85rem;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.2s var(--ease);
+      font-size: 0.9rem;
+    }
+    .payment-method:hover { border-color: var(--teal); }
+    .payment-method.selected { border-color: var(--teal); background: var(--teal-tint); }
+    .payment-icon { font-size: 1.4rem; color: var(--ink); width: 24px; text-align: center; }
+
+    .price-summary {
+      margin: 1.5rem 0;
+      padding: 1.1rem;
+      background: var(--surface-alt);
+      border-radius: var(--radius);
+      scroll-margin-top: 20px;
+    }
+    .price-line { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted); }
+    .price-total {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--ink);
+      border-top: 1px solid var(--border);
+      padding-top: 0.6rem;
+      margin-top: 0.6rem;
+    }
+
+    .sticky-price-footer {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--surface);
+      padding: 1rem 1.25rem;
+      box-shadow: 0 -4px 16px rgba(11, 30, 51, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+      transform: translateY(100%);
+      transition: transform 0.3s var(--ease);
+      border-top: 1px solid var(--border-soft);
+    }
+    .sticky-price-footer.visible { transform: translateY(0); }
+    .sticky-price-label { font-weight: 600; color: var(--text-muted); font-size: 0.9rem; }
+    .sticky-price-value { font-weight: 700; font-size: 1.25rem; color: var(--ink); }
+  </style>
+</head>
+<body>
+
+<header class="appbar">
+  <button class="appbar-btn" onclick="window.history.back()" aria-label="Back"><i class="fas fa-arrow-left"></i></button>
+  <div class="appbar-title">Complete Your Booking</div>
+</header>
+
+<div class="section" id="pageContent">
+  <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading car wash…</p></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Sticky Price Footer -->
+<div class="sticky-price-footer" id="stickyFooter">
+  <div class="sticky-price-label">Total:</div>
+  <div class="sticky-price-value" id="sticky-total">$0.00</div>
+</div>
+
+<script src="js/demo-mode.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/menu.js"></script>
+<script>
+  function t(key, fallback) { return window.I18n ? I18n.t(key) : fallback; }
+
+  const VEHICLE_TYPES = [
+    { key: "sedan", get label() { return t('vehicle_sedan', 'Sedan'); }, icon: "fa-car-side", surcharge: 0 },
+    { key: "suv", get label() { return t('vehicle_suv', 'SUV'); }, icon: "fa-truck-monster", surcharge: 5 },
+    { key: "truck", get label() { return t('vehicle_truck', 'Truck'); }, icon: "fa-truck-pickup", surcharge: 8 },
+    { key: "van", get label() { return t('vehicle_van', 'Van'); }, icon: "fa-shuttle-van", surcharge: 10 }
+  ];
+
+  const sampleWash = {
+    id: 1, name: "Sparkle Auto Wash", service_type: "location", location: "Downtown",
+    rating: 4.5, review_count: 142, wait_time_minutes: 15,
+    exterior_price: 15, full_wash_addon: 8,
+    concurrent_slots: 2, slot_interval_minutes: 15,
+    addons: [
+      { id: 1, name: "Tire Shine", price: 3, applies_to: "both" },
+      { id: 2, name: "Undercarriage Wash", price: 4, applies_to: "both" },
+      { id: 3, name: "Wax Coating", price: 7, applies_to: "both" },
+      { id: 4, name: "Headlight Restoration", price: 6, applies_to: "both" }
+    ]
+  };
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const washId = urlParams.get('id');
+  const TAX_RATE = 0.1;
+
+  let wash = null;
+  let state = {
+    vehicleType: "sedan",
+    washType: "exterior",
+    selectedAddonIds: new Set(),
+    selectedDate: null,
+    selectedTime: null,
+    selectedPayment: null
+  };
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (!washId) {
+      renderNotFound();
+      return;
+    }
+    try {
+      wash = await apiFetch(`/carwashes/${washId}`);
+    } catch (err) {
+      console.warn('Backend not reachable, using sample data.', err);
+      wash = sampleWash;
+    }
+    renderPage();
+  });
+
+  function renderNotFound() {
+    document.getElementById('pageContent').innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-car-side"></i>
+        <p>${t('bd_not_found_body', "We couldn't find that car wash.")}</p>
+        <a href="book.html" class="btn" style="display:inline-flex;width:auto;margin-top:1rem;">
+          <i class="fas fa-arrow-left"></i> ${t('bd_back_to_washes', 'Back to Car Washes')}
+        </a>
+      </div>`;
+  }
+
+  function today() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  function renderPage() {
+    state.selectedDate = today();
+    const isMobile = wash.service_type !== 'location';
+
+    document.getElementById('pageContent').innerHTML = `
+      <div class="wash-details">
+        <span class="service-type-badge ${wash.service_type}" style="margin-bottom: 0.6rem;">
+          <i class="fas ${isMobile ? (wash.service_type === 'moto-mobile' ? 'fa-motorcycle' : 'fa-hand-holding-water') : 'fa-map-marker-alt'}"></i>
+          ${isMobile ? t('book_comes_to_you', 'Comes to you') : t('type_label_location', 'Fixed Location')}
+        </span>
+        <h2>${wash.name}</h2>
+        <div class="meta-info">
+          <div class="meta-item"><i class="fas fa-map-marker-alt"></i> ${wash.location}</div>
+          <div class="meta-item"><i class="fas fa-star"></i> ${wash.rating} (${wash.review_count || 0} ${t('wash_about_reviews', 'Reviews').toLowerCase()})</div>
+          ${!isMobile ? `<div class="meta-item"><i class="fas fa-clock"></i> ${wash.wait_time_minutes} ${t('book_min_wait', 'min wait')}</div>` : ''}
+        </div>
+      </div>
+
+      <div class="booking-form">
+        <div class="step-label" data-i18n="step_1">Step 1</div>
+        <h2 class="section-title" style="font-size: 1.15rem;"><i class="fas fa-car"></i> <span data-i18n="heading_your_vehicle">Your Vehicle</span></h2>
+        <div class="vehicle-type-grid" id="vehicleTypeGrid"></div>
+
+        <div class="step-label" data-i18n="step_2">Step 2</div>
+        <h2 class="section-title" style="font-size: 1.15rem;"><i class="fas fa-soap"></i> <span data-i18n="heading_choose_wash">Choose Your Wash</span></h2>
+        <div class="choice-grid" id="choiceGrid"></div>
+
+        <div class="step-label" data-i18n="step_3">Step 3 (Optional)</div>
+        <h2 class="section-title" style="font-size: 1.15rem;"><i class="fas fa-plus-circle"></i> <span data-i18n="heading_add_extras">Add Extras</span></h2>
+        <div class="addons-grid" id="addonsGrid"></div>
+
+        <div class="step-label" style="margin-top: 1.75rem;" data-i18n="step_4">Step 4</div>
+        <h2 class="section-title" style="font-size: 1.15rem;"><i class="fas fa-calendar-alt"></i> <span data-i18n="heading_date_time">Date & Time</span></h2>
+        ${isMobile ? `
+        <div class="form-group">
+          <label for="service-address"><i class="fas fa-location-dot"></i> <span data-i18n="booking_where_come">Where should we come?</span></label>
+          <input type="text" id="service-address" class="form-control" placeholder="Street address, city, unit/apt (if any)" data-i18n-placeholder="bd_address_placeholder">
+        </div>
+        ` : ''}
+        <div class="form-group">
+          <label for="booking-date" data-i18n="booking_date_label">Date</label>
+          <input type="date" id="booking-date" class="form-control" min="${today()}" value="${today()}">
+        </div>
+        <div class="form-group">
+          <label>Available Time Slots</label>
+          <div class="slot-grid" id="slotGrid"></div>
+          <div class="slot-note" id="slotNote"></div>
+        </div>
+
+        <h3 class="section-title" style="margin-top: 1.75rem; font-size: 1.15rem;"><i class="fas fa-credit-card"></i> <span data-i18n="booking_step_payment">Payment Method</span></h3>
+        <div class="payment-methods" id="paymentMethods"></div>
+
+        <div class="form-group" style="margin-top: 1.5rem;">
+          <label for="special-requests" data-i18n="booking_special_requests">Special Requests (Optional)</label>
+          <textarea id="special-requests" class="form-control" rows="3" placeholder="Any special instructions..." data-i18n-placeholder="bd_special_placeholder"></textarea>
+        </div>
+
+        <div class="price-summary" id="priceSummary">
+          <div class="price-line"><span>Base Price:</span><span id="base-price">$0.00</span></div>
+          <div class="price-line"><span>Add-ons:</span><span id="addons-price-line">$0.00</span></div>
+          <div class="price-line"><span>Tax:</span><span id="tax">$0.00</span></div>
+          <div class="price-line price-total"><span data-i18n="booking_total">Total:</span><span id="total">$0.00</span></div>
+        </div>
+
+        <button class="btn btn-block" id="confirm-booking">
+          <i class="fas fa-check-circle"></i> <span data-i18n="booking_confirm_btn">Confirm Booking</span>
+        </button>
+      </div>
+    `;
+
+    renderVehicleTypes();
+    renderWashChoices();
+    renderAddons();
+    loadPaymentMethods();
+    loadSlots();
+    updatePriceSummary();
+    setupScrollObserver();
+
+    document.getElementById('booking-date').addEventListener('change', function() {
+      state.selectedDate = this.value;
+      state.selectedTime = null;
+      loadSlots();
+    });
+
+    document.getElementById('confirm-booking').addEventListener('click', confirmBooking);
+
+    if (window.I18n) I18n.applyTranslations();
+  }
+
+  function availableVehicleTypes() {
+    // moto-mobile washes CARS (a motorcycle with a water tank comes to you) —
+    // it's just better suited to smaller vehicles than a full van, so it only
+    // offers sedan/SUV. Every other wash type offers the full vehicle range.
+    return wash.service_type === 'moto-mobile'
+      ? VEHICLE_TYPES.filter(v => v.key === 'sedan' || v.key === 'suv')
+      : VEHICLE_TYPES;
+  }
+
+  function renderVehicleTypes() {
+    const grid = document.getElementById('vehicleTypeGrid');
+    const options = availableVehicleTypes();
+
+    // Make sure the currently selected type is actually valid for this wash.
+    if (!options.some(v => v.key === state.vehicleType)) {
+      state.vehicleType = options[0].key;
+    }
+
+    grid.innerHTML = options.map(v => `
+      <div class="vehicle-type-btn ${state.vehicleType === v.key ? 'selected' : ''}" data-vehicle="${v.key}">
+        <i class="fas ${v.icon}"></i>
+        ${v.label}
+      </div>
+    `).join('');
+    grid.querySelectorAll('.vehicle-type-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        state.vehicleType = this.dataset.vehicle;
+        grid.querySelectorAll('.vehicle-type-btn').forEach(b => b.classList.remove('selected'));
+        this.classList.add('selected');
+        renderWashChoices();
+        updatePriceSummary();
+      });
+    });
+  }
+
+  function currentVehicleSurcharge() {
+    const v = VEHICLE_TYPES.find(v => v.key === state.vehicleType);
+    return v ? v.surcharge : 0;
+  }
+
+  function renderWashChoices() {
+    const surcharge = currentVehicleSurcharge();
+    const exteriorPrice = parseFloat(wash.exterior_price) + surcharge;
+    const fullPrice = exteriorPrice + parseFloat(wash.full_wash_addon);
+
+    const grid = document.getElementById('choiceGrid');
+    grid.innerHTML = `
+      <div class="choice-card ${state.washType === 'exterior' ? 'selected' : ''}" data-wash="exterior">
+        <i class="fas fa-shower"></i>
+        <h4>${t('bd_exterior_only', 'Exterior Only')}</h4>
+        <div class="choice-desc">${t('choice_exterior_desc', 'Outside wash, rinse & dry')}</div>
+        <div class="choice-price">$${exteriorPrice.toFixed(2)}</div>
+      </div>
+      <div class="choice-card ${state.washType === 'full' ? 'selected' : ''}" data-wash="full">
+        <i class="fas fa-car-burst"></i>
+        <h4>${t('bd_exterior_interior', 'Exterior + Interior')}</h4>
+        <div class="choice-desc">${t('choice_full_desc', 'Full wash plus interior clean')}</div>
+        <div class="choice-price">$${fullPrice.toFixed(2)}</div>
+      </div>
+    `;
+    grid.querySelectorAll('.choice-card').forEach(card => {
+      card.addEventListener('click', function() {
+        state.washType = this.dataset.wash;
+        grid.querySelectorAll('.choice-card').forEach(c => c.classList.remove('selected'));
+        this.classList.add('selected');
+        renderAddons();
+        updatePriceSummary();
+      });
+    });
+  }
+
+  // Maps the fixed, known set of addon names (as stored in the database) to
+  // their translation keys — a small enough set to translate properly
+  // rather than leaving as raw data.
+  const ADDON_NAME_KEYS = {
+    "Tire Shine": "addon_tire_shine",
+    "Undercarriage Wash": "addon_undercarriage",
+    "Wax Coating": "addon_wax",
+    "Headlight Restoration": "addon_headlight",
+    "Engine Bay Clean": "addon_engine_bay",
+    "Pet Hair Removal": "addon_pet_hair",
+    "Air Freshener": "addon_air_freshener"
+  };
+  function addonLabel(name) {
+    const key = ADDON_NAME_KEYS[name];
+    return key ? t(key, name) : name;
+  }
+
+  function renderAddons() {
+    const grid = document.getElementById('addonsGrid');
+    const addons = (wash.addons || []).filter(a => a.applies_to === 'both' || a.applies_to === state.washType);
+
+    if (addons.length === 0) {
+      grid.innerHTML = `<div class="text-muted" style="font-size: 0.85rem;">${t('bd_no_addons', 'No extras available for this wash.')}</div>`;
+      return;
+    }
+
+    grid.innerHTML = addons.map(a => `
+      <div class="addon-item ${state.selectedAddonIds.has(a.id) ? 'selected' : ''}" data-addon-id="${a.id}">
+        <div>${addonLabel(a.name)}</div>
+        <div class="addon-price">+$${parseFloat(a.price).toFixed(2)}</div>
+      </div>
+    `).join('');
+
+    grid.querySelectorAll('.addon-item').forEach(item => {
+      item.addEventListener('click', function() {
+        const id = parseInt(this.dataset.addonId, 10);
+        if (state.selectedAddonIds.has(id)) {
+          state.selectedAddonIds.delete(id);
+          this.classList.remove('selected');
+        } else {
+          state.selectedAddonIds.add(id);
+          this.classList.add('selected');
+        }
+        updatePriceSummary();
+      });
+    });
+  }
+
+  async function loadPaymentMethods() {
+    const container = document.getElementById('paymentMethods');
+    let methods = [];
+    try {
+      methods = await apiFetch('/payment-methods');
+    } catch {
+      methods = [
+        { id: 1, type: 'visa', last4: '1234', label: 'Visa •••• 1234', is_default: true },
+        { id: 2, type: 'mastercard', last4: '5678', label: 'Mastercard •••• 5678', is_default: false },
+        { id: 3, type: 'apple-pay', last4: null, label: 'Apple Pay', is_default: false }
+      ];
+    }
+
+    if (methods.length === 0) {
+      container.innerHTML = `<div class="text-muted" style="font-size: 0.85rem;">${t('bd_no_saved_payment', 'No saved payment methods. Add one from your profile.')}</div>`;
+      return;
+    }
+
+    state.selectedPayment = methods.find(m => m.is_default)?.id || methods[0].id;
+
+    const iconMap = {
+      visa: 'fab fa-cc-visa', mastercard: 'fab fa-cc-mastercard',
+      amex: 'fab fa-cc-amex', discover: 'fab fa-cc-discover', 'apple-pay': 'fab fa-apple-pay'
+    };
+
+    container.innerHTML = methods.map(m => `
+      <div class="payment-method ${m.id === state.selectedPayment ? 'selected' : ''}" data-payment-id="${m.id}">
+        <i class="${iconMap[m.type] || 'fas fa-credit-card'} payment-icon"></i>
+        <div>${m.label}</div>
+      </div>
+    `).join('');
+
+    container.querySelectorAll('.payment-method').forEach(el => {
+      el.addEventListener('click', function() {
+        state.selectedPayment = parseInt(this.dataset.paymentId, 10);
+        container.querySelectorAll('.payment-method').forEach(p => p.classList.remove('selected'));
+        this.classList.add('selected');
+      });
+    });
+  }
+
+  async function loadSlots() {
+    const grid = document.getElementById('slotGrid');
+    const note = document.getElementById('slotNote');
+    grid.innerHTML = `<div class="text-muted" style="font-size: 0.85rem;">${t('bd_loading_times', 'Loading times…')}</div>`;
+
+    let data;
+    try {
+      data = await apiFetch(`/carwashes/${wash.id}/slots?date=${state.selectedDate}`);
+    } catch {
+      const interval = wash.slot_interval_minutes || 30;
+      const capacity = wash.concurrent_slots || 1;
+      const slots = [];
+      for (let mins = 8 * 60; mins < 20 * 60; mins += interval) {
+        const hh = String(Math.floor(mins / 60)).padStart(2, "0");
+        const mm = String(mins % 60).padStart(2, "0");
+        slots.push({ time: `${hh}:${mm}`, capacity, booked: Math.random() > 0.7 ? capacity : 0, available: true });
+      }
+      data = { interval, capacity, slots };
+    }
+
+    note.textContent = wash.service_type === 'location'
+      ? `${t('bd_appointments_every', 'Appointments every')} ${data.interval} ${t('bd_minutes', 'minutes')} • ${t('bd_up_to', 'up to')} ${data.capacity} ${t('bd_vehicles_per_slot', 'vehicles per slot')}`
+      : `${t('bd_appointments_every', 'Appointments every')} ${data.interval} ${t('bd_minutes', 'minutes')} • ${t('bd_one_tech_per_slot', 'one technician per slot')}`;
+
+    grid.innerHTML = data.slots.map(slot => {
+      const spotsLeft = slot.capacity - slot.booked;
+      const full = spotsLeft <= 0;
+      const spotsLabel = wash.service_type === 'location' && slot.capacity > 1
+        ? `<span class="slot-spots">${full ? t('bd_full', 'Full') : spotsLeft + ' ' + t('slot_left', 'left')}</span>`
+        : (full ? `<span class="slot-spots">${t('bd_full', 'Full')}</span>` : '');
+      return `
+        <div class="slot-chip ${full ? 'full' : ''} ${state.selectedTime === slot.time ? 'selected' : ''}" data-time="${slot.time}">
+          ${slot.time}
+          ${spotsLabel}
+        </div>`;
+    }).join('');
+
+    grid.querySelectorAll('.slot-chip:not(.full)').forEach(chip => {
+      chip.addEventListener('click', function() {
+        state.selectedTime = this.dataset.time;
+        grid.querySelectorAll('.slot-chip').forEach(c => c.classList.remove('selected'));
+        this.classList.add('selected');
+      });
+    });
+  }
+
+  function setupScrollObserver() {
+    const priceSummary = document.getElementById('priceSummary');
+    const stickyFooter = document.getElementById('stickyFooter');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => stickyFooter.classList.toggle('visible', !entry.isIntersecting));
+    }, { threshold: 0.1 });
+    observer.observe(priceSummary);
+  }
+
+  function computeAddonsTotal() {
+    return (wash.addons || [])
+      .filter(a => state.selectedAddonIds.has(a.id))
+      .reduce((sum, a) => sum + parseFloat(a.price), 0);
+  }
+
+  function updatePriceSummary() {
+    const surcharge = currentVehicleSurcharge();
+    const basePrice = parseFloat(wash.exterior_price) + surcharge + (state.washType === 'full' ? parseFloat(wash.full_wash_addon) : 0);
+    const addonsTotal = computeAddonsTotal();
+    const subtotal = basePrice + addonsTotal;
+    const tax = subtotal * TAX_RATE;
+    const total = subtotal + tax;
+
+    document.getElementById('base-price').textContent = `$${basePrice.toFixed(2)}`;
+    document.getElementById('addons-price-line').textContent = `$${addonsTotal.toFixed(2)}`;
+    document.getElementById('tax').textContent = `$${tax.toFixed(2)}`;
+    document.getElementById('total').textContent = `$${total.toFixed(2)}`;
+    document.getElementById('sticky-total').textContent = `$${total.toFixed(2)}`;
+  }
+
+  async function confirmBooking() {
+    if (!Auth.isLoggedIn()) {
+      showToast('Please log in to complete your booking.', true);
+      setTimeout(() => {
+        const returnTo = encodeURIComponent(window.location.pathname + window.location.search);
+        window.location.href = `login.html?returnTo=${returnTo}`;
+      }, 1200);
+      return;
+    }
+
+    if (!state.selectedTime) {
+      showToast('Please select an available time slot.', true);
+      return;
+    }
+    if (!state.selectedPayment) {
+      showToast('Please select a payment method.', true);
+      return;
+    }
+
+    const isMobile = wash.service_type !== 'location';
+    const addressInput = document.getElementById('service-address');
+    const address = isMobile ? (addressInput ? addressInput.value.trim() : '') : null;
+    if (isMobile && !address) {
+      showToast('Please enter an address for this mobile service.', true);
+      addressInput.focus();
+      return;
+    }
+
+    const btn = document.getElementById('confirm-booking');
+    btn.classList.add('loading');
+
+    try {
+      const booking = await apiFetch('/bookings', {
+        method: 'POST',
+        body: JSON.stringify({
+          carWashId: wash.id,
+          vehicleType: state.vehicleType,
+          washType: state.washType,
+          addonIds: Array.from(state.selectedAddonIds),
+          date: state.selectedDate,
+          time: state.selectedTime,
+          paymentMethodId: state.selectedPayment,
+          specialRequests: document.getElementById('special-requests').value,
+          address: address
+        })
+      });
+
+      window.location.href = `booking-confirmation.html?id=${booking.id}`;
+    } catch (err) {
+      showToast(err.message, true);
+      btn.classList.remove('loading');
+    }
+  }
+</script>
+</body>
+</html>

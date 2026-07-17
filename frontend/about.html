@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About Us | Car Wash Finder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .about-hero {
+      background: linear-gradient(135deg, var(--ink), var(--ink-2));
+      color: white; padding: 2.5rem 1.5rem; text-align: center; border-radius: var(--radius-lg);
+      margin: 1.25rem; margin-bottom: 1.5rem;
+    }
+    .about-hero .brand-mark { color: var(--teal); }
+    .about-hero h1 { color: white; font-size: 1.6rem; margin: 0.75rem 0 0.5rem; }
+    .about-hero p { opacity: 0.85; font-size: 0.92rem; max-width: 420px; margin: 0 auto; }
+
+    .value-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .value-card {
+      background: var(--surface); border: 1px solid var(--border-soft); border-radius: var(--radius);
+      padding: 1.25rem; text-align: center; box-shadow: var(--shadow-sm);
+    }
+    .value-card i { font-size: 1.6rem; color: var(--teal); margin-bottom: 0.6rem; }
+    .value-card h4 { font-size: 0.92rem; color: var(--ink); margin-bottom: 0.35rem; }
+    .value-card p { font-size: 0.8rem; color: var(--text-muted); }
+
+    .stat-row { display: flex; justify-content: space-around; text-align: center; margin: 1.5rem 0; }
+    .stat-row .num { font-size: 1.6rem; font-weight: 700; color: var(--ink); font-family: 'Space Grotesk', sans-serif; }
+    .stat-row .lbl { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.03em; }
+
+    .contact-card {
+      background: var(--surface); border: 1px solid var(--border-soft); border-radius: var(--radius);
+      padding: 1.25rem; box-shadow: var(--shadow-sm);
+    }
+    .contact-row { display: flex; align-items: center; gap: 0.85rem; padding: 0.7rem 0; border-bottom: 1px solid var(--border-soft); font-size: 0.9rem; }
+    .contact-row:last-child { border-bottom: none; }
+    .contact-row i { color: var(--teal); width: 20px; text-align: center; }
+  </style>
+</head>
+<body class="has-bottom-nav">
+
+<header class="appbar">
+  <button class="appbar-btn" onclick="window.history.back()" aria-label="Back"><i class="fas fa-arrow-left"></i></button>
+  <div class="appbar-title" data-i18n="about_title">About Us</div>
+</header>
+
+<div class="about-hero">
+  <div style="font-size: 2rem;"><i class="fas fa-car-side brand-mark"></i></div>
+  <h1>Car Wash Finder</h1>
+  <p data-i18n="about_hero_tagline">Connecting drivers with trusted car washes — at a shop, at your home, or wherever you're parked.</p>
+</div>
+
+<div class="section">
+  <div class="section-title"><i class="fas fa-bullseye"></i> <span data-i18n="about_mission_title">Our Mission</span></div>
+  <p class="text-muted" style="margin-bottom: 1.5rem; line-height: 1.7;" data-i18n="about_mission_body">
+    Getting your car washed shouldn't mean driving across town or waiting in line. Car Wash Finder
+    brings together fixed-location car washes, mobile vans that come to your driveway, and
+    water-tank motorcycles that can reach you even down the tightest streets — all bookable in a
+    few taps, with transparent pricing up front.
+  </p>
+
+  <div class="stat-row">
+    <div><div class="num">10+</div><div class="lbl" data-i18n="about_stat_partners">Wash Partners</div></div>
+    <div><div class="num">3</div><div class="lbl" data-i18n="about_stat_types">Service Types</div></div>
+    <div><div class="num">15min</div><div class="lbl" data-i18n="about_stat_slot">Fastest Slot</div></div>
+  </div>
+
+  <div class="section-title"><i class="fas fa-star"></i> <span data-i18n="about_values_title">What We Value</span></div>
+  <div class="value-grid">
+    <div class="value-card">
+      <i class="fas fa-clock"></i>
+      <h4 data-i18n="about_value_convenience_title">Convenience</h4>
+      <p data-i18n="about_value_convenience_body">Book in under a minute, from wherever you are.</p>
+    </div>
+    <div class="value-card">
+      <i class="fas fa-hand-holding-dollar"></i>
+      <h4 data-i18n="about_value_pricing_title">Transparent Pricing</h4>
+      <p data-i18n="about_value_pricing_body">See the full price before you book — no surprises.</p>
+    </div>
+    <div class="value-card">
+      <i class="fas fa-leaf"></i>
+      <h4 data-i18n="about_value_local_title">Local Businesses</h4>
+      <p data-i18n="about_value_local_body">Every wash on the app is an independent local operator.</p>
+    </div>
+    <div class="value-card">
+      <i class="fas fa-gem"></i>
+      <h4 data-i18n="about_value_loyalty_title">Loyalty That Pays</h4>
+      <p data-i18n="about_value_loyalty_body">Earn points on every wash, redeemable for free services.</p>
+    </div>
+  </div>
+
+  <div class="section-title"><i class="fas fa-envelope"></i> <span data-i18n="about_contact_title">Get in Touch</span></div>
+  <div class="contact-card">
+    <div class="contact-row"><i class="fas fa-envelope"></i> support@carwashfinder.app</div>
+    <div class="contact-row"><i class="fas fa-phone"></i> +1 (555) 010-2030</div>
+    <div class="contact-row"><i class="fas fa-store"></i> <span data-i18n="about_contact_list">Own a car wash, van, or motorcycle wash service?</span> <a href="signup.html" style="color: var(--teal-dark); font-weight: 600;" data-i18n="about_contact_list_here">List it here</a>.</div>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <p data-i18n="footer_rights">&copy; 2025 Car Wash Finder. All rights reserved.</p>
+</footer>
+
+<div class="bottom-nav">
+  <a href="index.html" class="nav-item"><i class="fas fa-home"></i><span data-i18n="nav_home">Home</span></a>
+  <a href="book.html" class="nav-item"><i class="fas fa-search"></i><span data-i18n="nav_search">Search</span></a>
+  <a href="about.html" class="nav-item active"><i class="fas fa-circle-info"></i><span data-i18n="nav_about">About</span></a>
+  <a href="profile.html" class="nav-item"><i class="fas fa-user"></i><span data-i18n="nav_profile">Profile</span></a>
+</div>
+
+<script src="js/demo-mode.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/menu.js"></script>
+</body>
+</html>

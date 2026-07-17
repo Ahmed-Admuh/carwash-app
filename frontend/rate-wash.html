@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rate Your Wash | Car Wash Finder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .rate-card {
+      background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border-soft);
+      padding: 2rem 1.5rem; box-shadow: var(--shadow-sm); text-align: center;
+    }
+    .rate-card img { width: 100%; height: 150px; object-fit: cover; border-radius: var(--radius); margin-bottom: 1.25rem; }
+    .rate-card h2 { color: var(--ink); margin-bottom: 0.3rem; }
+    .rate-card .meta { color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1.5rem; }
+
+    .star-picker { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .star-picker i {
+      font-size: 2.2rem; color: var(--border); cursor: pointer; transition: color 0.15s var(--ease), transform 0.15s var(--ease);
+    }
+    .star-picker i.filled { color: var(--amber); }
+    .star-picker i:hover { transform: scale(1.15); }
+
+    .already-rated {
+      background: var(--teal-tint); color: var(--teal-dark); border-radius: var(--radius);
+      padding: 1rem; font-size: 0.9rem; margin-bottom: 1rem;
+    }
+    .already-rated .star-picker i { cursor: default; }
+    .already-rated .star-picker i:hover { transform: none; }
+  </style>
+</head>
+<body>
+
+<header class="appbar">
+  <button class="appbar-btn" onclick="window.history.back()" aria-label="Back"><i class="fas fa-arrow-left"></i></button>
+  <div class="appbar-title">Rate Your Wash</div>
+</header>
+
+<div class="section" id="pageContent">
+  <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading…</p></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/demo-mode.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/menu.js"></script>
+<script>
+  const bookingId = new URLSearchParams(window.location.search).get('bookingId');
+  let selectedRating = 0;
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (!Auth.requireAuth()) return;
+    if (!bookingId) {
+      document.getElementById('pageContent').innerHTML = `<div class="empty-state"><i class="fas fa-triangle-exclamation"></i><p>No booking specified.</p></div>`;
+      return;
+    }
+    await load();
+  });
+
+  async function load() {
+    let data;
+    try {
+      data = await apiFetch(`/reviews/booking/${bookingId}`);
+    } catch (err) {
+      document.getElementById('pageContent').innerHTML = `<div class="empty-state"><i class="fas fa-triangle-exclamation"></i><p>${err.message}</p></div>`;
+      return;
+    }
+    render(data.booking, data.existingReview);
+  }
+
+  function render(booking, existingReview) {
+    const el = document.getElementById('pageContent');
+    const date = new Date(booking.booking_date).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    if (existingReview) {
+      el.innerHTML = `
+        <div class="rate-card">
+          ${booking.image_url ? `<img src="${booking.image_url}" alt="${booking.car_wash_name}">` : ''}
+          <h2>${booking.car_wash_name}</h2>
+          <div class="meta">${date}</div>
+          <div class="already-rated">
+            <i class="fas fa-check-circle"></i> <span data-i18n="rate_already">You already rated this wash</span>
+          </div>
+          <div class="star-picker">
+            ${[1,2,3,4,5].map(n => `<i class="fas fa-star ${n <= existingReview.rating ? 'filled' : ''}"></i>`).join('')}
+          </div>
+          ${existingReview.comment ? `<p class="text-muted" style="font-style: italic;">"${escapeHtml(existingReview.comment)}"</p>` : ''}
+          <a href="profile.html#history" class="btn btn-block" style="margin-top: 1.5rem;" data-i18n="rate_back_profile">Back to Profile</a>
+        </div>
+      `;
+      if (window.I18n) I18n.applyTranslations();
+      return;
+    }
+
+    el.innerHTML = `
+      <div class="rate-card">
+        ${booking.image_url ? `<img src="${booking.image_url}" alt="${booking.car_wash_name}">` : ''}
+        <h2>${booking.car_wash_name}</h2>
+        <div class="meta">${date} • ${booking.wash_type === 'full' ? 'Exterior + Interior' : 'Exterior Only'}</div>
+        <p class="text-muted" style="margin-bottom: 1rem;" data-i18n="rate_how_was_it">How was your wash?</p>
+        <div class="star-picker" id="starPicker">
+          ${[1,2,3,4,5].map(n => `<i class="fas fa-star" data-star="${n}"></i>`).join('')}
+        </div>
+        <div class="form-group">
+          <textarea id="comment" class="form-control" rows="3" placeholder="Tell others what you thought (optional)" data-i18n-placeholder="rate_comment_placeholder"></textarea>
+        </div>
+        <button class="btn btn-block" id="submitReview" disabled>
+          <i class="fas fa-paper-plane"></i> <span data-i18n="rate_submit">Submit Rating</span>
+        </button>
+      </div>
+    `;
+
+    if (window.I18n) I18n.applyTranslations();
+
+    const stars = el.querySelectorAll('#starPicker i');
+    stars.forEach(star => {
+      star.addEventListener('click', () => {
+        selectedRating = parseInt(star.dataset.star, 10);
+        stars.forEach(s => s.classList.toggle('filled', parseInt(s.dataset.star, 10) <= selectedRating));
+        document.getElementById('submitReview').disabled = false;
+      });
+    });
+
+    document.getElementById('submitReview').addEventListener('click', async () => {
+      const btn = document.getElementById('submitReview');
+      btn.classList.add('loading');
+      try {
+        await apiFetch('/reviews', {
+          method: 'POST',
+          body: JSON.stringify({
+            bookingId: parseInt(bookingId, 10),
+            rating: selectedRating,
+            comment: document.getElementById('comment').value.trim() || null
+          })
+        });
+        showToast('Thanks for your rating!');
+        setTimeout(() => { window.location.href = 'profile.html#history'; }, 900);
+      } catch (err) {
+        showToast(err.message, true);
+        btn.classList.remove('loading');
+      }
+    });
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Seller Dashboard | Car Wash Finder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .stat-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border-soft); padding: 1.25rem; box-shadow: var(--shadow-sm); }
+    .stat-card .stat-label { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.4rem; }
+    .stat-card .stat-value { font-size: 1.7rem; font-weight: 700; color: var(--ink); font-family: 'Space Grotesk', sans-serif; }
+
+    .wash-owned-card {
+      background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border-soft);
+      padding: 1.1rem; box-shadow: var(--shadow-sm); margin-bottom: 0.85rem;
+      display: flex; align-items: center; gap: 1rem;
+    }
+    .wash-owned-card img { width: 60px; height: 60px; border-radius: var(--radius-sm); object-fit: cover; }
+    .wash-owned-card h4 { font-size: 1rem; color: var(--ink); margin-bottom: 0.25rem; }
+    .wash-owned-card .meta { font-size: 0.82rem; color: var(--text-muted); }
+
+    .bookings-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .bookings-table th {
+      text-align: left; padding: 0.7rem 0.6rem; background: var(--surface-alt);
+      color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.03em;
+    }
+    .bookings-table td { padding: 0.7rem 0.6rem; border-bottom: 1px solid var(--border-soft); vertical-align: middle; }
+    .bookings-table-wrap { overflow-x: auto; }
+
+    .status-pill {
+      display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px;
+      font-size: 0.72rem; font-weight: 700; text-transform: capitalize;
+    }
+    .status-pill.confirmed { background: var(--success-tint); color: var(--success); }
+    .status-pill.completed { background: var(--teal-tint); color: var(--teal-dark); }
+    .status-pill.cancelled { background: var(--danger-tint); color: var(--danger); }
+
+    .row-actions { display: flex; gap: 0.4rem; }
+    .row-actions button {
+      border: none; background: var(--surface-alt); color: var(--text); font-size: 0.75rem;
+      padding: 0.3rem 0.55rem; border-radius: 6px; cursor: pointer; font-weight: 600;
+    }
+    .row-actions button.complete { background: var(--teal-tint); color: var(--teal-dark); }
+    .row-actions button.cancel { background: var(--danger-tint); color: var(--danger); }
+  </style>
+</head>
+<body>
+
+<header class="appbar">
+  <div class="appbar-title"><i class="fas fa-store"></i> <span data-i18n="seller_dashboard_title">Seller Dashboard</span></div>
+  <div class="appbar-spacer"></div>
+  <button class="appbar-btn" id="logoutBtn" title="Log out"><i class="fas fa-sign-out-alt"></i></button>
+</header>
+
+<div class="section" id="pageContent">
+  <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading your dashboard…</p></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/demo-mode.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/menu.js"></script>
+<script>
+  function t(key, fallback) { return window.I18n ? I18n.t(key) : fallback; }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (!Auth.requireRole('seller')) return;
+    document.getElementById('logoutBtn').addEventListener('click', () => Auth.logout());
+    await loadDashboard();
+  });
+
+  async function loadDashboard() {
+    let stats, washes, bookings;
+    try {
+      [stats, washes, bookings] = await Promise.all([
+        apiFetch('/seller/stats'),
+        apiFetch('/seller/washes'),
+        apiFetch('/seller/bookings')
+      ]);
+    } catch (err) {
+      document.getElementById('pageContent').innerHTML = `
+        <div class="empty-state"><i class="fas fa-triangle-exclamation"></i><p>${err.message}</p></div>`;
+      return;
+    }
+    render(stats, washes, bookings);
+  }
+
+  function render(stats, washes, bookings) {
+    const user = Auth.getUser();
+    document.getElementById('pageContent').innerHTML = `
+      <div class="eyebrow" data-i18n="seller_welcome">Welcome back</div>
+      <div class="section-title" style="margin-bottom: 1.5rem;"><i class="fas fa-user-tie"></i> ${user.name}</div>
+
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label" data-i18n="seller_today_bookings">Today's Bookings</div><div class="stat-value">${stats.today_bookings}</div></div>
+        <div class="stat-card"><div class="stat-label" data-i18n="seller_revenue">Revenue (30 days)</div><div class="stat-value">$${parseFloat(stats.revenue_30d).toFixed(2)}</div></div>
+        <div class="stat-card"><div class="stat-label" data-i18n="seller_upcoming">Upcoming</div><div class="stat-value">${stats.upcoming}</div></div>
+        <div class="stat-card"><div class="stat-label" data-i18n="seller_completed">Completed</div><div class="stat-value">${stats.completed}</div></div>
+      </div>
+
+      <div class="section-title"><i class="fas fa-water"></i> <span data-i18n="seller_your_washes">Your Wash Places</span></div>
+      <div id="washList"></div>
+
+      <div class="section-title" style="margin-top: 1.5rem;"><i class="fas fa-calendar-check"></i> <span data-i18n="seller_bookings_title">Bookings</span></div>
+      <div class="bookings-table-wrap">
+        <table class="bookings-table" id="bookingsTable"></table>
+      </div>
+    `;
+
+    if (window.I18n) I18n.applyTranslations();
+
+    renderWashes(washes);
+    renderBookings(bookings);
+  }
+
+  function renderWashes(washes) {
+    const el = document.getElementById('washList');
+    if (washes.length === 0) {
+      el.innerHTML = `<div class="empty-state"><i class="fas fa-water"></i><p>${t('seller_no_washes', 'No wash places yet.')}</p></div>`;
+      return;
+    }
+    const typeLabels = {
+      location: t('type_label_location', 'Fixed Location'),
+      'home-service': t('type_label_home', 'Home Service (Van)'),
+      'moto-mobile': t('type_label_moto', 'Moto-Mobile Wash')
+    };
+    el.innerHTML = washes.map(w => `
+      <div class="wash-owned-card">
+        ${w.image_url ? `<img src="${w.image_url}" alt="${w.name}">` : ''}
+        <div>
+          <h4>${w.name}</h4>
+          <div class="meta">${typeLabels[w.service_type] || w.service_type} • ${w.location || t('book_comes_to_you', 'Comes to you')} • ${w.points_per_visit} ${t('seller_pts_per_visit', 'pts/visit')} • $${parseFloat(w.exterior_price).toFixed(2)} ${t('seller_base', 'base')}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderBookings(bookings) {
+    const table = document.getElementById('bookingsTable');
+    if (bookings.length === 0) {
+      table.innerHTML = `<tr><td><div class="empty-state"><i class="fas fa-receipt"></i><p>${t('seller_no_bookings', 'No bookings yet.')}</p></div></td></tr>`;
+      return;
+    }
+    const locale = (window.I18n && I18n.lang === 'ar') ? 'ar' : 'en-US';
+    const STATUS_KEYS = { confirmed: 'bc_status_confirmed', completed: 'bc_status_completed', cancelled: 'bc_status_cancelled' };
+
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>${t('seller_col_customer', 'Customer')}</th><th>${t('seller_col_wash', 'Wash')}</th><th>${t('seller_col_date', 'Date')}</th><th>${t('seller_col_time', 'Time')}</th><th>${t('seller_col_type', 'Type')}</th><th>${t('seller_col_total', 'Total')}</th><th>${t('seller_col_status', 'Status')}</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${bookings.map(b => {
+          const date = new Date(b.booking_date).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+          const washTypeLabel = b.wash_type === 'full' ? t('bd_exterior_interior', 'Exterior + Interior') : t('bd_exterior_only', 'Exterior Only');
+          const statusLabel = t(STATUS_KEYS[b.status] || 'bc_status_confirmed', b.status);
+          const actions = b.status === 'confirmed' ? `
+            <div class="row-actions">
+              <button class="complete" data-id="${b.id}" data-status="completed">${t('seller_complete_btn', 'Complete')}</button>
+              <button class="cancel" data-id="${b.id}" data-status="cancelled">${t('seller_cancel_btn', 'Cancel')}</button>
+            </div>` : '';
+          return `
+            <tr>
+              <td>${b.customer_name}</td>
+              <td>${b.car_wash_name}</td>
+              <td>${date}</td>
+              <td>${b.booking_time}</td>
+              <td>${washTypeLabel}</td>
+              <td>$${parseFloat(b.total_price).toFixed(2)}</td>
+              <td><span class="status-pill ${b.status}">${statusLabel}</span></td>
+              <td>${actions}</td>
+            </tr>`;
+        }).join('')}
+      </tbody>
+    `;
+
+    table.querySelectorAll('button[data-status]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        const status = btn.dataset.status;
+        if (status === 'cancelled' && !confirm(t('profile_confirm_cancel_booking', 'Cancel this booking?'))) return;
+        try {
+          await apiFetch(`/seller/bookings/${id}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status })
+          });
+          showToast(status === 'completed' ? t('seller_marked_complete', 'Marked complete — points awarded to customer.') : t('profile_booking_cancelled', 'Booking cancelled.'));
+          await loadDashboard();
+        } catch (err) {
+          showToast(err.message, true);
+        }
+      });
+    });
+  }
+</script>
+
+</body>
+</html>

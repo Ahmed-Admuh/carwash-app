@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Book a Wash | Car Wash Finder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .filter-section {
+      background: var(--surface);
+      padding: 1.25rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border-soft);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 1.5rem;
+    }
+    .filter-group { margin-bottom: 1.1rem; }
+    .filter-group:last-child { margin-bottom: 0; }
+    .filter-group h3 {
+      margin-bottom: 0.6rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .filter-group h3 i { color: var(--teal); }
+    .filter-options { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .result-count { margin-left: auto; font-size: 0.85rem; color: var(--text-muted); font-weight: 500; }
+    .card-thumb {
+      height: 130px;
+      margin: -1.25rem -1.25rem 1rem;
+      overflow: hidden;
+    }
+    .card-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  </style>
+</head>
+<body class="has-bottom-nav">
+
+<header class="appbar">
+  <button class="appbar-btn" onclick="window.history.back()" aria-label="Back"><i class="fas fa-arrow-left"></i></button>
+  <div class="appbar-title" data-i18n="book_title">Book a Wash</div>
+</header>
+
+<div class="section">
+  <div class="service-tabs" id="serviceTabs">
+    <button class="service-tab active" data-type=""><i class="fas fa-th-large"></i> <span data-i18n="book_all">All</span></button>
+    <button class="service-tab" data-type="location"><i class="fas fa-map-marker-alt"></i> <span data-i18n="book_locations">Car Wash Locations</span></button>
+    <button class="service-tab" data-type="home-service"><i class="fas fa-hand-holding-water"></i> <span data-i18n="book_mobile">Mobile / Home Service</span></button>
+    <button class="service-tab" data-type="moto-mobile"><i class="fas fa-motorcycle"></i> <span data-i18n="book_moto">Moto-Mobile Wash</span></button>
+  </div>
+
+  <div class="filter-section">
+    <div class="filter-group">
+      <h3><i class="fas fa-sort-amount-down"></i> <span data-i18n="book_sort_by">Sort By</span></h3>
+      <div class="filter-options">
+        <button class="chip active sort-btn" data-sort="distance" data-i18n="book_sort_distance">Distance</button>
+        <button class="chip sort-btn" data-sort="price" data-i18n="book_sort_price">Price</button>
+        <button class="chip sort-btn" data-sort="rating" data-i18n="book_sort_rating">Rating</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">
+    <i class="fas fa-car-side"></i> <span data-i18n="book_available_options">Available Options</span>
+    <span id="result-count" class="result-count" data-i18n="book_loading">Loading…</span>
+  </div>
+
+  <div class="cards" id="carWashList"></div>
+</div>
+
+<footer class="site-footer">
+  <div data-i18n="footer_payment">Payment Methods Accepted</div>
+  <div class="payment-icons">
+    <i class="fab fa-cc-visa"></i>
+    <i class="fab fa-cc-mastercard"></i>
+    <i class="fas fa-credit-card"></i>
+    <i class="fab fa-apple-pay"></i>
+  </div>
+  <p data-i18n="footer_rights">&copy; 2025 Car Wash Finder. All rights reserved.</p>
+</footer>
+
+<div class="bottom-nav">
+  <a href="index.html" class="nav-item"><i class="fas fa-home"></i><span data-i18n="nav_home">Home</span></a>
+  <a href="book.html" class="nav-item active"><i class="fas fa-search"></i><span data-i18n="nav_search">Search</span></a>
+  <a href="about.html" class="nav-item"><i class="fas fa-circle-info"></i><span data-i18n="nav_about">About</span></a>
+  <a href="profile.html" class="nav-item"><i class="fas fa-user"></i><span data-i18n="nav_profile">Profile</span></a>
+</div>
+
+<script src="js/demo-mode.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/menu.js"></script>
+<script>
+  const sampleCarWashes = [
+    { id: 1, name: "Sparkle Auto Wash", service_type: "location", location: "Downtown", exterior_price: 15, distance_km: 2.8, rating: 4.5, wait_time_minutes: 15 },
+    { id: 2, name: "SuperClean Express", service_type: "location", location: "Burnaby", exterior_price: 10, distance_km: 4.3, rating: 4.2, wait_time_minutes: 5 },
+    { id: 3, name: "EcoWash", service_type: "location", location: "Richmond", exterior_price: 18, distance_km: 3.1, rating: 4.7, wait_time_minutes: 25 },
+    { id: 7, name: "DriveClean Mobile Wash", service_type: "home-service", location: "Comes to your home", exterior_price: 22, distance_km: 0, rating: 4.6, wait_time_minutes: 0 },
+    { id: 9, name: "MotoWheels Quick Wash", service_type: "moto-mobile", location: "Comes to your home", exterior_price: 12, distance_km: 0, rating: 4.7, wait_time_minutes: 0 }
+  ];
+
+  function t(key, fallback) { return window.I18n ? I18n.t(key) : fallback; }
+
+  function typeLabels() {
+    return {
+      location: { label: t('type_label_location', 'Fixed Location'), icon: "fa-map-marker-alt" },
+      "home-service": { label: t('type_label_home', 'Home Service (Van)'), icon: "fa-hand-holding-water" },
+      "moto-mobile": { label: t('type_label_moto', 'Moto-Mobile Wash'), icon: "fa-motorcycle" }
+    };
+  }
+
+  let allWashes = [];
+  let currentType = "";
+  let currentSort = "distance";
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const params = new URLSearchParams(window.location.search);
+    const typeParam = params.get('type');
+    if (typeParam) {
+      currentType = typeParam;
+      document.querySelectorAll('.service-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.type === typeParam);
+      });
+    }
+
+    loadCarWashes();
+    setupTabs();
+    setupSortButtons();
+  });
+
+  function setupTabs() {
+    document.querySelectorAll('.service-tab').forEach(tab => {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.service-tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        currentType = this.dataset.type;
+        loadCarWashes();
+      });
+    });
+  }
+
+  function setupSortButtons() {
+    document.querySelectorAll('.sort-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        currentSort = this.dataset.sort;
+        renderCarWashes(sortWashes(allWashes));
+      });
+    });
+  }
+
+  async function loadCarWashes() {
+    document.getElementById('result-count').textContent = t('book_loading', 'Loading…');
+    try {
+      const path = currentType ? `/carwashes?type=${currentType}` : '/carwashes';
+      allWashes = await apiFetch(path);
+    } catch (err) {
+      console.warn('Backend not reachable, using sample data.', err);
+      allWashes = currentType ? sampleCarWashes.filter(w => w.service_type === currentType) : sampleCarWashes;
+    }
+    renderCarWashes(sortWashes(allWashes));
+  }
+
+  function sortWashes(washes) {
+    const sorted = [...washes];
+    sorted.sort((a, b) => {
+      if (currentSort === 'distance') return parseFloat(a.distance_km) - parseFloat(b.distance_km);
+      if (currentSort === 'price') return parseFloat(a.exterior_price) - parseFloat(b.exterior_price);
+      if (currentSort === 'rating') return parseFloat(b.rating) - parseFloat(a.rating);
+      return 0;
+    });
+    return sorted;
+  }
+
+  function renderCarWashes(washes) {
+    const listContainer = document.getElementById("carWashList");
+    listContainer.innerHTML = '';
+
+    if (washes.length === 0) {
+      listContainer.innerHTML = `
+        <div class="empty-state" style="grid-column: 1 / -1;">
+          <i class="fas fa-car-side"></i>
+          <p>${t('book_no_results', 'No results match these filters.')}</p>
+        </div>`;
+      document.getElementById("result-count").textContent = '0 ' + t('result_word', 'results');
+      return;
+    }
+
+    const labels = typeLabels();
+
+    washes.forEach(wash => {
+      const typeInfo = labels[wash.service_type] || labels.location;
+      const distanceLabel = wash.service_type === 'location'
+        ? `<span><i class="fas fa-map-marker-alt"></i> ${wash.distance_km} km</span>`
+        : `<span><i class="fas fa-house-chimney"></i> ${t('book_comes_to_you', 'Comes to you')}</span>`;
+
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <span class="service-type-badge ${wash.service_type}" style="margin-bottom: 0.6rem; align-self: flex-start;">
+          <i class="fas ${typeInfo.icon}"></i> ${typeInfo.label}
+        </span>
+        <h3>${wash.name}</h3>
+        <div class="meta">
+          📍 ${wash.location} •
+          ${'★'.repeat(Math.floor(wash.rating))}${'☆'.repeat(5-Math.floor(wash.rating))} ${wash.rating}
+        </div>
+        <div class="price-distance">
+          <span><i class="fas fa-dollar-sign"></i> ${t('book_from', 'From')} $${wash.exterior_price}</span>
+          ${distanceLabel}
+        </div>
+        <a class="btn" href="booking-details.html?id=${wash.id}">
+          <i class="fas fa-calendar-check"></i> ${t('book_book_now', 'Book Now')}
+        </a>
+      `;
+      listContainer.appendChild(card);
+    });
+
+    document.getElementById("result-count").textContent =
+      `${washes.length} ${washes.length === 1 ? t('result_word_singular', 'result') : t('result_word', 'results')}`;
+  }
+</script>
+</body>
+</html>

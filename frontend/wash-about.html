@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About This Wash | Car Wash Finder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .wash-hero { position: relative; margin: 1.25rem; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-md); height: 200px; }
+    .wash-hero img { width: 100%; height: 100%; object-fit: cover; }
+    .wash-hero-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11,30,51,0) 40%, rgba(11,30,51,0.8) 100%); }
+    .wash-hero-caption { position: absolute; left: 1.25rem; bottom: 1.25rem; right: 1.25rem; color: white; }
+    .wash-hero-caption h1 { color: white; font-size: 1.4rem; }
+    .wash-hero-caption .meta { font-size: 0.85rem; opacity: 0.9; margin-top: 0.25rem; }
+
+    .rating-summary { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+    .rating-big { font-size: 2.2rem; font-weight: 700; color: var(--ink); font-family: 'Space Grotesk', sans-serif; }
+    .rating-stars { color: var(--amber); font-size: 0.9rem; margin-bottom: 0.2rem; }
+    .rating-count { font-size: 0.8rem; color: var(--text-muted); }
+
+    .review-item { padding: 1rem 0; border-bottom: 1px solid var(--border-soft); }
+    .review-item:last-child { border-bottom: none; }
+    .review-item-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem; }
+    .review-name { font-weight: 600; font-size: 0.9rem; color: var(--text); }
+    .review-stars { color: var(--amber); font-size: 0.78rem; }
+    .review-comment { font-size: 0.87rem; color: var(--text-muted); line-height: 1.5; }
+    .review-date { font-size: 0.72rem; color: var(--text-faint); margin-top: 0.3rem; }
+  </style>
+</head>
+<body class="has-bottom-nav">
+
+<header class="appbar">
+  <button class="appbar-btn" onclick="window.history.back()" aria-label="Back"><i class="fas fa-arrow-left"></i></button>
+  <div class="appbar-title" data-i18n="about_this_wash">About This Wash</div>
+</header>
+
+<div id="pageContent">
+  <div class="section"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading…</p></div></div>
+</div>
+
+<footer class="site-footer">
+  <p data-i18n="footer_rights">&copy; 2025 Car Wash Finder. All rights reserved.</p>
+</footer>
+
+<div class="bottom-nav">
+  <a href="index.html" class="nav-item"><i class="fas fa-home"></i><span data-i18n="nav_home">Home</span></a>
+  <a href="book.html" class="nav-item"><i class="fas fa-search"></i><span data-i18n="nav_search">Search</span></a>
+  <a href="about.html" class="nav-item"><i class="fas fa-circle-info"></i><span data-i18n="nav_about">About</span></a>
+  <a href="profile.html" class="nav-item"><i class="fas fa-user"></i><span data-i18n="nav_profile">Profile</span></a>
+</div>
+
+<script src="js/demo-mode.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/menu.js"></script>
+<script>
+  function t(key, fallback) { return window.I18n ? I18n.t(key) : fallback; }
+
+  const washId = new URLSearchParams(window.location.search).get('id');
+  function typeLabels() {
+    return { location: t('type_label_location', 'Fixed Location'), 'home-service': t('type_label_home', 'Home Service (Van)'), 'moto-mobile': t('type_label_moto', 'Moto-Mobile Wash') };
+  }
+  function typeDescriptions() {
+    return {
+      location: t('wash_desc_location', 'Drive to this location for your wash.'),
+      'home-service': t('wash_desc_home', 'A van with its own water tank and generator comes to your address.'),
+      'moto-mobile': t('wash_desc_moto', 'A motorcycle fitted with a water tank comes to your address — nimble, fast, and great for tight streets. Best suited to sedans and SUVs.')
+    };
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (!washId) {
+      document.getElementById('pageContent').innerHTML = `<div class="section"><div class="empty-state"><i class="fas fa-triangle-exclamation"></i><p>${t('wash_about_no_wash_specified', 'No wash specified.')}</p></div></div>`;
+      return;
+    }
+    await load();
+  });
+
+  async function load() {
+    let wash, reviewData;
+    try {
+      [wash, reviewData] = await Promise.all([
+        apiFetch(`/carwashes/${washId}`),
+        apiFetch(`/reviews?carWashId=${washId}`)
+      ]);
+    } catch (err) {
+      document.getElementById('pageContent').innerHTML = `<div class="section"><div class="empty-state"><i class="fas fa-triangle-exclamation"></i><p>${err.message}</p></div></div>`;
+      return;
+    }
+    render(wash, reviewData);
+  }
+
+  function render(wash, reviewData) {
+    document.title = `${wash.name} | Car Wash Finder`;
+    const labels = typeLabels();
+    const descriptions = typeDescriptions();
+    const locale = (window.I18n && I18n.lang === 'ar') ? 'ar' : 'en-US';
+
+    document.getElementById('pageContent').innerHTML = `
+      <div class="wash-hero">
+        ${wash.image_url ? `<img src="${wash.image_url}" alt="${wash.name}">` : ''}
+        <div class="wash-hero-overlay"></div>
+        <div class="wash-hero-caption">
+          <h1>${wash.name}</h1>
+          <div class="meta">${labels[wash.service_type] || wash.service_type} • ${wash.location || t('book_comes_to_you', 'Comes to you')}</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="rating-summary">
+          <div class="rating-big">${reviewData.averageRating > 0 ? reviewData.averageRating : wash.rating}</div>
+          <div>
+            <div class="rating-stars">${starString(Math.round(reviewData.averageRating > 0 ? reviewData.averageRating : wash.rating))}</div>
+            <div class="rating-count">${reviewData.totalReviews} ${t('wash_about_ratings_count', 'ratings on Car Wash Finder')}</div>
+          </div>
+        </div>
+
+        <div class="section-title"><i class="fas fa-circle-info"></i> <span data-i18n="wash_about_about">About</span></div>
+        <p class="text-muted" style="line-height: 1.7; margin-bottom: 1rem;">
+          ${wash.description || descriptions[wash.service_type] || ''}
+        </p>
+        <p class="text-muted" style="line-height: 1.7; margin-bottom: 1.5rem;">
+          ${descriptions[wash.service_type] || ''}
+        </p>
+
+        <div class="cards" style="margin-bottom: 1.5rem;">
+          <div class="card">
+            <h3><i class="fas fa-star" style="color: var(--amber);"></i> ${wash.points_per_visit} ${t('profile_pts_short', 'pts')}</h3>
+            <p class="meta">${t('wash_about_points_earned', 'Earned per completed wash')}</p>
+          </div>
+          <div class="card">
+            <h3><i class="fas fa-clock" style="color: var(--teal);"></i> ${wash.wait_time_minutes} ${t('pkg_min', 'min')}</h3>
+            <p class="meta">${wash.service_type === 'location' ? t('wash_about_typical_wait', 'Typical wait') : t('wash_about_typical_eta', 'Typical ETA')}</p>
+          </div>
+        </div>
+
+        <a href="booking-details.html?id=${wash.id}" class="btn btn-block" style="margin-bottom: 1.5rem;">
+          <i class="fas fa-calendar-check"></i> <span data-i18n="wash_about_book_this">Book This Wash</span>
+        </a>
+
+        <div class="section-title"><i class="fas fa-comments"></i> <span data-i18n="wash_about_reviews">Reviews</span></div>
+        <div id="reviewsList"></div>
+      </div>
+    `;
+
+    if (window.I18n) I18n.applyTranslations();
+
+    const reviewsList = document.getElementById('reviewsList');
+    if (reviewData.reviews.length === 0) {
+      reviewsList.innerHTML = `<div class="empty-state"><i class="fas fa-comment-slash"></i><p>${t('wash_about_no_reviews', 'No reviews yet — be the first!')}</p></div>`;
+      return;
+    }
+    reviewsList.innerHTML = reviewData.reviews.map(r => `
+      <div class="review-item">
+        <div class="review-item-top">
+          <span class="review-name">${r.reviewer_name}</span>
+          <span class="review-stars">${starString(r.rating)}</span>
+        </div>
+        ${r.comment ? `<div class="review-comment">${escapeHtml(r.comment)}</div>` : ''}
+        <div class="review-date">${new Date(r.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+      </div>
+    `).join('');
+  }
+
+  function starString(n) {
+    return '★'.repeat(n) + '☆'.repeat(5 - n);
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+</script>
+
+</body>
+</html>

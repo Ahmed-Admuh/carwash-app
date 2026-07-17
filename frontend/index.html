@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Car Wash Finder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .hero {
+      position: relative;
+      margin: 1.25rem;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+    }
+
+    .image-carousel {
+      display: flex;
+      overflow-x: hidden;
+      scroll-snap-type: x mandatory;
+      position: relative;
+      height: 220px;
+    }
+
+    .carousel-img {
+      flex: 0 0 100%;
+      width: 100%;
+      object-fit: cover;
+      scroll-snap-align: start;
+      height: 100%;
+      filter: saturate(1.05);
+    }
+
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(11,30,51,0) 40%, rgba(11,30,51,0.75) 100%);
+      pointer-events: none;
+    }
+
+    .hero-caption {
+      position: absolute;
+      left: 1.25rem;
+      bottom: 1.6rem;
+      right: 1.25rem;
+      color: white;
+    }
+
+    .hero-caption .eyebrow { color: var(--amber); margin-bottom: 0.3rem; }
+
+    .hero-caption h1 {
+      color: white;
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .carousel-indicators {
+      position: absolute;
+      bottom: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 6px;
+      z-index: 2;
+    }
+
+    .indicator {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.45);
+      cursor: pointer;
+      transition: all 0.2s var(--ease);
+    }
+
+    .indicator.active { background: var(--teal); width: 18px; border-radius: 3px; }
+
+    .services-grid { display: flex; flex-wrap: wrap; gap: 0.85rem; }
+    .services-grid .btn { flex: 1 1 220px; }
+
+    .offer-chip {
+      flex: 0 0 auto;
+      min-width: 148px;
+      background: var(--surface);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--ink);
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+      padding: 1rem 0.9rem;
+      text-align: left;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+    }
+
+    .offer-chip i { font-size: 1.3rem; color: var(--amber); }
+    .offer-chip:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+    .offer-chip .offer-chip-tag {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--teal-dark);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .horizontal-scroll {
+      display: flex;
+      overflow-x: auto;
+      gap: 0.85rem;
+      padding: 0.25rem 0 0.5rem;
+      -webkit-overflow-scrolling: touch;
+    }
+    .horizontal-scroll::-webkit-scrollbar { display: none; }
+
+    .package-card { cursor: pointer; }
+    .category-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+
+    #carWashSection { display: none; }
+
+    .location-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--teal-tint);
+      color: var(--teal-dark);
+      padding: 0.5rem 1rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-left: auto;
+      cursor: pointer;
+      border: none;
+      transition: background 0.2s var(--ease);
+    }
+    .location-btn:hover { background: #d6ede9; }
+
+    .toggle-row { display: flex; justify-content: center; }
+  </style>
+</head>
+<body class="has-bottom-nav">
+
+<header class="appbar">
+  <button class="appbar-btn" aria-label="Menu"><i class="fas fa-bars"></i></button>
+  <div class="appbar-title"><span class="brand-mark">Car</span>Wash Finder</div>
+  <div class="appbar-spacer"></div>
+  <span id="authSlot"></span>
+</header>
+
+<div id="pointsWidget"></div>
+
+<div class="hero">
+  <div class="image-carousel" id="carousel">
+    <img src="https://images.unsplash.com/photo-1750492960736-6ef3f76d6c95?fm=jpg&q=80&w=1200&auto=format&fit=crop" alt="Foamy exterior wash" class="carousel-img">
+    <img src="https://images.unsplash.com/photo-1762933855598-273a51b47649?fm=jpg&q=80&w=1200&auto=format&fit=crop" alt="Car being rinsed" class="carousel-img">
+    <img src="https://images.pexels.com/photos/5233285/pexels-photo-5233285.jpeg?auto=compress&cs=tinysrgb&w=1200" alt="Interior detailing" class="carousel-img">
+    <div class="promo-slide promo-a">
+      <div class="promo-slide-content">
+        <div class="promo-slide-eyebrow">Limited time</div>
+        <div class="promo-slide-title">20% off your<br>first booking</div>
+      </div>
+    </div>
+    <div class="promo-slide promo-b">
+      <div class="promo-slide-content">
+        <div class="promo-slide-eyebrow">New</div>
+        <div class="promo-slide-title">We now come<br>to your home</div>
+      </div>
+    </div>
+  </div>
+  <div class="hero-overlay"></div>
+  <div class="hero-caption">
+    <span class="eyebrow" data-i18n="home_eyebrow">Book in under a minute</span>
+    <h1 data-i18n="home_hero_title">Find a trusted car wash near you</h1>
+  </div>
+  <div class="carousel-indicators">
+    <div class="indicator active" data-index="0"></div>
+    <div class="indicator" data-index="1"></div>
+    <div class="indicator" data-index="2"></div>
+    <div class="indicator" data-index="3"></div>
+    <div class="indicator" data-index="4"></div>
+  </div>
+</div>
+
+<div class="section">
+  <span class="eyebrow" data-i18n="home_get_started">Get started</span>
+  <div class="section-title"><i class="fas fa-concierge-bell"></i> <span data-i18n="home_services_title">Services</span></div>
+  <div class="services-grid">
+    <a href="book.html" class="btn"><i class="fas fa-car"></i> <span data-i18n="btn_book_wash">Book a Wash</span></a>
+    <a href="profile.html#history" class="btn btn-outline"><i class="fas fa-history"></i> <span data-i18n="btn_order_history">Order History</span></a>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title"><i class="fas fa-hand-holding-water"></i> <span data-i18n="home_we_come_to_you">We Come To You</span></div>
+  <div class="category-grid">
+    <div class="category-card" onclick="window.location.href='book.html?type=home-service'">
+      <img src="https://images.pexels.com/photos/6196223/pexels-photo-6196223.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Mobile car wash van">
+      <div class="category-card-overlay">
+        <h4 data-i18n="home_mobile_wash_title">Mobile Car Wash</h4>
+        <p data-i18n="home_mobile_wash_desc">A van comes to your driveway or office</p>
+      </div>
+    </div>
+    <div class="category-card" onclick="window.location.href='book.html?type=moto-mobile'">
+      <img src="https://images.pexels.com/photos/4513028/pexels-photo-4513028.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Motorcycle-delivered mobile car wash">
+      <div class="category-card-overlay">
+        <h4 data-i18n="home_moto_wash_title">Moto-Mobile Wash</h4>
+        <p data-i18n="home_moto_wash_desc">A water-tank motorcycle washes your car at your door</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title"><i class="fas fa-tags"></i> <span data-i18n="home_offers_title">Offers &amp; Discounts</span></div>
+  <div class="horizontal-scroll" id="offersScroll">
+    <div class="text-muted" style="padding: 1rem 0; font-size: 0.85rem;" data-i18n="home_loading_offers">Loading offers…</div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title"><i class="fas fa-box-open"></i> <span data-i18n="home_packages_title">Packages</span></div>
+  <div class="cards">
+    <div class="card package-card" data-package="exterior">
+      <h3 data-i18n="pkg_exterior_title">Exterior Only</h3>
+      <p class="meta" data-i18n="pkg_exterior_desc">A quick, thorough outside wash</p>
+      <div class="price-distance">
+        <span><i class="fas fa-dollar-sign"></i> <span data-i18n="book_from">From</span> $8</span>
+        <span><i class="fas fa-clock"></i> ~15 <span data-i18n="pkg_min">min</span></span>
+      </div>
+      <button class="btn" data-i18n="pkg_find_wash">Find a Wash</button>
+    </div>
+    <div class="card package-card" data-package="full">
+      <h3 data-i18n="pkg_full_title">Exterior + Interior</h3>
+      <p class="meta" data-i18n="pkg_full_desc">Full wash plus interior vacuum & wipe-down</p>
+      <div class="price-distance">
+        <span><i class="fas fa-dollar-sign"></i> <span data-i18n="book_from">From</span> $16</span>
+        <span><i class="fas fa-clock"></i> ~35 <span data-i18n="pkg_min">min</span></span>
+      </div>
+      <button class="btn" data-i18n="pkg_find_wash">Find a Wash</button>
+    </div>
+    <div class="card package-card" data-package="home-service">
+      <h3 data-i18n="pkg_mobile_title">Mobile / Motorcycle</h3>
+      <p class="meta" data-i18n="pkg_mobile_desc">We come to your home — car or bike</p>
+      <div class="price-distance">
+        <span><i class="fas fa-dollar-sign"></i> <span data-i18n="book_from">From</span> $10</span>
+        <span><i class="fas fa-clock"></i> <span data-i18n="pkg_on_schedule">On your schedule</span></span>
+      </div>
+      <button class="btn" data-i18n="pkg_find_wash">Find a Wash</button>
+    </div>
+  </div>
+</div>
+
+<div class="section toggle-row">
+  <button class="btn btn-outline" id="toggleWashesBtn">
+    <i class="fas fa-car-side"></i> <span data-i18n="home_toggle_washes">Show/Hide Car Washes</span>
+  </button>
+</div>
+
+<div class="section" id="carWashSection">
+  <div class="section-title">
+    <i class="fas fa-map-marker-alt"></i> <span data-i18n="home_popular_title">Popular Car Washes</span>
+    <button class="location-btn" onclick="getLocation()">
+      <i class="fas fa-location-arrow"></i> <span data-i18n="home_near_me">Near Me</span>
+    </button>
+  </div>
+  <div class="cards" id="carWashList"></div>
+</div>
+
+<footer class="site-footer">
+  <div data-i18n="footer_payment">Payment Methods Accepted</div>
+  <div class="payment-icons">
+    <i class="fab fa-cc-visa"></i>
+    <i class="fab fa-cc-mastercard"></i>
+    <i class="fas fa-credit-card"></i>
+    <i class="fab fa-apple-pay"></i>
+  </div>
+  <p data-i18n="footer_rights">&copy; 2025 Car Wash Finder. All rights reserved.</p>
+</footer>
+
+<div class="bottom-nav">
+  <a href="index.html" class="nav-item active">
+    <i class="fas fa-home"></i>
+    <span data-i18n="nav_home">Home</span>
+  </a>
+  <a href="book.html" class="nav-item">
+    <i class="fas fa-search"></i>
+    <span data-i18n="nav_search">Search</span>
+  </a>
+  <a href="about.html" class="nav-item">
+    <i class="fas fa-circle-info"></i>
+    <span data-i18n="nav_about">About</span>
+  </a>
+  <a href="profile.html" class="nav-item">
+    <i class="fas fa-user"></i>
+    <span data-i18n="nav_profile">Profile</span>
+  </a>
+</div>
+
+<!-- Offer detail modal -->
+<div class="modal-overlay" id="offerModal">
+  <div class="modal-panel">
+    <button class="modal-close" id="closeOfferModal">&times;</button>
+    <div class="offer-modal-icon" id="offerModalIcon"><i class="fas fa-tag"></i></div>
+    <h3 class="offer-modal-title" id="offerModalTitle">Offer title</h3>
+    <p class="offer-modal-desc" id="offerModalDesc">Offer description.</p>
+    <div class="offer-modal-meta">
+      <span class="offer-scope-badge" id="offerModalScope"></span>
+      <span class="offer-expiry-badge" id="offerModalExpiry"></span>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/demo-mode.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/menu.js"></script>
+<script>
+  const sampleCarWashes = [
+    { id: 1, name: "Sparkle Auto Wash", location: "Downtown", exterior_price: 15, distance_km: "2.8", rating: 4.5 },
+    { id: 2, name: "SuperClean Express", location: "Burnaby", exterior_price: 10, distance_km: "4.3", rating: 4.2 },
+    { id: 3, name: "EcoWash", location: "Richmond", exterior_price: 18, distance_km: "3.1", rating: 4.7 }
+  ];
+
+  document.addEventListener('DOMContentLoaded', function() {
+    loadCarWashes();
+    loadOffers();
+    loadPointsWidget();
+
+    const toggleBtn = document.getElementById('toggleWashesBtn');
+    const carWashSection = document.getElementById('carWashSection');
+    carWashSection.style.display = 'none';
+    toggleBtn.addEventListener('click', function() {
+      const isHidden = carWashSection.style.display === 'none' || carWashSection.style.display === '';
+      carWashSection.style.display = isHidden ? 'block' : 'none';
+    });
+
+    initCarousel();
+
+    document.querySelectorAll('.package-card').forEach(card => {
+      card.addEventListener('click', function() {
+        const pkg = this.dataset.package;
+        if (pkg === 'home-service') {
+          window.location.href = 'book.html?type=home-service';
+        } else {
+          window.location.href = `book.html?wash=${pkg}`;
+        }
+      });
+    });
+
+    document.getElementById('closeOfferModal').addEventListener('click', closeOfferModal);
+    document.getElementById('offerModal').addEventListener('click', (e) => {
+      if (e.target.id === 'offerModal') closeOfferModal();
+    });
+  });
+
+  async function loadCarWashes() {
+    try {
+      const data = await apiFetch('/carwashes?type=location');
+      renderCarWashes(data.slice(0, 5));
+    } catch (err) {
+      console.warn('Backend not reachable, using sample data.', err);
+      renderCarWashes(sampleCarWashes);
+    }
+  }
+
+  function renderCarWashes(washes) {
+    const listContainer = document.getElementById("carWashList");
+    const t = (key, fallback) => (window.I18n ? I18n.t(key) : fallback);
+    listContainer.innerHTML = '';
+    washes.forEach(wash => {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <h3>${wash.name}</h3>
+        <div class="meta">📍 ${wash.location} • ${'★'.repeat(Math.floor(wash.rating))}${'☆'.repeat(5-Math.floor(wash.rating))} ${wash.rating}</div>
+        <div class="price-distance">
+          <span><i class="fas fa-dollar-sign"></i> ${t('book_from', 'From')} $${wash.exterior_price}</span>
+          <span><i class="fas fa-map-marker-alt"></i> ${wash.distance_km} km</span>
+        </div>
+        <a class="btn" href="booking-details.html?id=${wash.id}">
+          <i class="fas fa-calendar-check"></i> ${t('book_book_now', 'Book Now')}
+        </a>
+      `;
+      listContainer.appendChild(card);
+    });
+  }
+
+  const sampleOffers = [
+    { id: 1, title: "20% Off New Users", description: "Get 20% off your very first booking.", icon: "fa-gift", discount_text: "20% OFF", scope: "app-only", expires_at: null }
+  ];
+
+  async function loadOffers() {
+    let offers;
+    try {
+      offers = await apiFetch('/offers');
+    } catch (err) {
+      offers = sampleOffers;
+    }
+    renderOffers(offers);
+  }
+
+  function renderOffers(offers) {
+    const scroll = document.getElementById('offersScroll');
+    scroll.innerHTML = '';
+    offers.forEach(offer => {
+      const chip = document.createElement('button');
+      chip.className = 'offer-chip';
+      chip.innerHTML = `
+        <i class="fas ${offer.icon || 'fa-tag'}"></i>
+        <div>${offer.title}</div>
+        <div class="offer-chip-tag">${offer.discount_text || ''}</div>
+      `;
+      chip.addEventListener('click', () => openOfferModal(offer));
+      scroll.appendChild(chip);
+    });
+  }
+
+  function openOfferModal(offer) {
+    const t = (key, fallback) => (window.I18n ? I18n.t(key) : fallback);
+    const locale = (window.I18n && I18n.lang === 'ar') ? 'ar' : 'en-US';
+
+    document.getElementById('offerModalIcon').innerHTML = `<i class="fas ${offer.icon || 'fa-tag'}"></i>`;
+    document.getElementById('offerModalTitle').textContent = offer.title;
+    document.getElementById('offerModalDesc').textContent = offer.description;
+
+    const scopeBadge = document.getElementById('offerModalScope');
+    const isNationwide = offer.scope === 'nationwide';
+    scopeBadge.className = `offer-scope-badge ${offer.scope}`;
+    scopeBadge.innerHTML = isNationwide
+      ? `<i class="fas fa-globe"></i> ${t('offer_nationwide', 'Nationwide offer')}`
+      : `<i class="fas fa-mobile-alt"></i> ${t('offer_app_exclusive', 'App exclusive')}`;
+
+    const expiryBadge = document.getElementById('offerModalExpiry');
+    if (offer.expires_at) {
+      const date = new Date(offer.expires_at);
+      expiryBadge.innerHTML = `<i class="fas fa-calendar-times"></i> ${t('offer_expires', 'Expires')} ${date.toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' })}`;
+    } else {
+      expiryBadge.innerHTML = `<i class="fas fa-infinity"></i> ${t('offer_ongoing', 'Ongoing offer')}`;
+    }
+
+    document.getElementById('offerModal').classList.add('active');
+  }
+
+  function closeOfferModal() {
+    document.getElementById('offerModal').classList.remove('active');
+  }
+
+  function initCarousel() {
+    const carousel = document.getElementById("carousel");
+    const slides = carousel.children;
+    const indicators = document.querySelectorAll(".indicator");
+    let index = 0;
+
+    function updateCarousel() {
+      carousel.scrollTo({ left: carousel.clientWidth * index, behavior: "smooth" });
+      indicators.forEach((ind, i) => ind.classList.toggle("active", i === index));
+    }
+
+    function scrollNext() {
+      index = (index + 1) % slides.length;
+      updateCarousel();
+    }
+
+    indicators.forEach(ind => {
+      ind.addEventListener("click", () => {
+        index = parseInt(ind.dataset.index);
+        updateCarousel();
+      });
+    });
+
+    setInterval(scrollNext, 4000);
+  }
+
+  function getLocation() {
+    const btn = document.querySelector('.location-btn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Locating...';
+    setTimeout(async () => {
+      try {
+        const data = await apiFetch('/carwashes?type=location');
+        const sorted = [...data].sort((a, b) => parseFloat(a.distance_km) - parseFloat(b.distance_km));
+        renderCarWashes(sorted.slice(0, 5));
+      } catch {
+        renderCarWashes(sampleCarWashes);
+      }
+      btn.innerHTML = originalText;
+    }, 1000);
+  }
+
+  async function loadPointsWidget() {
+    const widget = document.getElementById('pointsWidget');
+    if (!Auth.isLoggedIn()) { widget.innerHTML = ''; return; }
+    const user = Auth.getUser();
+    if (user && user.role === 'seller') { widget.innerHTML = ''; return; } // points are a customer feature
+
+    let points;
+    try {
+      points = await apiFetch('/points');
+    } catch {
+      widget.innerHTML = '';
+      return;
+    }
+
+    const tiers = [500, 1000, 1500, 2500];
+    const nextTierPoints = tiers.find(p => points.balance < p);
+    const prevTierPoints = [0, ...tiers].reverse().find(p => p <= points.balance) || 0;
+    const pct = nextTierPoints
+      ? Math.min(100, Math.round(((points.balance - prevTierPoints) / (nextTierPoints - prevTierPoints)) * 100))
+      : 100;
+
+    const radius = 26;
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference * (1 - pct / 100);
+    const t = (key, fallback) => (window.I18n ? I18n.t(key) : fallback);
+
+    widget.innerHTML = `
+      <a href="profile.html#points" class="points-ring-link">
+        <div class="points-ring-wrap">
+          <svg class="points-ring" viewBox="0 0 64 64" width="56" height="56">
+            <circle cx="32" cy="32" r="${radius}" class="points-ring-track"></circle>
+            <circle cx="32" cy="32" r="${radius}" class="points-ring-fill"
+              stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"></circle>
+          </svg>
+          <span class="points-ring-value">${points.balance}</span>
+        </div>
+        <span class="points-ring-label">${t('profile_points_suffix', 'points')}</span>
+      </a>
+    `;
+  }
+</script>
+
+</body>
+</html>
