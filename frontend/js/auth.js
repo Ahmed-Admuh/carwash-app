@@ -8,7 +8,7 @@
 // placeholder with your actual Render URL (Render shows it on your
 // service's dashboard page, looks like https://something.onrender.com).
 // ============================================================
-const DEPLOYED_API_BASE = "https://YOUR-RENDER-APP-NAME.onrender.com/api";
+const DEPLOYED_API_BASE = "https://carwash-app-jurb.onrender.com/api";
 
 // Auto-detects the right API host:
 // - Viewing the page on localhost or a LAN IP (e.g. testing on your phone
