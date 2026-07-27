@@ -88,6 +88,15 @@ const KsaPlate = (function () {
     const digitsAr = cellsOf(container, "digits-ar");
     const digitsEn = cellsOf(container, "digits-en");
 
+    // One continuous left-to-right sequence per row: digits then letters —
+    // so the cursor keeps moving forward automatically across that
+    // boundary instead of stopping at the last digit. Position j is the
+    // same physical column in both scripts, so cell j in one script always
+    // mirrors into cell j of the other script.
+    const rowEn = [...digitsEn, ...lettersEn];
+    const rowAr = [...digitsAr, ...lettersAr];
+    const isDigitAt = (j) => j < digitsEn.length;
+
     function emitChange() {
       const letters = lettersEn.map(c => c.value).join("");
       const digits = digitsEn.map(c => c.value).join("");
@@ -98,65 +107,42 @@ const KsaPlate = (function () {
       if (config.onChange) config.onChange(letters, digits);
     }
 
-    function wireLetterPair(enCells, arCells) {
-      enCells.forEach((enCell, i) => {
+    function wireRow(enCells, arCells) {
+      enCells.forEach((enCell, j) => {
         enCell.addEventListener("input", () => {
-          const ch = enCell.value.toUpperCase();
-          if (ch && !VALID_EN_LETTERS.includes(ch)) { enCell.value = ""; return; }
-          enCell.value = ch;
-          arCells[i].value = ch ? EN_TO_AR_LETTER[ch] : "";
-          if (ch) focusNext(enCells, i);
+          let ch = enCell.value;
+          if (isDigitAt(j)) {
+            if (ch && !/^[0-9]$/.test(ch)) { enCell.value = ""; return; }
+            arCells[j].value = ch ? EN_TO_AR_DIGIT[ch] : "";
+          } else {
+            ch = ch.toUpperCase();
+            if (ch && !VALID_EN_LETTERS.includes(ch)) { enCell.value = ""; return; }
+            enCell.value = ch;
+            arCells[j].value = ch ? EN_TO_AR_LETTER[ch] : "";
+          }
+          if (ch) focusNext(enCells, j);
           emitChange();
         });
         enCell.addEventListener("keydown", (e) => {
-          if (e.key === "Backspace" && !enCell.value) focusPrev(enCells, i);
+          if (e.key === "Backspace" && !enCell.value) focusPrev(enCells, j);
         });
       });
-      arCells.forEach((arCell, i) => {
+      arCells.forEach((arCell, j) => {
         arCell.addEventListener("input", () => {
           const ch = arCell.value;
-          const mapped = AR_TO_EN_LETTER[ch];
+          const mapped = isDigitAt(j) ? AR_TO_EN_DIGIT[ch] : AR_TO_EN_LETTER[ch];
           if (ch && !mapped) { arCell.value = ""; return; }
-          enCells[i].value = mapped || "";
-          if (mapped) focusNext(arCells, i);
+          enCells[j].value = mapped || "";
+          if (mapped) focusNext(arCells, j);
           emitChange();
         });
         arCell.addEventListener("keydown", (e) => {
-          if (e.key === "Backspace" && !arCell.value) focusPrev(arCells, i);
+          if (e.key === "Backspace" && !arCell.value) focusPrev(arCells, j);
         });
       });
     }
 
-    function wireDigitPair(enCells, arCells) {
-      enCells.forEach((enCell, i) => {
-        enCell.addEventListener("input", () => {
-          const ch = enCell.value;
-          if (ch && !/^[0-9]$/.test(ch)) { enCell.value = ""; return; }
-          arCells[i].value = ch ? EN_TO_AR_DIGIT[ch] : "";
-          if (ch) focusNext(enCells, i);
-          emitChange();
-        });
-        enCell.addEventListener("keydown", (e) => {
-          if (e.key === "Backspace" && !enCell.value) focusPrev(enCells, i);
-        });
-      });
-      arCells.forEach((arCell, i) => {
-        arCell.addEventListener("input", () => {
-          const ch = arCell.value;
-          const mapped = AR_TO_EN_DIGIT[ch];
-          if (ch && !mapped) { arCell.value = ""; return; }
-          enCells[i].value = mapped || "";
-          if (mapped) focusNext(arCells, i);
-          emitChange();
-        });
-        arCell.addEventListener("keydown", (e) => {
-          if (e.key === "Backspace" && !arCell.value) focusPrev(arCells, i);
-        });
-      });
-    }
-
-    wireLetterPair(lettersEn, lettersAr);
-    wireDigitPair(digitsEn, digitsAr);
+    wireRow(rowEn, rowAr);
 
     // Optional pre-fill (e.g. editing an existing vehicle).
     if (config.initialLetters) {
