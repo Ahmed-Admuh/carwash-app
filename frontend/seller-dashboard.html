@@ -96,6 +96,20 @@
         <label data-i18n="biz_location_label">Location / area</label>
         <input type="text" id="nwLocation" class="form-control" placeholder="e.g. Downtown">
       </div>
+      <div class="form-group" id="nwMapGroup">
+        <label id="nwMapLabel" data-i18n="biz_location_map_label">Pin your exact location on the map</label>
+        <input type="text" id="nwAddressSearch" class="form-control address-search-input" placeholder="Search an address…">
+        <div class="map-actions">
+          <button type="button" class="map-locate-btn" id="nwUseMyLocationBtn"><i class="fas fa-location-crosshairs"></i> <span data-i18n="btn_use_my_location">Use my current location</span></button>
+        </div>
+        <div class="map-picker" id="nwMap"></div>
+        <div class="form-group" id="nwRadiusGroup" style="display: none; margin-top: 0.75rem;">
+          <label data-i18n="biz_service_radius_label">Service radius (km)</label>
+          <input type="number" id="nwServiceRadius" class="form-control" min="1" step="1" value="15">
+        </div>
+        <input type="hidden" id="nwLat">
+        <input type="hidden" id="nwLng">
+      </div>
       <div class="section-divider" data-i18n="biz_pricing_title">Pricing</div>
       <p class="text-muted" style="font-size: 0.78rem; margin-top: -0.5rem; margin-bottom: 0.75rem;" data-i18n="biz_pricing_hint">
         Set your own price for each vehicle size — no fixed markup is added on top.
@@ -181,6 +195,8 @@
 <script src="js/auth.js"></script>
 <script src="js/i18n.js"></script>
 <script src="js/menu.js"></script>
+<script src="js/config.js"></script>
+<script src="js/gmaps.js"></script>
 <script>
   function t(key, fallback) { return window.I18n ? I18n.t(key) : fallback; }
 
@@ -436,7 +452,51 @@
     nwBuildVehiclePricingGrid();
     document.getElementById('addWashModal').classList.add('active');
     if (window.I18n) I18n.applyTranslations();
+    nwSetupMap();
   }
+
+  // ---- GPS map: a pin for 'location' washes, or a base point + radius
+  // circle ("region of access") for 'home-service' / 'moto-mobile' washes.
+  let nwMapPicker = null;
+  async function nwSetupMap(lat, lng, radiusKm) {
+    const serviceType = document.getElementById('nwServiceType').value;
+    const isMobile = serviceType !== 'location';
+    document.getElementById('nwRadiusGroup').style.display = isMobile ? 'block' : 'none';
+    document.getElementById('nwMapLabel').textContent = isMobile
+      ? t('biz_area_map_label', 'Set your base point and region of access')
+      : t('biz_location_map_label', 'Pin your exact location on the map');
+    if (radiusKm) document.getElementById('nwServiceRadius').value = radiusKm;
+    document.getElementById('nwLat').value = lat || '';
+    document.getElementById('nwLng').value = lng || '';
+
+    nwMapPicker = await GMaps.createPicker({
+      elementId: 'nwMap',
+      autocompleteInputId: 'nwAddressSearch',
+      lat: lat || null,
+      lng: lng || null,
+      showRadius: isMobile,
+      radiusKm: parseFloat(document.getElementById('nwServiceRadius').value) || 15,
+      onChange(latVal, lngVal, address) {
+        document.getElementById('nwLat').value = latVal;
+        document.getElementById('nwLng').value = lngVal;
+        if (address) document.getElementById('nwAddressSearch').value = address;
+      }
+    });
+  }
+
+  document.getElementById('nwServiceType').addEventListener('change', () => {
+    const lat = document.getElementById('nwLat').value || null;
+    const lng = document.getElementById('nwLng').value || null;
+    nwSetupMap(lat, lng);
+  });
+
+  document.getElementById('nwServiceRadius').addEventListener('input', () => {
+    if (nwMapPicker) nwMapPicker.setRadius(parseFloat(document.getElementById('nwServiceRadius').value) || 15);
+  });
+
+  document.getElementById('nwUseMyLocationBtn').addEventListener('click', () => {
+    if (nwMapPicker) nwMapPicker.useMyLocation();
+  });
 
   async function openEditWashModal(washId) {
     const wash = ownedWashesCache.find(w => w.id === washId);
@@ -458,6 +518,13 @@
     nwRenderGalleryList();
 
     nwBuildVehiclePricingGrid(wash.vehicle_pricing);
+
+    const isMobile = wash.service_type !== 'location';
+    nwSetupMap(
+      isMobile ? wash.service_area_lat : wash.latitude,
+      isMobile ? wash.service_area_lng : wash.longitude,
+      wash.service_radius_km
+    );
 
     // Hours periods
     document.getElementById('nwHoursPeriods').innerHTML = '';
@@ -677,6 +744,10 @@
     const requireCashOnly = document.getElementById('nwCashOnly').checked;
     const description = document.getElementById('nwDescription').value.trim();
     const imageUrl = document.getElementById('nwImageUrl').value.trim();
+    const isMobileType = serviceType !== 'location';
+    const nwLatVal = document.getElementById('nwLat').value;
+    const nwLngVal = document.getElementById('nwLng').value;
+    const serviceRadiusKm = parseFloat(document.getElementById('nwServiceRadius').value) || 15;
 
     if (!name) { showToast(t('val_enter_business_name', 'Please enter your business name.'), true); return; }
     if (!vehiclePricing.sedan) {
@@ -695,7 +766,12 @@
       extras: nwCollectExtras(),
       description: description || null,
       imageUrl: imageUrl || null,
-      galleryImages: nwGalleryUrls
+      galleryImages: nwGalleryUrls,
+      latitude: !isMobileType && nwLatVal ? parseFloat(nwLatVal) : null,
+      longitude: !isMobileType && nwLngVal ? parseFloat(nwLngVal) : null,
+      serviceAreaLat: isMobileType && nwLatVal ? parseFloat(nwLatVal) : null,
+      serviceAreaLng: isMobileType && nwLngVal ? parseFloat(nwLngVal) : null,
+      serviceRadiusKm: isMobileType ? serviceRadiusKm : null
     };
 
     try {

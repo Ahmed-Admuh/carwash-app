@@ -217,8 +217,8 @@ const I18N_DICT = {
   modal_model_placeholder: { en: "e.g. Toyota Camry", ar: "مثال: تويوتا كامري" },
   ksa_plate_country: { en: "SAUDI ARABIA", ar: "المملكة العربية السعودية" },
   modal_plate_letters_placeholder: { en: "ABC", ar: "ا ب ح" },
-  modal_plate_hint: { en: "1-3 letters (Arabic or English) and 1-4 digits (0-9) — required, like a real Saudi plate.", ar: "1-3 أحرف (عربية أو إنجليزية) و1-4 أرقام (0-9) — مطلوب، كما في لوحة سعودية حقيقية." },
-  modal_plate_invalid: { en: "Please enter 1-3 letters and 1-4 digits (0-9).", ar: "يرجى إدخال 1-3 أحرف و1-4 أرقام (0-9)." },
+  modal_plate_hint: { en: "Type in Arabic or English — the other script fills in automatically, just like a real Saudi plate.", ar: "اكتب بالعربية أو الإنجليزية — يُملأ النص الآخر تلقائيًا، تمامًا كما في لوحة سعودية حقيقية." },
+  modal_plate_invalid: { en: "Please fill in 1-3 letters and 1-4 digits.", ar: "يرجى إدخال 1-3 أحرف و1-4 أرقام." },
   modal_vehicle_type: { en: "Vehicle type", ar: "نوع المركبة" },
 
   // ---- Add Payment modal ----
@@ -429,7 +429,32 @@ const I18N_DICT = {
   profile_my_vehicle: { en: "My Vehicle", ar: "مركبتي" },
   profile_vehicle_added: { en: "Vehicle added.", ar: "تمت إضافة المركبة." },
   profile_enter_4_digits: { en: "Please enter exactly 4 digits.", ar: "يرجى إدخال 4 أرقام بالضبط." },
-  profile_payment_added: { en: "Payment method added.", ar: "تمت إضافة وسيلة الدفع." }
+  profile_payment_added: { en: "Payment method added.", ar: "تمت إضافة وسيلة الدفع." },
+
+  // ---- Saved address / GPS (Profile) ----
+  profile_address_title: { en: "Saved Address", ar: "العنوان المحفوظ" },
+  profile_address_hint: { en: "Used automatically for Moto-Mobile bookings, so you never type it twice.", ar: "يُستخدم تلقائيًا لحجوزات الدراجة النارية المتنقلة، فلن تكتبه مرتين." },
+  profile_change_address: { en: "Change Address", ar: "تغيير العنوان" },
+  profile_add_address: { en: "Add Address", ar: "إضافة عنوان" },
+  profile_no_address: { en: "No address saved yet.", ar: "لا يوجد عنوان محفوظ بعد." },
+  profile_address_modal_title: { en: "Your Saved Address", ar: "عنوانك المحفوظ" },
+  profile_address_label: { en: "Address", ar: "العنوان" },
+  profile_address_placeholder: { en: "Search your address…", ar: "ابحث عن عنوانك…" },
+  btn_use_my_location: { en: "Use my current location", ar: "استخدم موقعي الحالي" },
+  btn_save_address: { en: "Save Address", ar: "حفظ العنوان" },
+  profile_enter_address: { en: "Please enter an address.", ar: "يرجى إدخال عنوان." },
+  profile_address_saved: { en: "Address saved.", ar: "تم حفظ العنوان." },
+
+  // ---- GPS / maps (Seller dashboard + Booking) ----
+  biz_location_map_label: { en: "Pin your exact location on the map", ar: "حدد موقعك بدقة على الخريطة" },
+  biz_area_map_label: { en: "Set your base point and region of access", ar: "حدد نقطة انطلاقك ونطاق تغطيتك" },
+  biz_service_radius_label: { en: "Service radius (km)", ar: "نطاق الخدمة (كم)" },
+  booking_moto_uses_saved: { en: "We'll come to your saved address:", ar: "سنأتي إلى عنوانك المحفوظ:" },
+  booking_moto_no_saved: { en: "You haven't saved an address yet.", ar: "لم تحفظ عنوانًا بعد." },
+  booking_moto_add_in_profile: { en: "Add one in your Profile", ar: "أضف واحدًا في ملفك الشخصي" },
+  bd_address_map_hint: { en: "Search or drag the pin to set exactly where we should come.", ar: "ابحث أو اسحب الدبوس لتحديد مكان الوصول بدقة." },
+  bd_shop_location: { en: "Shop Location", ar: "موقع المحل" },
+  book_map_view: { en: "Map View", ar: "عرض الخريطة" }
 };
 
 const I18n = {

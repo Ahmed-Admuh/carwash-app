@@ -5,10 +5,12 @@ const { requireAuth } = require("../middleware/auth");
 const router = express.Router();
 
 // Saudi private plates: 1-3 letters + 1-4 digits (digits are always Western/
-// English numerals — Eastern Arabic numerals like ٠١٢٣ aren't used on
-// plates). Letters can be entered in English OR in the specific Arabic
-// letter set that has a direct Latin equivalent on real Saudi plates.
-const PLATE_RE = /^[A-Za-z\u0623\u0627\u0628\u062D\u062F\u0631\u0633\u0635\u0637\u0639\u0642\u0643\u0644\u0645\u0646\u0647\u0648\u064A]{1,3}\s\d{1,4}$/;
+// English numerals — the plate widget on the frontend converts any Eastern
+// Arabic digits before submitting). Letters must come from the official
+// 17-letter set used on real Saudi plates — A B J D R S X T E G K L Z N H
+// U V (Latin) — entered either in English or in their exact Arabic
+// counterpart (the frontend keeps both sides in sync automatically).
+const PLATE_RE = /^[ABJDRSXTEGKLZNHUVabjdrsxtegklznhuv\u0623\u0627\u0628\u062D\u062F\u0631\u0633\u0635\u0637\u0639\u0642\u0643\u0644\u0645\u0646\u0647\u0648\u0649\u064A]{1,3}\s\d{1,4}$/;
 
 // GET /api/vehicles
 router.get("/", requireAuth, async (req, res) => {

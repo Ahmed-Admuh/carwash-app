@@ -26,6 +26,13 @@ CREATE TABLE users (
   role VARCHAR(20) NOT NULL DEFAULT 'customer',
   avatar_url TEXT,
   points_balance INTEGER NOT NULL DEFAULT 0,
+  -- Saved home address — used automatically for moto-mobile bookings (the
+  -- customer never re-types an address for those; a fixed-location wash
+  -- needs no address at all, and a home-service/van booking asks fresh
+  -- each time in case they want the wash somewhere else that day).
+  saved_address TEXT,
+  saved_address_lat NUMERIC(9,6),
+  saved_address_lng NUMERIC(9,6),
   created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -53,6 +60,15 @@ CREATE TABLE car_washes (
   service_type VARCHAR(24) NOT NULL DEFAULT 'location',
   location VARCHAR(160),
   address VARCHAR(200),
+  -- GPS pin for a fixed 'location' wash — set by the seller by dropping a
+  -- pin / searching an address on the map in the seller dashboard.
+  latitude NUMERIC(9,6),
+  longitude NUMERIC(9,6),
+  -- Center point of the "region of access" circle for 'home-service' and
+  -- 'moto-mobile' sellers (van/motorcycle base). Paired with
+  -- service_radius_km below to draw the coverage circle on the map.
+  service_area_lat NUMERIC(9,6),
+  service_area_lng NUMERIC(9,6),
   distance_km NUMERIC(4,1) DEFAULT 0,
   rating NUMERIC(2,1) DEFAULT 4.5,        -- seed/starting rating; live average also derivable from reviews
   review_count INTEGER DEFAULT 0,
@@ -129,6 +145,8 @@ CREATE TABLE bookings (
   payment_method_type VARCHAR(20) NOT NULL DEFAULT 'cash',  -- denormalized copy, always set, incl. 'cash'
   payment_status VARCHAR(20) NOT NULL DEFAULT 'unpaid',     -- 'unpaid' | 'paid' | 'refunded'
   address TEXT,
+  address_lat NUMERIC(9,6),  -- GPS pin for this booking's service address (home-service:
+  address_lng NUMERIC(9,6),  -- picked fresh on the map; moto-mobile: copied from customer's saved address)
   special_requests TEXT,
   points_earned INTEGER NOT NULL DEFAULT 0,
   status VARCHAR(20) DEFAULT 'confirmed', -- 'pending' | 'confirmed' | 'completed' | 'cancelled'

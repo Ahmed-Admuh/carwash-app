@@ -36,7 +36,9 @@ router.post("/", requireAuth, async (req, res) => {
       paymentMethodId,   // null/omitted for cash
       paymentMethodType, // 'visa' | 'mastercard' | 'amex' | 'discover' | 'apple-pay' | 'cash'
       specialRequests,
-      address
+      address,
+      addressLat,
+      addressLng
     } = req.body;
 
     if (!carWashId || !washType || !date || !time) {
@@ -61,9 +63,35 @@ router.post("/", requireAuth, async (req, res) => {
       return res.status(404).json({ error: "Car wash not found." });
     }
 
-    if (wash.service_type !== "location" && (!address || !address.trim())) {
-      await client.query("ROLLBACK");
-      return res.status(400).json({ error: "Please provide an address for this mobile service." });
+    // Address resolution depends on the wash's service type:
+    //  - 'location'      : customer drives there, no address needed at all.
+    //  - 'home-service'  : a van comes to a fresh address picked for THIS
+    //                      booking (with an optional GPS pin from the map).
+    //  - 'moto-mobile'   : never asks for an address in the booking flow —
+    //                      it always uses the customer's one saved profile
+    //                      address, set once from the Profile page.
+    let resolvedAddress = null;
+    let resolvedAddressLat = null;
+    let resolvedAddressLng = null;
+
+    if (wash.service_type === "home-service") {
+      if (!address || !address.trim()) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({ error: "Please provide an address for this mobile service." });
+      }
+      resolvedAddress = address.trim();
+      resolvedAddressLat = addressLat ?? null;
+      resolvedAddressLng = addressLng ?? null;
+    } else if (wash.service_type === "moto-mobile") {
+      const userResult = await client.query("SELECT saved_address, saved_address_lat, saved_address_lng FROM users WHERE id = $1", [req.user.id]);
+      const customer = userResult.rows[0];
+      if (!customer || !customer.saved_address) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({ error: "Please add your address in your Profile first — moto-mobile bookings always use your saved address." });
+      }
+      resolvedAddress = customer.saved_address;
+      resolvedAddressLat = customer.saved_address_lat;
+      resolvedAddressLng = customer.saved_address_lng;
     }
 
     // Check slot capacity
@@ -155,13 +183,13 @@ router.post("/", requireAuth, async (req, res) => {
       `INSERT INTO bookings
         (booking_ref, user_id, car_wash_id, vehicle_id, wash_type, addons, booking_date, booking_time,
          base_price, addons_price, tax, total_price, payment_method_id, payment_method_type, payment_status,
-         address, special_requests, points_earned, status)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
+         address, address_lat, address_lng, special_requests, points_earned, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
        RETURNING *`,
       [
         bookingRef, req.user.id, carWashId, vehicleId || null, washType, JSON.stringify(addons),
         date, time, basePrice, addonsPrice, tax, total, paymentMethodId || null, paymentMethodType,
-        paymentStatus, (address && address.trim()) || null, specialRequests || null, pointsEarned, initialStatus
+        paymentStatus, resolvedAddress, resolvedAddressLat, resolvedAddressLng, specialRequests || null, pointsEarned, initialStatus
       ]
     );
 

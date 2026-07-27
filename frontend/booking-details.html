@@ -210,6 +210,8 @@
 <script src="js/auth.js"></script>
 <script src="js/i18n.js"></script>
 <script src="js/menu.js"></script>
+<script src="js/config.js"></script>
+<script src="js/gmaps.js"></script>
 <script>
   function t(key, fallback) { return window.I18n ? I18n.t(key) : fallback; }
 
@@ -237,6 +239,7 @@
   const washId = urlParams.get('id');
 
   let wash = null;
+  let currentUser = null;
   let state = {
     vehicleType: "sedan",
     washType: "exterior",
@@ -257,6 +260,15 @@
     } catch (err) {
       console.warn('Backend not reachable, using sample data.', err);
       wash = sampleWash;
+    }
+    if (Auth.isLoggedIn()) {
+      try {
+        const me = await apiFetch('/auth/me');
+        currentUser = me.user;
+      } catch (err) {
+        // non-fatal — booking flow still works, moto-mobile note just won't
+        // show a saved address until they log in / refresh
+      }
     }
     renderPage();
   });
@@ -310,10 +322,28 @@
 
         <div class="step-label" style="margin-top: 1.75rem;" data-i18n="step_4">Step 4</div>
         <h2 class="section-title" style="font-size: 1.15rem;"><i class="fas fa-calendar-alt"></i> <span data-i18n="heading_date_time">Date & Time</span></h2>
-        ${isMobile ? `
+        ${wash.service_type === 'home-service' ? `
         <div class="form-group">
           <label for="service-address"><i class="fas fa-location-dot"></i> <span data-i18n="booking_where_come">Where should we come?</span></label>
-          <input type="text" id="service-address" class="form-control" placeholder="Street address, city, unit/apt (if any)" data-i18n-placeholder="bd_address_placeholder">
+          <input type="text" id="service-address" class="form-control address-search-input" placeholder="Street address, city, unit/apt (if any)" data-i18n-placeholder="bd_address_placeholder">
+          <p class="text-muted" style="font-size: 0.76rem; margin-top: 0.35rem;" data-i18n="bd_address_map_hint">Search or drag the pin to set exactly where we should come.</p>
+          <div class="map-picker" id="bdAddressMap"></div>
+        </div>
+        ` : ''}
+        ${wash.service_type === 'moto-mobile' ? `
+        <div class="moto-address-note">
+          <i class="fas fa-motorcycle"></i>
+          <div>
+            ${currentUser && currentUser.savedAddress
+              ? `${t('booking_moto_uses_saved', "We'll come to your saved address:")} <strong>${currentUser.savedAddress}</strong>`
+              : `${t('booking_moto_no_saved', "You haven't saved an address yet.")} <a href="profile.html">${t('booking_moto_add_in_profile', 'Add one in your Profile')}</a>`}
+          </div>
+        </div>
+        ` : ''}
+        ${wash.service_type === 'location' && wash.latitude && wash.longitude ? `
+        <div class="form-group">
+          <label><i class="fas fa-map-marker-alt"></i> <span data-i18n="bd_shop_location">Shop Location</span></label>
+          <div class="map-picker" id="bdShopMap"></div>
         </div>
         ` : ''}
         <div class="form-group">
@@ -368,8 +398,26 @@
 
     document.getElementById('confirm-booking').addEventListener('click', confirmBooking);
     setupAddPaymentModalBD();
+    setupBookingMaps();
 
     if (window.I18n) I18n.applyTranslations();
+  }
+
+  let bdAddressPicker = null;
+  let bdAddressPos = null;
+  function setupBookingMaps() {
+    if (wash.service_type === 'home-service') {
+      GMaps.createPicker({
+        elementId: 'bdAddressMap',
+        autocompleteInputId: 'service-address',
+        onChange(lat, lng, address) {
+          bdAddressPos = { lat, lng };
+          if (address) document.getElementById('service-address').value = address;
+        }
+      }).then(picker => { bdAddressPicker = picker; });
+    } else if (wash.service_type === 'location' && wash.latitude && wash.longitude) {
+      GMaps.createMapView('bdShopMap', [{ lat: wash.latitude, lng: wash.longitude, title: wash.name }]);
+    }
   }
 
   function availableVehicleTypes() {
@@ -714,13 +762,23 @@
       return;
     }
 
-    const isMobile = wash.service_type !== 'location';
     const addressInput = document.getElementById('service-address');
-    const address = isMobile ? (addressInput ? addressInput.value.trim() : '') : null;
-    if (isMobile && !address) {
-      showToast('Please enter an address for this mobile service.', true);
-      addressInput.focus();
-      return;
+    let address = null, addressLat = null, addressLng = null;
+    if (wash.service_type === 'home-service') {
+      address = addressInput ? addressInput.value.trim() : '';
+      if (!address) {
+        showToast('Please enter an address for this mobile service.', true);
+        if (addressInput) addressInput.focus();
+        return;
+      }
+      if (bdAddressPos) { addressLat = bdAddressPos.lat; addressLng = bdAddressPos.lng; }
+    } else if (wash.service_type === 'moto-mobile') {
+      if (!currentUser || !currentUser.savedAddress) {
+        showToast(t('booking_moto_no_saved', "You haven't saved an address yet.") + ' ' + t('booking_moto_add_in_profile', 'Add one in your Profile'), true);
+        return;
+      }
+      // Address itself is resolved server-side from the customer's saved
+      // profile address — nothing to send here.
     }
 
     const btn = document.getElementById('confirm-booking');
@@ -739,7 +797,9 @@
           paymentMethodId: state.selectedPayment === 'cash' ? null : state.selectedPayment,
           paymentMethodType: state.selectedPaymentType,
           specialRequests: document.getElementById('special-requests').value,
-          address: address
+          address: address,
+          addressLat: addressLat,
+          addressLng: addressLng
         })
       });
 

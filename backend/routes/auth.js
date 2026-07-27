@@ -25,6 +25,9 @@ function publicUser(row) {
     role: row.role,
     avatarUrl: row.avatar_url,
     pointsBalance: row.points_balance,
+    savedAddress: row.saved_address,
+    savedAddressLat: row.saved_address_lat,
+    savedAddressLng: row.saved_address_lng,
     createdAt: row.created_at
   };
 }
@@ -183,6 +186,49 @@ router.get("/me", requireAuth, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Could not load profile." });
+  }
+});
+
+// PATCH /api/auth/me/address — set/update the customer's one saved address.
+// This is what moto-mobile bookings use automatically (no address step in
+// the booking flow itself). body: { address, lat, lng }
+router.patch("/me/address", requireAuth, async (req, res) => {
+  try {
+    const { address, lat, lng } = req.body;
+    if (!address || !address.trim()) {
+      return res.status(400).json({ error: "Please enter an address." });
+    }
+    if (lat != null && (isNaN(lat) || lat < -90 || lat > 90)) {
+      return res.status(400).json({ error: "Invalid latitude." });
+    }
+    if (lng != null && (isNaN(lng) || lng < -180 || lng > 180)) {
+      return res.status(400).json({ error: "Invalid longitude." });
+    }
+
+    const result = await pool.query(
+      `UPDATE users SET saved_address = $1, saved_address_lat = $2, saved_address_lng = $3
+       WHERE id = $4 RETURNING *`,
+      [address.trim(), lat ?? null, lng ?? null, req.user.id]
+    );
+    res.json(publicUser(result.rows[0]));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Could not save your address." });
+  }
+});
+
+// DELETE /api/auth/me/address — clear the saved address
+router.delete("/me/address", requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `UPDATE users SET saved_address = NULL, saved_address_lat = NULL, saved_address_lng = NULL
+       WHERE id = $1 RETURNING *`,
+      [req.user.id]
+    );
+    res.json(publicUser(result.rows[0]));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Could not clear your address." });
   }
 });
 

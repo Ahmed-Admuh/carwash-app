@@ -1521,49 +1521,148 @@ html[dir="rtl"] .book-search-bar input { padding: 0.75rem 2.6rem 0.75rem 1rem; }
 }
 
 /* ============================================================
-   Saudi-style plate input (Add Vehicle modal)
+   Saudi-style plate input (Add Vehicle modal) — two-row widget
+   with live Arabic <-> English auto-transliteration per cell.
    ============================================================ */
-.ksa-plate-input {
+.ksa-plate-widget {
   display: flex;
   align-items: stretch;
-  border: 2px solid var(--ink);
-  border-radius: 6px;
+  border: 3px solid var(--ink);
+  border-radius: 8px;
   overflow: hidden;
-  background: white;
-  height: 56px;
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
 }
-.ksa-plate-flag {
-  background: #0B6B3A;
-  color: white;
+.ksa-plate-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0.4rem 0.6rem;
+}
+.ksa-plate-row {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 0.5rem;
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  font-size: 0.55rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  flex-shrink: 0;
+  gap: 0.6rem;
 }
-.ksa-plate-letters,
-.ksa-plate-digits {
-  border: none;
-  outline: none;
+.ksa-plate-row-sep {
+  height: 2px;
+  background: var(--ink);
+  opacity: 0.7;
+  margin: 0.3rem 0;
+}
+.ksa-cell-group {
+  display: flex;
+  gap: 0.25rem;
+}
+.ksa-cell-divider {
+  width: 2px;
+  align-self: stretch;
+  background: var(--ink);
+  opacity: 0.5;
+}
+.ksa-cell {
+  width: 1.9rem;
+  height: 2.3rem;
   text-align: center;
+  border: 1.5px solid #cfd6dc;
+  border-radius: 4px;
   font-family: 'Space Grotesk', sans-serif;
   font-weight: 700;
-  font-size: 1.4rem;
-  letter-spacing: 0.15em;
+  font-size: 1.15rem;
   color: var(--ink);
+  background: #fbfbfc;
+  outline: none;
+  padding: 0;
+}
+.ksa-cell:focus {
+  border-color: var(--teal);
   background: white;
-  text-transform: uppercase;
 }
-.ksa-plate-letters {
-  flex: 1;
-  border-right: 2px solid var(--ink);
+.ksa-cell-ar { font-family: 'Tahoma', 'Segoe UI', sans-serif; }
+.ksa-cell-en { text-transform: uppercase; }
+.ksa-plate-strip {
+  width: 44px;
+  flex-shrink: 0;
+  background: linear-gradient(180deg, #0B6B3A, #0a5c31);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  border-left: 2px solid var(--ink);
 }
-.ksa-plate-digits {
-  flex: 1.2;
+.ksa-plate-emblem { font-size: 1.1rem; line-height: 1; }
+.ksa-plate-ksa {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
 }
-html[dir="rtl"] .ksa-plate-letters { border-right: none; border-left: 2px solid var(--ink); }
+@media (max-width: 380px) {
+  .ksa-cell { width: 1.5rem; height: 2rem; font-size: 0.95rem; }
+  .ksa-plate-strip { width: 36px; }
+}
+
+/* ============================================================
+   Google Maps pickers / views (seller dashboard, profile,
+   booking details, search)
+   ============================================================ */
+.map-picker {
+  width: 100%;
+  height: 220px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  margin-top: 0.6rem;
+  background: var(--surface-alt);
+}
+.map-picker-tall { height: 280px; }
+.map-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.map-locate-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--teal-dark);
+  background: var(--teal-tint);
+  border: none;
+  border-radius: 999px;
+  padding: 0.4rem 0.85rem;
+  cursor: pointer;
+}
+.address-search-input {
+  margin-top: 0.6rem;
+}
+.saved-address-card {
+  background: var(--surface-alt);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  padding: 0.9rem 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.saved-address-card i { color: var(--teal); margin-top: 0.15rem; }
+.saved-address-card .addr-text { flex: 1; font-size: 0.9rem; color: var(--ink); }
+.moto-address-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  background: var(--teal-tint);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1rem;
+  font-size: 0.85rem;
+  color: var(--ink);
+  margin-bottom: 1rem;
+}
+.moto-address-note i { color: var(--teal-dark); margin-top: 0.15rem; }
+.moto-address-note a { color: var(--teal-dark); font-weight: 600; text-decoration: underline; }

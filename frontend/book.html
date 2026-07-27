@@ -91,6 +91,11 @@
     <span id="result-count" class="result-count" data-i18n="book_loading">Loading…</span>
   </div>
 
+  <div style="display:flex; justify-content:flex-end; margin-bottom: 0.75rem;">
+    <button class="map-locate-btn" id="toggleMapViewBtn"><i class="fas fa-map-location-dot"></i> <span data-i18n="book_map_view">Map View</span></button>
+  </div>
+  <div class="map-picker map-picker-tall" id="searchMap" style="display:none; margin-bottom: 1.25rem;"></div>
+
   <div class="cards" id="carWashList"></div>
 </div>
 
@@ -117,6 +122,8 @@
 <script src="js/auth.js"></script>
 <script src="js/i18n.js"></script>
 <script src="js/menu.js"></script>
+<script src="js/config.js"></script>
+<script src="js/gmaps.js"></script>
 <script>
   const sampleCarWashes = [
     { id: 1, name: "Sparkle Auto Wash", service_type: "location", location: "Downtown", exterior_price: 15, distance_km: 2.8, rating: 4.5, wait_time_minutes: 15 },
@@ -157,7 +164,28 @@
     setupSortButtons();
     setupOpenNowToggle();
     setupSearch();
+    setupMapViewToggle();
   });
+
+  let mapViewOn = false;
+  function setupMapViewToggle() {
+    document.getElementById('toggleMapViewBtn').addEventListener('click', function() {
+      mapViewOn = !mapViewOn;
+      document.getElementById('searchMap').style.display = mapViewOn ? 'block' : 'none';
+      this.classList.toggle('active', mapViewOn);
+      if (mapViewOn) refreshSearchMap();
+    });
+  }
+
+  function refreshSearchMap() {
+    if (!mapViewOn) return;
+    const washes = sortWashes(filterBySearch(allWashes));
+    const items = washes.map(w => w.service_type === 'location'
+      ? { lat: w.latitude, lng: w.longitude, title: w.name }
+      : { lat: w.service_area_lat, lng: w.service_area_lng, title: w.name, isArea: true, radiusKm: w.service_radius_km }
+    );
+    GMaps.createMapView('searchMap', items);
+  }
 
   function setupSearch() {
     document.getElementById('washSearchInput').addEventListener('input', function() {
@@ -218,6 +246,7 @@
       allWashes = currentType ? sampleCarWashes.filter(w => w.service_type === currentType) : sampleCarWashes;
     }
     renderCarWashes(sortWashes(filterBySearch(allWashes)));
+    refreshSearchMap();
   }
 
   function sortWashes(washes) {
