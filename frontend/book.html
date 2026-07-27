@@ -65,6 +65,11 @@
     <button class="service-tab" data-type="moto-mobile"><i class="fas fa-motorcycle"></i> <span data-i18n="book_moto">Moto-Mobile Wash</span></button>
   </div>
 
+  <div class="book-search-bar">
+    <i class="fas fa-search"></i>
+    <input type="text" id="washSearchInput" data-i18n-placeholder="book_search_placeholder" placeholder="Search by name or location…">
+  </div>
+
   <div class="filter-section">
     <div class="filter-group">
       <h3><i class="fas fa-sort-amount-down"></i> <span data-i18n="book_sort_by">Sort By</span></h3>
@@ -135,6 +140,7 @@
   let currentType = "";
   let currentSort = "distance";
   let openNowOnly = false;
+  let searchQuery = "";
 
   document.addEventListener('DOMContentLoaded', function() {
     const params = new URLSearchParams(window.location.search);
@@ -150,7 +156,23 @@
     setupTabs();
     setupSortButtons();
     setupOpenNowToggle();
+    setupSearch();
   });
+
+  function setupSearch() {
+    document.getElementById('washSearchInput').addEventListener('input', function() {
+      searchQuery = this.value.trim().toLowerCase();
+      renderCarWashes(sortWashes(filterBySearch(allWashes)));
+    });
+  }
+
+  function filterBySearch(washes) {
+    if (!searchQuery) return washes;
+    return washes.filter(w =>
+      (w.name || '').toLowerCase().includes(searchQuery) ||
+      (w.location || '').toLowerCase().includes(searchQuery)
+    );
+  }
 
   function setupTabs() {
     document.querySelectorAll('.service-tab').forEach(tab => {
@@ -169,7 +191,7 @@
         document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
         this.classList.add('active');
         currentSort = this.dataset.sort;
-        renderCarWashes(sortWashes(allWashes));
+        renderCarWashes(sortWashes(filterBySearch(allWashes)));
       });
     });
   }
@@ -195,7 +217,7 @@
       console.warn('Backend not reachable, using sample data.', err);
       allWashes = currentType ? sampleCarWashes.filter(w => w.service_type === currentType) : sampleCarWashes;
     }
-    renderCarWashes(sortWashes(allWashes));
+    renderCarWashes(sortWashes(filterBySearch(allWashes)));
   }
 
   function sortWashes(washes) {

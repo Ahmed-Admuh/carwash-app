@@ -46,7 +46,7 @@
     .hero-overlay {
       position: absolute;
       inset: 0;
-      background: linear-gradient(180deg, rgba(11,30,51,0) 40%, rgba(11,30,51,0.75) 100%);
+      background: linear-gradient(180deg, rgba(11,30,51,0) 15%, rgba(11,30,51,0.55) 55%, rgba(11,30,51,0.92) 100%);
       pointer-events: none;
     }
 
@@ -56,9 +56,10 @@
       bottom: 1.6rem;
       right: 1.25rem;
       color: white;
+      text-shadow: 0 1px 6px rgba(0,0,0,0.5);
     }
 
-    .hero-caption .eyebrow { color: var(--amber); margin-bottom: 0.3rem; }
+    .hero-caption .eyebrow { color: var(--amber); margin-bottom: 0.3rem; text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
 
     .hero-caption h1 {
       color: white;
@@ -424,10 +425,58 @@
     renderOffers(offers);
   }
 
+  // A small, fixed set of offers exist in the seed/demo data (English
+  // only, from the database) — translated here the same way add-on names
+  // and reward tiers are, since building full bilingual columns in the
+  // database for just 7 rows isn't worth the schema complexity.
+  const OFFER_TRANSLATIONS = {
+    "20% Off New Users": {
+      title: "خصم 20% للمستخدمين الجدد",
+      description: "احصل على خصم 20% على أول حجز لك في Car Wash Finder — أي موقع، أي نوع خدمة. يُطبّق تلقائيًا عند الدفع في طلبك الأول.",
+      discount_text: "خصم 20%"
+    },
+    "Monthly Value Pack — 4 Washes": {
+      title: "باقة القيمة الشهرية — 4 غسلات",
+      description: "ادفع مقدمًا مقابل 4 غسلات خلال شهر واحد في نفس الموقع واحصل على خصم 15% على الإجمالي، محسوبًا لكل غسلة. مثالي للمترددين بانتظام — اذكر هذا العرض عند حجز أول غسلة في الشهر.",
+      discount_text: "خصم 15%"
+    },
+    "Bi-Weekly Shine Plan — 2 Washes": {
+      title: "خطة اللمعان نصف الشهرية — غسلتان",
+      description: "احجز غسلتين في نفس الشهر وفي نفس الموقع واحصل على خصم 10% عليهما. التزام أخف من باقة القيمة الشهرية، بنفس الفكرة.",
+      discount_text: "خصم 10%"
+    },
+    "Summer Deals": {
+      title: "عروض الصيف",
+      description: "أسعار موسمية على الغسيل الخارجي في المواقع المشاركة على مستوى الدولة حتى نهاية الصيف. ابحث عن شارة عروض الصيف على غسيلات السيارات المؤهلة.",
+      discount_text: "خصم يصل إلى 15%"
+    },
+    "Loyalty Rewards": {
+      title: "مكافآت الولاء",
+      description: "اكسب نقاطًا مع كل حجز — يعتمد العدد على مكان الغسيل والمبلغ الذي تدفعه. اجمع 500 نقطة للحصول على غسيل أساسي مجاني، و1000 نقطة لتلميع كامل مجاني، والمزيد. النقاط لا تنتهي صلاحيتها.",
+      discount_text: "اكسب أثناء الاستخدام"
+    },
+    "Free Wax Upgrade": {
+      title: "ترقية شمع مجانية",
+      description: "احجز باقة التلميع المميز أو الخدمة الفاخرة هذا الأسبوع وسنضيف ترقية طبقة الشمع دون أي رسوم إضافية.",
+      discount_text: "ترقية مجانية"
+    },
+    "Group Discount": {
+      title: "خصم المجموعات",
+      description: "هل تحجز 3 مركبات أو أكثر لنفس اليوم والموقع؟ احصل على خصم 15% على حجز المجموعة بالكامل. ينطبق على المواقع الثابتة والخدمات المتنقلة على مستوى الدولة.",
+      discount_text: "خصم 15%"
+    }
+  };
+  function localizeOffer(offer) {
+    const isAr = window.I18n && I18n.lang === 'ar';
+    const tr = isAr ? OFFER_TRANSLATIONS[offer.title] : null;
+    return tr ? { ...offer, title: tr.title, description: tr.description, discount_text: tr.discount_text } : offer;
+  }
+
   function renderOffers(offers) {
     const scroll = document.getElementById('offersScroll');
     scroll.innerHTML = '';
-    offers.forEach(offer => {
+    offers.forEach(rawOffer => {
+      const offer = localizeOffer(rawOffer);
       const chip = document.createElement('button');
       chip.className = 'offer-chip';
       chip.innerHTML = `
@@ -435,12 +484,13 @@
         <div>${offer.title}</div>
         <div class="offer-chip-tag">${offer.discount_text || ''}</div>
       `;
-      chip.addEventListener('click', () => openOfferModal(offer));
+      chip.addEventListener('click', () => openOfferModal(rawOffer));
       scroll.appendChild(chip);
     });
   }
 
-  function openOfferModal(offer) {
+  function openOfferModal(rawOffer) {
+    const offer = localizeOffer(rawOffer);
     const t = (key, fallback) => (window.I18n ? I18n.t(key) : fallback);
     const locale = (window.I18n && I18n.lang === 'ar') ? 'ar' : 'en-US';
 

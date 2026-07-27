@@ -11,8 +11,11 @@ const VEHICLE_SURCHARGE = {
   van: 10
 };
 
-const TAX_RATE = 0.1;
 const VALID_PAYMENT_TYPES = ["visa", "mastercard", "amex", "discover", "apple-pay", "cash"];
+// Note: no separate tax calculation — in Saudi Arabia, prices sellers set
+// are expected to already be VAT-inclusive, so nothing is added on top.
+// The `tax` column stays in the schema (old bookings still have real
+// values in it) but new bookings always write 0.
 
 function generateBookingRef() {
   return "CW-" + Math.floor(100000 + Math.random() * 900000);
@@ -46,7 +49,7 @@ router.post("/", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "Please choose a payment method." });
     }
     if (paymentMethodType !== "cash" && !paymentMethodId) {
-      return res.status(400).json({ error: "Please choose a saved payment method, or select Cash." });
+      return res.status(400).json({ error: "Please choose a saved payment method, or select Pay at Location." });
     }
 
     await client.query("BEGIN");
@@ -92,7 +95,7 @@ router.post("/", requireAuth, async (req, res) => {
 
     if (wash.require_cash_only && paymentMethodType !== "cash") {
       await client.query("ROLLBACK");
-      return res.status(400).json({ error: "This wash only accepts cash paid in person — please select Cash to continue." });
+      return res.status(400).json({ error: "This wash only accepts payment at the location — please select Pay at Location to continue." });
     }
 
     // Resolve addons (validated against DB, not trusted from client)
@@ -120,8 +123,15 @@ router.post("/", requireAuth, async (req, res) => {
     }
 
     const subtotal = basePrice + addonsPrice;
-    const tax = Math.round(subtotal * TAX_RATE * 100) / 100;
-    const total = Math.round((subtotal + tax) * 100) / 100;
+    // Saudi prices are VAT-inclusive by law — sellers set the final price,
+    // nothing is added on top. For the receipt, the 15% VAT portion is
+    // reverse-calculated out of that inclusive total purely for
+    // transparency (showing "price excl. VAT" + "VAT (15%)" that sum back
+    // to the same total the customer already agreed to).
+    const VAT_RATE = 0.15;
+    const total = Math.round(subtotal * 100) / 100;
+    const preTaxAmount = Math.round((total / (1 + VAT_RATE)) * 100) / 100;
+    const tax = Math.round((total - preTaxAmount) * 100) / 100;
 
     // Cash is settled in person later (unpaid until then); every other method
     // is treated as paid immediately — there's no real payment gateway wired

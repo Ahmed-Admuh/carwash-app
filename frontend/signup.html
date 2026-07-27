@@ -70,6 +70,8 @@
 </head>
 <body>
 
+<button class="appbar-btn auth-back-btn" onclick="window.history.back()" aria-label="Back"><i class="fas fa-arrow-left"></i></button>
+
 <div class="auth-shell">
   <div class="auth-card">
     <div class="auth-logo"><img src="assets/logo.svg" alt="" class="auth-logo-img"> Car Wash Finder</div>
@@ -132,7 +134,7 @@
           <input type="number" id="bizPointsRate" class="form-control" min="0" step="0.1" value="1.0">
         </div>
         <div class="form-group">
-          <label><input type="checkbox" id="bizCashOnly"> <span data-i18n="biz_cash_only_label">Only accept cash paid in person (no cards or Apple Pay)</span></label>
+          <label><input type="checkbox" id="bizCashOnly"> <span data-i18n="biz_cash_only_label">Only accept payment at the location (no cards or Apple Pay online)</span></label>
         </div>
 
         <div class="section-divider" data-i18n="biz_extras_title">Extra services (optional)</div>

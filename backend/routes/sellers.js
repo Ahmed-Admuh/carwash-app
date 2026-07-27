@@ -40,7 +40,7 @@ router.post("/washes", async (req, res) => {
       name, serviceType, location, address, exteriorPrice, fullWashAddon,
       pointsRate, autoAccept, concurrentSlots, slotIntervalMinutes,
       serviceRadiusKm, operatingHours, description, imageUrl, extras,
-      vehiclePricing, requireCashOnly
+      vehiclePricing, requireCashOnly, galleryImages
     } = req.body;
 
     if (!name || !name.trim()) return res.status(400).json({ error: "Please name your wash place." });
@@ -61,8 +61,8 @@ router.post("/washes", async (req, res) => {
       `INSERT INTO car_washes
         (owner_id, name, service_type, location, address, exterior_price, full_wash_addon,
          points_rate, auto_accept, concurrent_slots, slot_interval_minutes, service_radius_km,
-         operating_hours, description, image_url, vehicle_pricing, require_cash_only)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+         operating_hours, description, image_url, vehicle_pricing, require_cash_only, gallery_images)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
        RETURNING *`,
       [
         req.user.id, name.trim(), serviceType,
@@ -73,7 +73,8 @@ router.post("/washes", async (req, res) => {
         JSON.stringify(operatingHours || { is24_7: true, schedule: {} }),
         description || null, imageUrl || null,
         vehiclePricing ? JSON.stringify(vehiclePricing) : null,
-        !!requireCashOnly
+        !!requireCashOnly,
+        JSON.stringify(Array.isArray(galleryImages) ? galleryImages : [])
       ]
     );
     const wash = result.rows[0];
@@ -197,7 +198,7 @@ router.get("/bookings", async (req, res) => {
     const params = [req.user.id];
     let query = `
       SELECT b.*, c.name AS car_wash_name, c.service_type, u.name AS customer_name, u.email AS customer_email,
-             v.nickname AS vehicle_nickname, v.vehicle_type
+             v.model AS vehicle_model, v.vehicle_type, v.plate AS vehicle_plate
       FROM bookings b
       JOIN car_washes c ON c.id = b.car_wash_id
       JOIN users u ON u.id = b.user_id

@@ -107,7 +107,7 @@
         <input type="number" id="nwPointsRate" class="form-control" min="0" step="0.1" value="1.0">
       </div>
       <div class="form-group">
-        <label><input type="checkbox" id="nwCashOnly"> <span data-i18n="biz_cash_only_label">Only accept cash paid in person (no cards or Apple Pay)</span></label>
+        <label><input type="checkbox" id="nwCashOnly"> <span data-i18n="biz_cash_only_label">Only accept payment at the location (no cards or Apple Pay online)</span></label>
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -134,6 +134,28 @@
       <button type="button" class="btn btn-outline btn-block" id="nwAddExtraBtn" style="margin-bottom: 1.1rem;">
         <i class="fas fa-plus"></i> <span data-i18n="biz_add_extra">Add an Extra</span>
       </button>
+
+      <div class="section-divider" data-i18n="biz_profile_title">Store Profile</div>
+      <p class="text-muted" style="font-size: 0.78rem; margin-top: -0.5rem; margin-bottom: 0.9rem;" data-i18n="biz_profile_hint">
+        Shown to customers on this wash's About page, along with its reviews.
+      </p>
+      <div class="form-group">
+        <label data-i18n="biz_description_label">Description</label>
+        <textarea id="nwDescription" class="form-control" rows="3" data-i18n-placeholder="biz_description_placeholder" placeholder="Tell customers what makes your wash place worth choosing…"></textarea>
+      </div>
+      <div class="form-group">
+        <label data-i18n="biz_cover_photo_label">Cover photo URL</label>
+        <input type="text" id="nwImageUrl" class="form-control" data-i18n-placeholder="biz_photo_url_placeholder" placeholder="https://…">
+      </div>
+      <div class="form-group">
+        <label data-i18n="biz_gallery_label">Gallery photos</label>
+        <div id="nwGalleryList"></div>
+        <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
+          <input type="text" id="nwGalleryUrlInput" class="form-control" data-i18n-placeholder="biz_photo_url_placeholder" placeholder="https://…" style="flex:1;">
+          <button type="button" class="btn btn-outline" id="nwAddGalleryBtn" style="width:auto; padding: 0 1rem;"><i class="fas fa-plus"></i></button>
+        </div>
+      </div>
+
       <button type="submit" class="btn btn-block" id="nwSubmitBtn" data-i18n="seller_add_wash">Add Wash Place</button>
     </form>
   </div>
@@ -238,7 +260,7 @@
     const grid = document.getElementById('statsGrid');
     if (isDaily) {
       grid.innerHTML = `
-        <div class="stat-card"><div class="stat-label" data-i18n="seller_col_status">Status</div><div class="stat-value">${stats.total_bookings}</div></div>
+        <div class="stat-card"><div class="stat-label" data-i18n="seller_total_bookings_day">Total Bookings</div><div class="stat-value">${stats.total_bookings}</div></div>
         <div class="stat-card"><div class="stat-label" data-i18n="seller_status_pending">pending</div><div class="stat-value">${stats.pending}</div></div>
         <div class="stat-card"><div class="stat-label" data-i18n="bc_status_confirmed">confirmed</div><div class="stat-value">${stats.confirmed}</div></div>
         <div class="stat-card"><div class="stat-label" data-i18n="bc_status_completed">completed</div><div class="stat-value">${stats.completed}</div></div>
@@ -274,7 +296,7 @@
       <div class="wash-owned-card">
         ${w.image_url ? `<img src="${w.image_url}" alt="${w.name}">` : ''}
         <div style="flex:1;">
-          <h4>${w.name} ${w.is_open_now ? `<span class="open-now-badge" data-i18n="seller_open_now">Open</span>` : `<span class="closed-now-badge" data-i18n="seller_closed_now">Closed</span>`} ${w.require_cash_only ? `<span class="closed-now-badge" data-i18n="seller_cash_only_badge">Cash Only</span>` : ''}</h4>
+          <h4>${w.name} ${w.is_open_now ? `<span class="open-now-badge" data-i18n="seller_open_now">Open</span>` : `<span class="closed-now-badge" data-i18n="seller_closed_now">Closed</span>`} ${w.require_cash_only ? `<span class="closed-now-badge" data-i18n="seller_cash_only_badge">Pay at Location Only</span>` : ''}</h4>
           <div class="meta">${typeLabels[w.service_type] || w.service_type} • ${w.location || t('book_comes_to_you', 'Comes to you')} • ${t('seller_pts_rate', 'pts rate')}: ${w.points_rate}x • ${formatPrice(w.exterior_price)} ${t('seller_base', 'base')}</div>
           <div class="wash-card-actions">
             <button class="btn-small edit-wash-btn" data-id="${w.id}"><i class="fas fa-pen"></i> <span data-i18n="seller_edit_wash">Edit Settings</span></button>
@@ -407,6 +429,8 @@
     document.getElementById('nwHoursPeriods').innerHTML = '';
     document.getElementById('nwHoursPeriods').style.display = 'none';
     document.getElementById('nwAddPeriodBtn').style.display = 'none';
+    nwGalleryUrls = [];
+    nwRenderGalleryList();
     document.querySelector('#addWashModal h3').textContent = t('seller_add_wash', 'Add Wash Place');
     document.getElementById('nwSubmitBtn').textContent = t('seller_add_wash', 'Add Wash Place');
     nwBuildVehiclePricingGrid();
@@ -428,6 +452,10 @@
     document.getElementById('nwSlotInterval').value = wash.slot_interval_minutes;
     document.getElementById('nwAutoAccept').checked = wash.auto_accept;
     document.getElementById('nw24_7').checked = !wash.operating_hours || wash.operating_hours.is24_7;
+    document.getElementById('nwDescription').value = wash.description || '';
+    document.getElementById('nwImageUrl').value = wash.image_url || '';
+    nwGalleryUrls = Array.isArray(wash.gallery_images) ? [...wash.gallery_images] : [];
+    nwRenderGalleryList();
 
     nwBuildVehiclePricingGrid(wash.vehicle_pricing);
 
@@ -549,6 +577,38 @@
   }
   document.getElementById('nwAddExtraBtn').addEventListener('click', () => nwAddExtraRow());
 
+  // ---- Gallery photo management ----
+  let nwGalleryUrls = [];
+  function nwRenderGalleryList() {
+    const list = document.getElementById('nwGalleryList');
+    if (nwGalleryUrls.length === 0) {
+      list.innerHTML = `<div class="text-muted" style="font-size: 0.8rem;" data-i18n="biz_no_gallery_photos">No gallery photos added yet.</div>`;
+      if (window.I18n) I18n.applyTranslations();
+      return;
+    }
+    list.innerHTML = nwGalleryUrls.map((url, idx) => `
+      <div class="gallery-url-row" data-idx="${idx}">
+        <img src="${url}" alt="" onerror="this.style.display='none'">
+        <span class="gallery-url-text">${url}</span>
+        <button type="button" class="item-delete-btn nw-remove-gallery-btn" data-idx="${idx}"><i class="fas fa-trash"></i></button>
+      </div>
+    `).join('');
+    list.querySelectorAll('.nw-remove-gallery-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        nwGalleryUrls.splice(parseInt(btn.dataset.idx, 10), 1);
+        nwRenderGalleryList();
+      });
+    });
+  }
+  document.getElementById('nwAddGalleryBtn').addEventListener('click', () => {
+    const input = document.getElementById('nwGalleryUrlInput');
+    const url = input.value.trim();
+    if (!url) return;
+    nwGalleryUrls.push(url);
+    input.value = '';
+    nwRenderGalleryList();
+  });
+
   function nwCollectExtras() {
     return Array.from(document.querySelectorAll('#nwExtrasList .nw-extra-row')).map(row => {
       const presetVal = row.querySelector('.nw-extra-preset').value;
@@ -615,6 +675,8 @@
     const slotIntervalMinutes = parseInt(document.getElementById('nwSlotInterval').value, 10) || 15;
     const autoAccept = document.getElementById('nwAutoAccept').checked;
     const requireCashOnly = document.getElementById('nwCashOnly').checked;
+    const description = document.getElementById('nwDescription').value.trim();
+    const imageUrl = document.getElementById('nwImageUrl').value.trim();
 
     if (!name) { showToast(t('val_enter_business_name', 'Please enter your business name.'), true); return; }
     if (!vehiclePricing.sedan) {
@@ -630,7 +692,10 @@
       exteriorPrice: vehiclePricing.sedan.exterior, fullWashAddon: vehiclePricing.sedan.full - vehiclePricing.sedan.exterior,
       vehiclePricing, pointsRate, concurrentSlots, slotIntervalMinutes, autoAccept, requireCashOnly,
       operatingHours: nwBuildOperatingHours(),
-      extras: nwCollectExtras()
+      extras: nwCollectExtras(),
+      description: description || null,
+      imageUrl: imageUrl || null,
+      galleryImages: nwGalleryUrls
     };
 
     try {

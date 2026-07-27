@@ -4,6 +4,12 @@ const { requireAuth } = require("../middleware/auth");
 
 const router = express.Router();
 
+// Saudi private plates: 1-3 letters + 1-4 digits (digits are always Western/
+// English numerals — Eastern Arabic numerals like ٠١٢٣ aren't used on
+// plates). Letters can be entered in English OR in the specific Arabic
+// letter set that has a direct Latin equivalent on real Saudi plates.
+const PLATE_RE = /^[A-Za-z\u0623\u0627\u0628\u062D\u062F\u0631\u0633\u0635\u0637\u0639\u0642\u0643\u0644\u0645\u0646\u0647\u0648\u064A]{1,3}\s\d{1,4}$/;
+
 // GET /api/vehicles
 router.get("/", requireAuth, async (req, res) => {
   try {
@@ -21,13 +27,16 @@ router.get("/", requireAuth, async (req, res) => {
 // POST /api/vehicles
 router.post("/", requireAuth, async (req, res) => {
   try {
-    const { nickname, make, model, plate, vehicleType } = req.body;
-    if (!vehicleType) return res.status(400).json({ error: "vehicleType is required." });
+    const { model, plate, vehicleType } = req.body;
+    if (!vehicleType) return res.status(400).json({ error: "Please choose a vehicle type." });
+    if (!plate || !PLATE_RE.test(plate.trim())) {
+      return res.status(400).json({ error: "Please enter a valid plate — 1-3 letters, a space, then 1-4 digits (e.g. ABC 1234)." });
+    }
 
     const result = await pool.query(
-      `INSERT INTO vehicles (user_id, nickname, make, model, plate, vehicle_type)
-       VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-      [req.user.id, nickname || null, make || null, model || null, plate || null, vehicleType]
+      `INSERT INTO vehicles (user_id, model, plate, vehicle_type)
+       VALUES ($1,$2,$3,$4) RETURNING *`,
+      [req.user.id, model || null, plate.trim().toUpperCase(), vehicleType]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {

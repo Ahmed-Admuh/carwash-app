@@ -74,9 +74,9 @@ async function seed() {
   console.log(`Created demo accounts (customer id=${customerId}, seller id=${adminId}).`);
 
   await pool.query(
-    `INSERT INTO vehicles (user_id, nickname, make, model, plate, vehicle_type)
-     VALUES ($1,'My Camry','Toyota','Camry','ABC-1234','sedan'),
-            ($1,'Family SUV','Honda','CR-V','XYZ-5678','suv')`,
+    `INSERT INTO vehicles (user_id, model, plate, vehicle_type)
+     VALUES ($1,'Camry','ABC 1234','sedan'),
+            ($1,'CR-V','XYZ 5678','suv')`,
     [customerId]
   );
 
@@ -221,7 +221,7 @@ async function seed() {
   console.log("Added offers (including monthly/bi-weekly package deals).");
 
   // ---------- Sample booking history + reviews for the demo customer ----------
-  const camry = await pool.query(`SELECT id FROM vehicles WHERE user_id = $1 AND nickname = 'My Camry'`, [customerId]);
+  const camry = await pool.query(`SELECT id FROM vehicles WHERE user_id = $1 AND model = 'Camry'`, [customerId]);
   const vehicleId = camry.rows[0].id;
   const visaCard = await pool.query(`SELECT id FROM payment_methods WHERE user_id = $1 AND type = 'visa'`, [customerId]);
   const paymentMethodId = visaCard.rows[0].id;

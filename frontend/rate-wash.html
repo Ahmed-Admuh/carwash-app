@@ -100,7 +100,7 @@
             ${[1,2,3,4,5].map(n => `<i class="fas fa-star ${n <= existingReview.rating ? 'filled' : ''}"></i>`).join('')}
           </div>
           ${existingReview.comment ? `<p class="text-muted" style="font-style: italic;">"${escapeHtml(existingReview.comment)}"</p>` : ''}
-          <a href="profile.html#history" class="btn btn-block" style="margin-top: 1.5rem;" data-i18n="rate_back_profile">Back to Profile</a>
+          <a href="#" onclick="location.replace('profile.html#history'); return false;" class="btn btn-block" style="margin-top: 1.5rem;" data-i18n="rate_back_profile">Back to Profile</a>
         </div>
       `;
       if (window.I18n) I18n.applyTranslations();
@@ -149,7 +149,7 @@
           })
         });
         showToast('Thanks for your rating!');
-        setTimeout(() => { window.location.href = 'profile.html#history'; }, 900);
+        setTimeout(() => { location.replace('profile.html#history'); }, 900);
       } catch (err) {
         showToast(err.message, true);
         btn.classList.remove('loading');

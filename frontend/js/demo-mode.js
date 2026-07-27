@@ -109,8 +109,8 @@ function buildSeedData() {
   ];
 
   const vehicles = [
-    { id: 1, user_id: 1, nickname: "My Camry", make: "Toyota", model: "Camry", plate: "ABC-1234", vehicle_type: "sedan" },
-    { id: 2, user_id: 1, nickname: "Family SUV", make: "Honda", model: "CR-V", plate: "XYZ-5678", vehicle_type: "suv" }
+    { id: 1, user_id: 1, model: "Camry", plate: "ABC 1234", vehicle_type: "sedan" },
+    { id: 2, user_id: 1, model: "CR-V", plate: "XYZ 5678", vehicle_type: "suv" }
   ];
 
   const paymentMethods = [
@@ -183,7 +183,6 @@ function apiError(message, status = 400) {
 }
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const VEHICLE_SURCHARGE = { sedan: 0, suv: 5, truck: 8, van: 10 };
-const TAX_RATE = 0.1;
 const VALID_PAYMENT_TYPES = ["visa", "mastercard", "amex", "discover", "apple-pay", "cash"];
 const TIERS = [
   { points: 500, label: "Free Basic Wash (Exterior Only)" },
@@ -364,9 +363,14 @@ const DemoAPI = {
     }
     if (method === "POST" && pathname === "/vehicles") {
       const user = requireUser();
-      const { nickname, make, model, plate, vehicleType } = body;
+      const { model, plate, vehicleType } = body;
       if (!vehicleType) throw apiError("vehicleType is required.");
-      const vehicle = { id: db.nextId.vehicle++, user_id: user.id, nickname: nickname || null, make: make || null, model: model || null, plate: plate || null, vehicle_type: vehicleType };
+      if (!vehicleType) throw apiError("Please choose a vehicle type.");
+      const PLATE_RE = /^[A-Za-z\u0623\u0627\u0628\u062D\u062F\u0631\u0633\u0635\u0637\u0639\u0642\u0643\u0644\u0645\u0646\u0647\u0648\u064A]{1,3}\s\d{1,4}$/;
+      if (!plate || !PLATE_RE.test(String(plate).trim())) {
+        throw apiError("Please enter a valid plate — 1-3 letters, a space, then 1-4 digits (e.g. ABC 1234).");
+      }
+      const vehicle = { id: db.nextId.vehicle++, user_id: user.id, model: model || null, plate: String(plate).trim().toUpperCase(), vehicle_type: vehicleType };
       db.vehicles.push(vehicle);
       saveDB(db);
       return { status: 201, data: vehicle };
@@ -434,7 +438,7 @@ const DemoAPI = {
       if (!carWashId || !washType || !date || !time) throw apiError("Missing required booking fields.");
       if (!["exterior", "full"].includes(washType)) throw apiError("washType must be 'exterior' or 'full'.");
       if (!paymentMethodType || !VALID_PAYMENT_TYPES.includes(paymentMethodType)) throw apiError("Please choose a payment method.");
-      if (paymentMethodType !== "cash" && !paymentMethodId) throw apiError("Please choose a saved payment method, or select Cash.");
+      if (paymentMethodType !== "cash" && !paymentMethodId) throw apiError("Please choose a saved payment method, or select Pay at Location.");
 
       const wash = db.carWashes.find(w => w.id === carWashId);
       if (!wash) throw apiError("Car wash not found.", 404);
@@ -452,7 +456,7 @@ const DemoAPI = {
         throw apiError("This motorcycle-delivered wash can only service sedans and SUVs — try a home-service (van) or a fixed location for larger vehicles.");
       }
       if (wash.require_cash_only && paymentMethodType !== "cash") {
-        throw apiError("This wash only accepts cash paid in person — please select Cash to continue.");
+        throw apiError("This wash only accepts payment at the location — please select Pay at Location to continue.");
       }
 
       let addons = [];
@@ -474,8 +478,13 @@ const DemoAPI = {
       }
 
       const subtotal = basePrice + addonsPrice;
-      const tax = Math.round(subtotal * TAX_RATE * 100) / 100;
-      const total = Math.round((subtotal + tax) * 100) / 100;
+      // Saudi prices are VAT-inclusive by law — nothing added on top of
+      // what the seller set. The 15% VAT is reverse-calculated purely for
+      // receipt transparency (excl.-VAT price + VAT = the same total).
+      const VAT_RATE = 0.15;
+      const total = Math.round(subtotal * 100) / 100;
+      const preTaxAmount = Math.round((total / (1 + VAT_RATE)) * 100) / 100;
+      const tax = Math.round((total - preTaxAmount) * 100) / 100;
 
       // Cash is settled later in person (unpaid until then); everything
       // else is treated as paid immediately (no real payment gateway here).
@@ -601,7 +610,7 @@ const DemoAPI = {
         name, serviceType, location, address, exteriorPrice, fullWashAddon,
         pointsRate, autoAccept, concurrentSlots, slotIntervalMinutes,
         serviceRadiusKm, operatingHours, description, imageUrl, extras,
-        vehiclePricing, requireCashOnly
+        vehiclePricing, requireCashOnly, galleryImages
       } = body;
       if (!name || !name.trim()) throw apiError("Please name your wash place.");
       if (!["location", "home-service", "moto-mobile"].includes(serviceType)) throw apiError("Please choose a valid service type.");
@@ -618,7 +627,7 @@ const DemoAPI = {
         service_radius_km: isMobile ? (serviceRadiusKm || 15) : null,
         operating_hours: operatingHours || { is24_7: true, schedule: {} },
         vehicle_pricing: vehiclePricing || null, require_cash_only: !!requireCashOnly,
-        gallery_images: [], image_url: imageUrl || null, description: description || null
+        gallery_images: Array.isArray(galleryImages) ? galleryImages : [], image_url: imageUrl || null, description: description || null
       };
       db.carWashes.push(wash);
       if (Array.isArray(extras)) {
@@ -685,7 +694,7 @@ const DemoAPI = {
         const wash = db.carWashes.find(w => w.id === b.car_wash_id) || {};
         const customer = db.users.find(u => u.id === b.user_id) || {};
         const vehicle = db.vehicles.find(v => v.id === b.vehicle_id) || {};
-        return { ...b, car_wash_name: wash.name, service_type: wash.service_type, customer_name: customer.name, customer_email: customer.email, vehicle_nickname: vehicle.nickname, vehicle_type: vehicle.vehicle_type };
+        return { ...b, car_wash_name: wash.name, service_type: wash.service_type, customer_name: customer.name, customer_email: customer.email, vehicle_model: vehicle.model, vehicle_type: vehicle.vehicle_type, vehicle_plate: vehicle.plate };
       });
       if (query.status) list = list.filter(b => b.status === query.status);
       if (query.date) list = list.filter(b => b.booking_date === query.date);

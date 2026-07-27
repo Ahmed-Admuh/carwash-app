@@ -133,6 +133,7 @@
       scroll-margin-top: 20px;
     }
     .price-line { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted); }
+    .price-line-muted { font-size: 0.78rem; opacity: 0.75; }
     .price-total {
       font-weight: 700;
       font-size: 1.1rem;
@@ -234,7 +235,6 @@
 
   const urlParams = new URLSearchParams(window.location.search);
   const washId = urlParams.get('id');
-  const TAX_RATE = 0.1;
 
   let wash = null;
   let state = {
@@ -321,7 +321,7 @@
           <input type="date" id="booking-date" class="form-control" min="${today()}" value="${today()}">
         </div>
         <div class="form-group">
-          <label>Available Time Slots</label>
+          <label data-i18n="bd_available_slots">Available Time Slots</label>
           <div class="slot-grid" id="slotGrid"></div>
           <div class="slot-note" id="slotNote"></div>
         </div>
@@ -341,7 +341,8 @@
         <div class="price-summary" id="priceSummary">
           <div class="price-line"><span data-i18n="bd_base_price">Base Price:</span><span id="base-price">0.00 <span class="sar-symbol">SAR</span></span></div>
           <div class="price-line"><span data-i18n="bd_addons_price">Add-ons:</span><span id="addons-price-line">0.00 <span class="sar-symbol">SAR</span></span></div>
-          <div class="price-line"><span data-i18n="bd_tax">Tax:</span><span id="tax">0.00 <span class="sar-symbol">SAR</span></span></div>
+          <div class="price-line price-line-muted"><span data-i18n="bd_price_excl_vat">Price (excl. VAT):</span><span id="pretax-price">0.00 <span class="sar-symbol">SAR</span></span></div>
+          <div class="price-line price-line-muted"><span data-i18n="bd_vat_15">VAT (15%):</span><span id="vat-amount">0.00 <span class="sar-symbol">SAR</span></span></div>
           <div class="price-line price-total"><span data-i18n="booking_total">Total:</span><span id="total">0.00 <span class="sar-symbol">SAR</span></span></div>
         </div>
 
@@ -516,16 +517,16 @@
       ];
     }
 
-    // Cash is always offered, even with no saved cards — settled in person,
-    // not tied to any saved payment method.
-    const cashOption = { id: 'cash', type: 'cash', label: t('bd_cash_label', 'Cash (pay on arrival)'), is_default: false };
+    // "Pay at Location" is always offered, even with no saved cards —
+    // settled in person, not tied to any saved payment method.
+    const cashOption = { id: 'cash', type: 'cash', label: t('bd_cash_label', 'Pay at Location'), is_default: false };
 
-    // Some sellers only accept cash in person — if so, that's the only
+    // Some sellers only accept payment in person — if so, that's the only
     // option offered here, regardless of what's saved on the account.
     const allMethods = wash.require_cash_only ? [cashOption] : [...methods, cashOption];
 
     document.getElementById('cashOnlyNotice').innerHTML = wash.require_cash_only
-      ? `<div class="text-muted" style="font-size: 0.85rem; background: var(--amber-tint); color: var(--amber); padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); margin-bottom: 0.75rem;"><i class="fas fa-info-circle"></i> ${t('bd_cash_only_notice', 'This wash only accepts cash paid in person.')}</div>`
+      ? `<div class="text-muted" style="font-size: 0.85rem; background: var(--amber-tint); color: var(--amber); padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); margin-bottom: 0.75rem;"><i class="fas fa-info-circle"></i> ${t('bd_cash_only_notice', 'This wash only accepts payment at the location.')}</div>`
       : '';
 
     const defaultMethod = wash.require_cash_only ? cashOption : (methods.find(m => m.is_default) || methods[0] || cashOption);
@@ -536,7 +537,7 @@
     const iconMap = {
       visa: 'fab fa-cc-visa', mastercard: 'fab fa-cc-mastercard',
       amex: 'fab fa-cc-amex', discover: 'fab fa-cc-discover', 'apple-pay': 'fab fa-apple-pay',
-      cash: 'fas fa-money-bill-wave'
+      cash: 'fas fa-store'
     };
 
     container.innerHTML = allMethods.map(m => `
@@ -681,13 +682,15 @@
     const { exteriorPrice, fullPrice } = getVehiclePrices();
     const basePrice = state.washType === 'full' ? fullPrice : exteriorPrice;
     const addonsTotal = computeAddonsTotal();
-    const subtotal = basePrice + addonsTotal;
-    const tax = subtotal * TAX_RATE;
-    const total = subtotal + tax;
+    const total = basePrice + addonsTotal; // VAT-inclusive pricing — no tax added on top
+    const VAT_RATE = 0.15;
+    const preTaxAmount = Math.round((total / (1 + VAT_RATE)) * 100) / 100;
+    const vatAmount = Math.round((total - preTaxAmount) * 100) / 100;
 
     document.getElementById('base-price').innerHTML = formatPrice(basePrice);
     document.getElementById('addons-price-line').innerHTML = formatPrice(addonsTotal);
-    document.getElementById('tax').innerHTML = formatPrice(tax);
+    document.getElementById('pretax-price').innerHTML = formatPrice(preTaxAmount);
+    document.getElementById('vat-amount').innerHTML = formatPrice(vatAmount);
     document.getElementById('total').innerHTML = formatPrice(total);
     document.getElementById('sticky-total').innerHTML = formatPrice(total);
   }
