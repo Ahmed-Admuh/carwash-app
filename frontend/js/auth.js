@@ -189,3 +189,14 @@ document.addEventListener("DOMContentLoaded", () => {
   renderAuthSlot();
   renderDemoBanner();
 });
+
+// Registers the minimal service worker (see sw.js) so the browser will
+// offer "Add to Home Screen" / PWA installation. Silently does nothing on
+// browsers without service worker support — never blocks page load.
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {
+      // Not fatal — the site works fine without it, just isn't installable.
+    });
+  });
+}
