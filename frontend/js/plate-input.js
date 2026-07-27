@@ -48,10 +48,10 @@ const KsaPlate = (function () {
     container.innerHTML = `
       <div class="ksa-plate-widget">
         <div class="ksa-plate-body">
-          <div class="ksa-plate-row" dir="rtl">
-            <div class="ksa-cell-group" data-role="letters-ar">${cellRow("la", 3, "ksa-cell-letter ksa-cell-ar")}</div>
-            <div class="ksa-cell-divider"></div>
+          <div class="ksa-plate-row">
             <div class="ksa-cell-group" data-role="digits-ar">${cellRow("da", 4, "ksa-cell-digit ksa-cell-ar")}</div>
+            <div class="ksa-cell-divider"></div>
+            <div class="ksa-cell-group" data-role="letters-ar">${cellRow("la", 3, "ksa-cell-letter ksa-cell-ar")}</div>
           </div>
           <div class="ksa-plate-row-sep"></div>
           <div class="ksa-plate-row">
