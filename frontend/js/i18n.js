@@ -13,7 +13,7 @@ const I18N_DICT = {
   nav_about: { en: "About", ar: "حول" },
   nav_profile: { en: "Profile", ar: "حسابي" },
   nav_saved: { en: "Saved", ar: "المحفوظات" },
-  footer_rights: { en: "© 2025 Car Wash Finder. All rights reserved.", ar: "© 2025 Car Wash Finder. جميع الحقوق محفوظة." },
+  footer_rights: { en: "© 2025 Sabouna. All rights reserved.", ar: "© 2025 صابونة. جميع الحقوق محفوظة." },
   footer_payment: { en: "Payment Methods Accepted", ar: "طرق الدفع المقبولة" },
 
   // ---- Common actions ----
@@ -123,7 +123,7 @@ const I18N_DICT = {
   wash_about_reviews: { en: "Reviews", ar: "التقييمات" },
   wash_about_gallery: { en: "Photos", ar: "الصور" },
   wash_about_book_this: { en: "Book This Wash", ar: "احجز هذا الغسيل" },
-  wash_about_ratings_count: { en: "ratings on Car Wash Finder", ar: "تقييمًا على Car Wash Finder" },
+  wash_about_ratings_count: { en: "ratings on Sabouna", ar: "تقييمًا على صابونة" },
   wash_about_no_reviews: { en: "No reviews yet — be the first!", ar: "لا توجد تقييمات بعد — كن أول من يقيّم!" },
   wash_about_no_wash_specified: { en: "No wash specified.", ar: "لم يتم تحديد غسيل." },
   wash_about_points_earned: { en: "Points per 1 SAR spent", ar: "نقاط لكل ريال يُنفق" },
@@ -229,7 +229,7 @@ const I18N_DICT = {
   // ---- About page ----
   about_hero_tagline: { en: "Connecting drivers with trusted car washes — at a shop, at your home, or wherever you're parked.", ar: "نربط السائقين بمغاسل سيارات موثوقة — في المحل أو في المنزل أو أينما ركنت سيارتك." },
   about_mission_title: { en: "Our Mission", ar: "مهمتنا" },
-  about_mission_body: { en: "Getting your car washed shouldn't mean driving across town or waiting in line. Car Wash Finder brings together fixed-location car washes, mobile vans that come to your driveway, and water-tank motorcycles that can reach you even down the tightest streets — all bookable in a few taps, with transparent pricing up front.", ar: "غسيل سيارتك لا يجب أن يعني القيادة عبر المدينة أو الانتظار في طابور. يجمع Car Wash Finder بين مغاسل السيارات الثابتة والشاحنات المتنقلة التي تأتي إلى منزلك والدراجات النارية المزوّدة بخزانات مياه التي تصل إليك حتى في أضيق الشوارع — كل ذلك بضغطات قليلة وبأسعار واضحة من البداية." },
+  about_mission_body: { en: "Getting your car washed shouldn't mean driving across town or waiting in line. Sabouna brings together fixed-location car washes, mobile vans that come to your driveway, and water-tank motorcycles that can reach you even down the tightest streets — all bookable in a few taps, with transparent pricing up front.", ar: "غسيل سيارتك لا يجب أن يعني القيادة عبر المدينة أو الانتظار في طابور. يجمع صابونة بين مغاسل السيارات الثابتة والشاحنات المتنقلة التي تأتي إلى منزلك والدراجات النارية المزوّدة بخزانات مياه التي تصل إليك حتى في أضيق الشوارع — كل ذلك بضغطات قليلة وبأسعار واضحة من البداية." },
   about_stat_partners: { en: "Wash Partners", ar: "شركاء الغسيل" },
   about_stat_types: { en: "Service Types", ar: "أنواع الخدمة" },
   about_stat_slot: { en: "Fastest Slot", ar: "أسرع موعد" },
@@ -486,7 +486,9 @@ const I18N_DICT = {
   bd_add_vehicle_in_profile: { en: "Add a vehicle in your Profile", ar: "أضف مركبة في ملفك الشخصي" },
   bd_vehicle_not_supported: { en: "This wash doesn't support this vehicle size — try another vehicle.", ar: "هذا الغسيل لا يدعم حجم هذه المركبة — جرّب مركبة أخرى." },
 
-  heading_bill_details: { en: "Bill Details", ar: "تفاصيل الفاتورة" }
+  heading_bill_details: { en: "Bill Details", ar: "تفاصيل الفاتورة" },
+
+  brand_name: { en: "Sabouna", ar: "صابونة" }
 };
 
 const I18n = {
