@@ -74,16 +74,15 @@ async function seed() {
   console.log(`Created demo accounts (customer id=${customerId}, seller id=${adminId}).`);
 
   await pool.query(
-    `INSERT INTO vehicles (user_id, model, plate, vehicle_type)
-     VALUES ($1,'Camry','ABC 1234','sedan'),
-            ($1,'CR-V','XYZ 5678','suv')`,
+    `INSERT INTO vehicles (user_id, model, plate, vehicle_type, is_default)
+     VALUES ($1,'Camry','ABC 1234','small', true),
+            ($1,'CR-V','XYZ 5678','medium', false)`,
     [customerId]
   );
 
   await pool.query(
     `INSERT INTO payment_methods (user_id, type, last4, label, is_default)
-     VALUES ($1,'visa','1234','Visa •••• 1234', true),
-            ($1,'mastercard','5678','Mastercard •••• 5678', false),
+     VALUES ($1,'mada','1234','Mada •••• 1234', true),
             ($1,'apple-pay',NULL,'Apple Pay', false)`,
     [customerId]
   );
@@ -223,8 +222,8 @@ async function seed() {
   // ---------- Sample booking history + reviews for the demo customer ----------
   const camry = await pool.query(`SELECT id FROM vehicles WHERE user_id = $1 AND model = 'Camry'`, [customerId]);
   const vehicleId = camry.rows[0].id;
-  const visaCard = await pool.query(`SELECT id FROM payment_methods WHERE user_id = $1 AND type = 'visa'`, [customerId]);
-  const paymentMethodId = visaCard.rows[0].id;
+  const madaCard = await pool.query(`SELECT id FROM payment_methods WHERE user_id = $1 AND type = 'mada'`, [customerId]);
+  const paymentMethodId = madaCard.rows[0].id;
   const sparkleId = insertedIds["Sparkle Auto Wash"];
   const ecoWashId = insertedIds["EcoWash"];
 
@@ -235,7 +234,7 @@ async function seed() {
        base_price, addons_price, tax, total_price, payment_method_id, payment_method_type, payment_status,
        points_earned, status, created_at)
      VALUES ($1,$2,$3,$4,'full','[]', CURRENT_DATE - INTERVAL '14 days', '10:30',
-       23.00, 0, 2.30, 25.30, $5, 'visa', 'paid', 25, 'completed', CURRENT_DATE - INTERVAL '14 days')
+       23.00, 0, 2.30, 25.30, $5, 'mada', 'paid', 25, 'completed', CURRENT_DATE - INTERVAL '14 days')
      RETURNING id`,
     [genCode('CW'), customerId, sparkleId, vehicleId, paymentMethodId]
   );
@@ -261,7 +260,7 @@ async function seed() {
        base_price, addons_price, tax, total_price, payment_method_id, payment_method_type, payment_status,
        points_earned, status)
      VALUES ($1,$2,$3,$4,'full','[]', CURRENT_DATE + INTERVAL '3 days', '09:15',
-       23.00, 0, 2.30, 25.30, $5, 'visa', 'paid', 25, 'confirmed')`,
+       23.00, 0, 2.30, 25.30, $5, 'mada', 'paid', 25, 'confirmed')`,
     [genCode('CW'), customerId, sparkleId, vehicleId, paymentMethodId]
   );
 

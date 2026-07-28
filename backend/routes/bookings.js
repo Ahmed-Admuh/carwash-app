@@ -5,13 +5,13 @@ const { requireAuth } = require("../middleware/auth");
 const router = express.Router();
 
 const VEHICLE_SURCHARGE = {
-  sedan: 0,
-  suv: 5,
-  truck: 8,
-  van: 10
+  small: 0,
+  medium: 5,
+  large: 8,
+  xlarge: 10
 };
 
-const VALID_PAYMENT_TYPES = ["visa", "mastercard", "amex", "discover", "apple-pay", "cash"];
+const VALID_PAYMENT_TYPES = ["mada", "apple-pay", "samsung-pay", "google-pay"];
 // Note: no separate tax calculation — in Saudi Arabia, prices sellers set
 // are expected to already be VAT-inclusive, so nothing is added on top.
 // The `tax` column stays in the schema (old bookings still have real
@@ -33,8 +33,8 @@ router.post("/", requireAuth, async (req, res) => {
       addonIds = [],
       date,
       time,
-      paymentMethodId,   // null/omitted for cash
-      paymentMethodType, // 'visa' | 'mastercard' | 'amex' | 'discover' | 'apple-pay' | 'cash'
+      paymentMethodId,
+      paymentMethodType, // 'mada' | 'apple-pay' | 'samsung-pay' | 'google-pay'
       specialRequests,
       address,
       addressLat,
@@ -44,14 +44,14 @@ router.post("/", requireAuth, async (req, res) => {
     if (!carWashId || !washType || !date || !time) {
       return res.status(400).json({ error: "Missing required booking fields." });
     }
-    if (!["exterior", "full"].includes(washType)) {
-      return res.status(400).json({ error: "washType must be 'exterior' or 'full'." });
+    if (!["exterior", "interior", "full"].includes(washType)) {
+      return res.status(400).json({ error: "washType must be 'exterior', 'interior', or 'full'." });
     }
     if (!paymentMethodType || !VALID_PAYMENT_TYPES.includes(paymentMethodType)) {
       return res.status(400).json({ error: "Please choose a payment method." });
     }
-    if (paymentMethodType !== "cash" && !paymentMethodId) {
-      return res.status(400).json({ error: "Please choose a saved payment method, or select Pay at Location." });
+    if (!paymentMethodId) {
+      return res.status(400).json({ error: "Please choose a saved payment method." });
     }
 
     await client.query("BEGIN");
@@ -107,7 +107,7 @@ router.post("/", requireAuth, async (req, res) => {
     }
 
     // Resolve vehicle type (for surcharge)
-    let resolvedVehicleType = vehicleType || "sedan";
+    let resolvedVehicleType = vehicleType || "small";
     if (vehicleId) {
       const vResult = await client.query(
         "SELECT * FROM vehicles WHERE id = $1 AND user_id = $2",
@@ -116,14 +116,9 @@ router.post("/", requireAuth, async (req, res) => {
       if (vResult.rows[0]) resolvedVehicleType = vResult.rows[0].vehicle_type;
     }
 
-    if (wash.service_type === "moto-mobile" && !["sedan", "suv"].includes(resolvedVehicleType)) {
+    if (wash.service_type === "moto-mobile" && !["small", "medium"].includes(resolvedVehicleType)) {
       await client.query("ROLLBACK");
-      return res.status(400).json({ error: "This motorcycle-delivered wash can only service sedans and SUVs — try a home-service (van) or a fixed location for larger vehicles." });
-    }
-
-    if (wash.require_cash_only && paymentMethodType !== "cash") {
-      await client.query("ROLLBACK");
-      return res.status(400).json({ error: "This wash only accepts payment at the location — please select Pay at Location to continue." });
+      return res.status(400).json({ error: "This motorcycle-delivered wash can only service small and medium vehicles — try a home-service (van) or a fixed location for larger vehicles." });
     }
 
     // Resolve addons (validated against DB, not trusted from client)
@@ -143,7 +138,14 @@ router.post("/", requireAuth, async (req, res) => {
     // (only relevant for washes that predate this feature).
     let basePrice;
     const vp = wash.vehicle_pricing && wash.vehicle_pricing[resolvedVehicleType];
-    if (vp) {
+    if (washType === "interior") {
+      const interiorPrice = vp ? vp.interior : wash.interior_price;
+      if (interiorPrice == null) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({ error: "This wash doesn't offer an interior-only option." });
+      }
+      basePrice = parseFloat(interiorPrice);
+    } else if (vp) {
       basePrice = parseFloat(washType === "full" ? vp.full : vp.exterior);
     } else {
       const vehicleSurcharge = VEHICLE_SURCHARGE[resolvedVehicleType] ?? 0;
@@ -161,17 +163,14 @@ router.post("/", requireAuth, async (req, res) => {
     const preTaxAmount = Math.round((total / (1 + VAT_RATE)) * 100) / 100;
     const tax = Math.round((total - preTaxAmount) * 100) / 100;
 
-    // Cash is settled in person later (unpaid until then); every other method
-    // is treated as paid immediately — there's no real payment gateway wired
+    // Every remaining payment method (Mada, Apple/Samsung/Google Pay) is
+    // treated as paid immediately — there's no real payment gateway wired
     // up yet, so this simulates an instant successful charge.
-    const paymentStatus = paymentMethodType === "cash" ? "unpaid" : "paid";
+    const paymentStatus = "paid";
 
     // Points are earned proportional to what's actually paid — pricier
-    // washes (or washes with a higher points_rate) earn more. They're only
-    // awarded once money has actually changed hands: immediately for
-    // card/Apple Pay, or later when a cash booking is completed and
-    // collected (see sellers.js).
-    const pointsEarned = paymentStatus === "paid" ? Math.round(total * parseFloat(wash.points_rate)) : 0;
+    // washes (or washes with a higher points_rate) earn more.
+    const pointsEarned = Math.round(total * parseFloat(wash.points_rate));
 
     // If the seller hasn't turned on auto-accept, new bookings need their
     // explicit sign-off before they're confirmed.

@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <link rel="stylesheet" href="css/style.css?v=3">
+  <link rel="stylesheet" href="css/style.css?v=4">
   <style>
     .role-toggle {
       display: flex;
@@ -121,6 +121,18 @@
           <label for="businessLocation" data-i18n="biz_location_label">Location / area</label>
           <input type="text" id="businessLocation" class="form-control" placeholder="e.g. Downtown">
         </div>
+        <div class="form-group" id="mapFieldGroup">
+          <label id="bizMapLabel" data-i18n="biz_location_map_label">Pin your exact location on the map</label>
+          <input type="text" id="bizAddressSearch" class="form-control address-search-input" placeholder="Search an address…">
+          <div class="map-actions">
+            <button type="button" class="map-locate-btn" id="bizUseMyLocationBtn"><i class="fas fa-location-crosshairs"></i> <span data-i18n="btn_use_my_location">Use my current location</span></button>
+          </div>
+          <div class="map-picker" id="bizMap"></div>
+          <div class="form-group" id="bizRadiusGroup" style="display: none; margin-top: 0.75rem;">
+            <label data-i18n="biz_service_radius_label">Service radius (km)</label>
+            <input type="number" id="bizServiceRadius" class="form-control" min="1" step="1" value="15">
+          </div>
+        </div>
 
         <div class="section-divider" data-i18n="biz_pricing_title">Pricing</div>
         <p class="text-muted" style="font-size: 0.8rem; margin-top: -0.5rem; margin-bottom: 0.9rem;" data-i18n="biz_pricing_hint">
@@ -132,9 +144,6 @@
         <div class="form-group" style="margin-top: 1rem;">
           <label for="bizPointsRate" data-i18n="biz_points_rate_label">Loyalty points rate (points per 1 SAR spent)</label>
           <input type="number" id="bizPointsRate" class="form-control" min="0" step="0.1" value="1.0">
-        </div>
-        <div class="form-group">
-          <label><input type="checkbox" id="bizCashOnly"> <span data-i18n="biz_cash_only_label">Only accept payment at the location (no cards or Apple Pay online)</span></label>
         </div>
 
         <div class="section-divider" data-i18n="biz_extras_title">Extra services (optional)</div>
@@ -192,8 +201,10 @@
 <script src="js/demo-mode.js"></script>
 <script src="js/currency.js"></script>
 <script src="js/auth.js"></script>
-<script src="js/i18n.js?v=2"></script>
+<script src="js/i18n.js?v=3"></script>
 <script src="js/menu.js"></script>
+<script src="js/config.js"></script>
+<script src="js/gmaps.js?v=3"></script>
 <script>
   function t(key, fallback) { return window.I18n ? I18n.t(key) : fallback; }
 
@@ -229,6 +240,7 @@
         authTitle.textContent = 'Register your wash business';
         authSubtitle.textContent = 'List your car wash and start taking bookings.';
         buildVehiclePricingGrid();
+        if (!bizMapPicker) bizSetupMap();
       } else {
         authTitle.textContent = 'Create your account';
         authSubtitle.textContent = 'Save vehicles, payment methods, and booking history.';
@@ -236,19 +248,53 @@
     });
   });
 
-  document.getElementById('serviceType').addEventListener('change', () => buildVehiclePricingGrid());
+  document.getElementById('serviceType').addEventListener('change', () => { buildVehiclePricingGrid(); bizSetupMap(); });
+
+  // ---- GPS map for the seller's fixed location, or base point + radius
+  // circle for home-service/moto-mobile sellers. Full editing (moving the
+  // pin later, changing the radius) happens afterward in the seller
+  // dashboard — this just captures a starting point at signup.
+  let bizMapPicker = null;
+  let nwSignupLat = null;
+  let nwSignupLng = null;
+  let isMobileSellerType = false;
+  async function bizSetupMap() {
+    isMobileSellerType = document.getElementById('serviceType').value !== 'location';
+    document.getElementById('bizRadiusGroup').style.display = isMobileSellerType ? 'block' : 'none';
+    document.getElementById('bizMapLabel').textContent = isMobileSellerType
+      ? t('biz_area_map_label', 'Set your base point and region of access')
+      : t('biz_location_map_label', 'Pin your exact location on the map');
+
+    bizMapPicker = await GMaps.createPicker({
+      elementId: 'bizMap',
+      autocompleteInputId: 'bizAddressSearch',
+      showRadius: isMobileSellerType,
+      radiusKm: parseFloat(document.getElementById('bizServiceRadius').value) || 15,
+      onChange(lat, lng, address) {
+        nwSignupLat = lat;
+        nwSignupLng = lng;
+        if (address) document.getElementById('bizAddressSearch').value = address;
+      }
+    });
+  }
+  document.getElementById('bizServiceRadius').addEventListener('input', () => {
+    if (bizMapPicker) bizMapPicker.setRadius(parseFloat(document.getElementById('bizServiceRadius').value) || 15);
+  });
+  document.getElementById('bizUseMyLocationBtn').addEventListener('click', () => {
+    if (bizMapPicker) bizMapPicker.useMyLocation();
+  });
 
   // ---------------- Per-vehicle-type pricing grid ----------------
   const VEHICLE_TYPES_FOR_PRICING = [
-    { key: 'sedan', icon: 'fa-car-side', labelKey: 'vehicle_sedan' },
-    { key: 'suv', icon: 'fa-truck-monster', labelKey: 'vehicle_suv' },
-    { key: 'truck', icon: 'fa-truck-pickup', labelKey: 'vehicle_truck' },
-    { key: 'van', icon: 'fa-shuttle-van', labelKey: 'vehicle_van' }
+    { key: 'small', icon: 'fa-car-side', labelKey: 'vehicle_small' },
+    { key: 'medium', icon: 'fa-truck-monster', labelKey: 'vehicle_medium' },
+    { key: 'large', icon: 'fa-truck-pickup', labelKey: 'vehicle_large' },
+    { key: 'xlarge', icon: 'fa-shuttle-van', labelKey: 'vehicle_xlarge' }
   ];
   function buildVehiclePricingGrid(existing) {
     const serviceType = document.getElementById('serviceType').value;
     const types = serviceType === 'moto-mobile'
-      ? VEHICLE_TYPES_FOR_PRICING.filter(v => v.key === 'sedan' || v.key === 'suv')
+      ? VEHICLE_TYPES_FOR_PRICING.filter(v => v.key === 'small' || v.key === 'medium')
       : VEHICLE_TYPES_FOR_PRICING;
 
     const grid = document.getElementById('vehiclePricingGrid');
@@ -330,7 +376,6 @@
     const concurrentSlots = parseInt(document.getElementById('bizConcurrentSlots').value, 10) || 2;
     const slotIntervalMinutes = parseInt(document.getElementById('bizSlotInterval').value, 10) || 15;
     const autoAccept = document.getElementById('bizAutoAccept').checked;
-    const requireCashOnly = document.getElementById('bizCashOnly').checked;
 
     let hasError = false;
     if (!name) {
@@ -356,8 +401,8 @@
         fieldError(businessNameInput, document.getElementById('businessNameError'), t('val_enter_business_name', 'Please enter your business name.'));
         hasError = true;
       }
-      if (!vehiclePricing.sedan) {
-        document.getElementById('exteriorPriceError').textContent = t('val_enter_exterior_price', 'Please enter at least a sedan price.');
+      if (!vehiclePricing.small) {
+        document.getElementById('exteriorPriceError').textContent = t('val_enter_exterior_price', 'Please enter at least a small-vehicle price.');
         document.getElementById('exteriorPriceError').classList.add('visible');
         hasError = true;
       }
@@ -369,12 +414,17 @@
     const payload = { name, email, password, role: selectedRole };
     if (selectedRole === 'seller') {
       // exteriorPrice/fullWashAddon are kept for backward-compatible display
-      // ("From X SAR" badges) — derived from the sedan tier, the cheapest
-      // and most universally-applicable vehicle type.
+      // ("From X SAR" badges) — derived from the small-vehicle tier, the
+      // cheapest and most universally-applicable vehicle type.
       payload.business = {
         name: businessName, serviceType, location: businessLocation,
-        exteriorPrice: vehiclePricing.sedan.exterior, fullWashAddon: vehiclePricing.sedan.full - vehiclePricing.sedan.exterior,
-        vehiclePricing, pointsRate, concurrentSlots, slotIntervalMinutes, autoAccept, requireCashOnly,
+        exteriorPrice: vehiclePricing.small.exterior, fullWashAddon: vehiclePricing.small.full - vehiclePricing.small.exterior,
+        vehiclePricing, pointsRate, concurrentSlots, slotIntervalMinutes, autoAccept,
+        latitude: !isMobileSellerType && nwSignupLat ? parseFloat(nwSignupLat) : null,
+        longitude: !isMobileSellerType && nwSignupLng ? parseFloat(nwSignupLng) : null,
+        serviceAreaLat: isMobileSellerType && nwSignupLat ? parseFloat(nwSignupLat) : null,
+        serviceAreaLng: isMobileSellerType && nwSignupLng ? parseFloat(nwSignupLng) : null,
+        serviceRadiusKm: isMobileSellerType ? (parseFloat(document.getElementById('bizServiceRadius')?.value) || 15) : null,
         operatingHours: buildOperatingHours(),
         extras: collectExtras()
       };

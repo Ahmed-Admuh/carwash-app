@@ -137,10 +137,10 @@ const I18N_DICT = {
   type_label_moto: { en: "Moto-Mobile Wash", ar: "غسيل بالدراجة النارية" },
 
   // ---- Vehicle types ----
-  vehicle_sedan: { en: "Sedan", ar: "سيدان" },
-  vehicle_suv: { en: "SUV", ar: "دفع رباعي" },
-  vehicle_truck: { en: "Truck", ar: "شاحنة صغيرة" },
-  vehicle_van: { en: "Van", ar: "فان" },
+  vehicle_small: { en: "Small", ar: "صغيرة" },
+  vehicle_medium: { en: "Medium", ar: "متوسطة" },
+  vehicle_large: { en: "Large", ar: "كبيرة" },
+  vehicle_xlarge: { en: "X-Large", ar: "كبيرة جدًا" },
 
   // ---- Book page dynamic ----
   book_loading: { en: "Loading…", ar: "جارٍ التحميل…" },
@@ -276,7 +276,7 @@ const I18N_DICT = {
   seller_wash_added: { en: "Wash place added.", ar: "تمت إضافة مكان الغسيل." },
   seller_edit_wash: { en: "Edit Settings", ar: "تعديل الإعدادات" },
   seller_view_slots: { en: "View Time Slots", ar: "عرض المواعيد" },
-  seller_cash_only_badge: { en: "Pay at Location Only", ar: "الدفع في الموقع فقط" },
+
   seller_wash_updated: { en: "Wash settings updated.", ar: "تم تحديث إعدادات الغسيل." },
   biz_profile_title: { en: "Store Profile", ar: "الملف التعريفي للمتجر" },
   biz_profile_hint: { en: "Shown to customers on this wash's About page, along with its reviews.", ar: "يظهر للعملاء في صفحة \"عن هذا الغسيل\"، بجانب التقييمات." },
@@ -330,7 +330,7 @@ const I18N_DICT = {
   biz_exterior_price_label: { en: "Exterior-only price (SAR)", ar: "سعر الغسيل الخارجي فقط (ريال)" },
   biz_full_addon_label: { en: "+ Extra for Exterior & Interior (SAR)", ar: "+ إضافي للغسيل الخارجي والداخلي (ريال)" },
   biz_pricing_hint: { en: "Set your own price for each vehicle size — no fixed markup is added on top.", ar: "حدّد سعرك الخاص لكل حجم مركبة — لا تُضاف أي زيادة ثابتة فوق ذلك." },
-  biz_cash_only_label: { en: "Only accept payment at the location (no cards or Apple Pay online)", ar: "قبول الدفع في الموقع فقط (بدون بطاقات أو Apple Pay عبر الإنترنت)" },
+
   biz_vp_exterior: { en: "Exterior only", ar: "خارجي فقط" },
   biz_vp_full: { en: "Exterior + Interior", ar: "خارجي وداخلي" },
   biz_extra_choose: { en: "Choose an extra…", ar: "اختر خدمة إضافية…" },
@@ -394,8 +394,7 @@ const I18N_DICT = {
   choice_exterior_desc: { en: "Outside wash, rinse & dry", ar: "غسيل خارجي، شطف وتجفيف" },
   choice_full_desc: { en: "Full wash plus interior clean", ar: "غسيل كامل مع تنظيف داخلي" },
   bd_no_saved_payment: { en: "No saved payment methods. Add one from your profile.", ar: "لا توجد وسائل دفع محفوظة. أضف واحدة من حسابك." },
-  bd_cash_label: { en: "Pay at Location", ar: "الدفع في الموقع" },
-  bd_cash_only_notice: { en: "This wash only accepts payment at the location.", ar: "يقبل هذا الغسيل الدفع في الموقع فقط." },
+
   slot_left: { en: "left", ar: "متبقٍ" },
   bd_loading_times: { en: "Loading times…", ar: "جارٍ تحميل الأوقات…" },
   bd_appointments_every: { en: "Appointments every", ar: "مواعيد كل" },
@@ -454,7 +453,40 @@ const I18N_DICT = {
   booking_moto_add_in_profile: { en: "Add one in your Profile", ar: "أضف واحدًا في ملفك الشخصي" },
   bd_address_map_hint: { en: "Search or drag the pin to set exactly where we should come.", ar: "ابحث أو اسحب الدبوس لتحديد مكان الوصول بدقة." },
   bd_shop_location: { en: "Shop Location", ar: "موقع المحل" },
-  book_map_view: { en: "Map View", ar: "عرض الخريطة" }
+  book_map_view: { en: "Map View", ar: "عرض الخريطة" },
+
+  // ---- Payment methods (Mada + wallets) ----
+  pm_apple_pay: { en: "Apple Pay", ar: "آبل باي" },
+  pm_samsung_pay: { en: "Samsung Pay", ar: "سامسونج باي" },
+  pm_google_pay: { en: "Google Pay", ar: "جوجل باي" },
+  bd_no_payment_methods: { en: "Add a payment method to continue.", ar: "أضف وسيلة دفع للمتابعة." },
+
+  // ---- Working days (Seller dashboard) ----
+  biz_working_days_label: { en: "Working days", ar: "أيام العمل" },
+  biz_working_days_hint: { en: "Uncheck any day you're closed — hours below still apply to the days you keep checked.", ar: "ألغِ تحديد أي يوم تكون فيه مغلقًا — تبقى الأوقات أدناه سارية على الأيام التي تُبقيها محددة." },
+  day_sunday_short: { en: "Sun", ar: "الأحد" },
+  day_monday_short: { en: "Mon", ar: "الإثنين" },
+  day_tuesday_short: { en: "Tue", ar: "الثلاثاء" },
+  day_wednesday_short: { en: "Wed", ar: "الأربعاء" },
+  day_thursday_short: { en: "Thu", ar: "الخميس" },
+  day_friday_short: { en: "Fri", ar: "الجمعة" },
+  day_saturday_short: { en: "Sat", ar: "السبت" },
+
+  // ---- Interior-only wash ----
+  biz_vp_interior: { en: "Interior only", ar: "داخلي فقط" },
+  biz_vp_interior_hint: { en: "Leave \"Interior only\" blank for a vehicle size if you don't want to offer it separately.", ar: "اترك \"داخلي فقط\" فارغًا لحجم مركبة إن لم ترغب في تقديمه بشكل منفصل." },
+  bd_interior_only: { en: "Interior Only", ar: "داخلي فقط" },
+  choice_interior_desc: { en: "Vacuum, wipe-down, and interior clean", ar: "شفط، مسح، وتنظيف داخلي" },
+
+  // ---- Default vehicle (Profile + Booking) ----
+  profile_default_badge: { en: "Default", ar: "افتراضي" },
+  profile_set_default: { en: "Set Default", ar: "تعيين كافتراضي" },
+  profile_default_vehicle_set: { en: "Default vehicle updated.", ar: "تم تحديث المركبة الافتراضية." },
+  bd_your_vehicles: { en: "Your saved vehicles", ar: "مركباتك المحفوظة" },
+  bd_add_vehicle_in_profile: { en: "Add a vehicle in your Profile", ar: "أضف مركبة في ملفك الشخصي" },
+  bd_vehicle_not_supported: { en: "This wash doesn't support this vehicle size — try another vehicle.", ar: "هذا الغسيل لا يدعم حجم هذه المركبة — جرّب مركبة أخرى." },
+
+  heading_bill_details: { en: "Bill Details", ar: "تفاصيل الفاتورة" }
 };
 
 const I18n = {

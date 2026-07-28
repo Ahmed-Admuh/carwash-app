@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <link rel="stylesheet" href="css/style.css?v=3">
+  <link rel="stylesheet" href="css/style.css?v=4">
   <style>
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
     .stat-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border-soft); padding: 1.25rem; box-shadow: var(--shadow-sm); }
@@ -120,9 +120,6 @@
         <label data-i18n="biz_points_rate_label">Loyalty points rate (points per 1 SAR spent)</label>
         <input type="number" id="nwPointsRate" class="form-control" min="0" step="0.1" value="1.0">
       </div>
-      <div class="form-group">
-        <label><input type="checkbox" id="nwCashOnly"> <span data-i18n="biz_cash_only_label">Only accept payment at the location (no cards or Apple Pay online)</span></label>
-      </div>
       <div class="form-row">
         <div class="form-group">
           <label data-i18n="biz_concurrent_slots_label">Bookings allowed per time slot</label>
@@ -138,6 +135,19 @@
       </div>
       <div class="form-group">
         <label><input type="checkbox" id="nw24_7" checked> <span data-i18n="biz_24_7_label">Open 24/7</span></label>
+      </div>
+      <div class="form-group">
+        <label data-i18n="biz_working_days_label">Working days</label>
+        <div class="nw-days-grid" id="nwDaysGrid">
+          <label><input type="checkbox" class="nw-day-checkbox" id="nwDay_sunday" checked> <span data-i18n="day_sunday_short">Sun</span></label>
+          <label><input type="checkbox" class="nw-day-checkbox" id="nwDay_monday" checked> <span data-i18n="day_monday_short">Mon</span></label>
+          <label><input type="checkbox" class="nw-day-checkbox" id="nwDay_tuesday" checked> <span data-i18n="day_tuesday_short">Tue</span></label>
+          <label><input type="checkbox" class="nw-day-checkbox" id="nwDay_wednesday" checked> <span data-i18n="day_wednesday_short">Wed</span></label>
+          <label><input type="checkbox" class="nw-day-checkbox" id="nwDay_thursday" checked> <span data-i18n="day_thursday_short">Thu</span></label>
+          <label><input type="checkbox" class="nw-day-checkbox" id="nwDay_friday" checked> <span data-i18n="day_friday_short">Fri</span></label>
+          <label><input type="checkbox" class="nw-day-checkbox" id="nwDay_saturday" checked> <span data-i18n="day_saturday_short">Sat</span></label>
+        </div>
+        <p class="text-muted" style="font-size: 0.76rem; margin-top: 0.4rem;" data-i18n="biz_working_days_hint">Uncheck any day you're closed — hours below still apply to the days you keep checked.</p>
       </div>
       <div id="nwHoursPeriods" style="display: none;"></div>
       <button type="button" class="btn btn-outline btn-block" id="nwAddPeriodBtn" style="display: none; margin-bottom: 1.1rem;">
@@ -193,7 +203,7 @@
 <script src="js/demo-mode.js"></script>
 <script src="js/currency.js"></script>
 <script src="js/auth.js"></script>
-<script src="js/i18n.js?v=2"></script>
+<script src="js/i18n.js?v=3"></script>
 <script src="js/menu.js"></script>
 <script src="js/config.js"></script>
 <script src="js/gmaps.js?v=3"></script>
@@ -312,7 +322,7 @@
       <div class="wash-owned-card">
         ${w.image_url ? `<img src="${w.image_url}" alt="${w.name}">` : ''}
         <div style="flex:1;">
-          <h4>${w.name} ${w.is_open_now ? `<span class="open-now-badge" data-i18n="seller_open_now">Open</span>` : `<span class="closed-now-badge" data-i18n="seller_closed_now">Closed</span>`} ${w.require_cash_only ? `<span class="closed-now-badge" data-i18n="seller_cash_only_badge">Pay at Location Only</span>` : ''}</h4>
+          <h4>${w.name} ${w.is_open_now ? `<span class="open-now-badge" data-i18n="seller_open_now">Open</span>` : `<span class="closed-now-badge" data-i18n="seller_closed_now">Closed</span>`}</h4>
           <div class="meta">${typeLabels[w.service_type] || w.service_type} • ${w.location || t('book_comes_to_you', 'Comes to you')} • ${t('seller_pts_rate', 'pts rate')}: ${w.points_rate}x • ${formatPrice(w.exterior_price)} ${t('seller_base', 'base')}</div>
           <div class="wash-card-actions">
             <button class="btn-small edit-wash-btn" data-id="${w.id}"><i class="fas fa-pen"></i> <span data-i18n="seller_edit_wash">Edit Settings</span></button>
@@ -507,11 +517,15 @@
     document.getElementById('nwServiceType').value = wash.service_type;
     document.getElementById('nwLocation').value = wash.location || '';
     document.getElementById('nwPointsRate').value = wash.points_rate;
-    document.getElementById('nwCashOnly').checked = !!wash.require_cash_only;
     document.getElementById('nwConcurrentSlots').value = wash.concurrent_slots;
     document.getElementById('nwSlotInterval').value = wash.slot_interval_minutes;
     document.getElementById('nwAutoAccept').checked = wash.auto_accept;
     document.getElementById('nw24_7').checked = !wash.operating_hours || wash.operating_hours.is24_7;
+    NW_DAY_KEYS.forEach(day => {
+      const schedule = wash.operating_hours && wash.operating_hours.schedule;
+      const isWorking = !wash.operating_hours || wash.operating_hours.is24_7 || !schedule || (schedule[day] && schedule[day].length > 0);
+      document.getElementById('nwDay_' + day).checked = isWorking;
+    });
     document.getElementById('nwDescription').value = wash.description || '';
     document.getElementById('nwImageUrl').value = wash.image_url || '';
     nwGalleryUrls = Array.isArray(wash.gallery_images) ? [...wash.gallery_images] : [];
@@ -564,30 +578,33 @@
 
   // ---- Per-vehicle-type pricing grid ----
   const NW_VEHICLE_TYPES = [
-    { key: 'sedan', icon: 'fa-car-side', labelKey: 'vehicle_sedan' },
-    { key: 'suv', icon: 'fa-truck-monster', labelKey: 'vehicle_suv' },
-    { key: 'truck', icon: 'fa-truck-pickup', labelKey: 'vehicle_truck' },
-    { key: 'van', icon: 'fa-shuttle-van', labelKey: 'vehicle_van' }
+    { key: 'small', icon: 'fa-car-side', labelKey: 'vehicle_small' },
+    { key: 'medium', icon: 'fa-truck-monster', labelKey: 'vehicle_medium' },
+    { key: 'large', icon: 'fa-truck-pickup', labelKey: 'vehicle_large' },
+    { key: 'xlarge', icon: 'fa-shuttle-van', labelKey: 'vehicle_xlarge' }
   ];
   function nwBuildVehiclePricingGrid(existing) {
     const serviceType = document.getElementById('nwServiceType').value;
     const types = serviceType === 'moto-mobile'
-      ? NW_VEHICLE_TYPES.filter(v => v.key === 'sedan' || v.key === 'suv')
+      ? NW_VEHICLE_TYPES.filter(v => v.key === 'small' || v.key === 'medium')
       : NW_VEHICLE_TYPES;
     const grid = document.getElementById('nwVehiclePricingGrid');
     grid.innerHTML = `
       <div class="vehicle-pricing-row" style="background:none; padding: 0 0.75rem;">
         <span></span>
         <span class="vp-col-label" data-i18n="biz_vp_exterior">Exterior only</span>
+        <span class="vp-col-label" data-i18n="biz_vp_interior">Interior only</span>
         <span class="vp-col-label" data-i18n="biz_vp_full">Exterior + Interior</span>
       </div>
       ${types.map(v => `
         <div class="vehicle-pricing-row" data-vehicle="${v.key}">
           <span class="vp-label"><i class="fas ${v.icon}"></i> <span data-i18n="${v.labelKey}">${v.key}</span></span>
           <input type="number" class="form-control nw-vp-exterior" min="0" step="0.5" placeholder="15" value="${existing?.[v.key]?.exterior ?? ''}">
+          <input type="number" class="form-control nw-vp-interior" min="0" step="0.5" placeholder="—" value="${existing?.[v.key]?.interior ?? ''}">
           <input type="number" class="form-control nw-vp-full" min="0" step="0.5" placeholder="22" value="${existing?.[v.key]?.full ?? ''}">
         </div>
       `).join('')}
+      <p class="text-muted" style="font-size: 0.76rem; margin-top: 0.4rem;" data-i18n="biz_vp_interior_hint">Leave "Interior only" blank for a vehicle size if you don't want to offer it separately.</p>
     `;
     if (window.I18n) I18n.applyTranslations();
   }
@@ -599,7 +616,11 @@
       const key = row.dataset.vehicle;
       const ext = parseFloat(row.querySelector('.nw-vp-exterior').value);
       const full = parseFloat(row.querySelector('.nw-vp-full').value);
-      if (!isNaN(ext)) pricing[key] = { exterior: ext, full: !isNaN(full) ? full : ext };
+      const interior = parseFloat(row.querySelector('.nw-vp-interior').value);
+      if (!isNaN(ext)) {
+        pricing[key] = { exterior: ext, full: !isNaN(full) ? full : ext };
+        if (!isNaN(interior)) pricing[key].interior = interior;
+      }
     });
     return pricing;
   }
@@ -721,13 +742,20 @@
 
   function nwBuildOperatingHours() {
     const is24_7 = document.getElementById('nw24_7').checked;
-    if (is24_7) return { is24_7: true, schedule: {} };
-    const periods = Array.from(document.querySelectorAll('#nwHoursPeriods .nw-period-row')).map(row => ({
-      open: row.querySelector('.nw-period-open').value,
-      close: row.querySelector('.nw-period-close').value
-    })).filter(p => p.open && p.close);
+    const workingDays = NW_DAY_KEYS.filter(day => document.getElementById('nwDay_' + day).checked);
+    const allDaysOn = workingDays.length === NW_DAY_KEYS.length;
+
+    if (is24_7 && allDaysOn) return { is24_7: true, schedule: {} };
+
+    const periods = is24_7
+      ? [{ open: '00:00', close: '23:59' }]
+      : Array.from(document.querySelectorAll('#nwHoursPeriods .nw-period-row')).map(row => ({
+          open: row.querySelector('.nw-period-open').value,
+          close: row.querySelector('.nw-period-close').value
+        })).filter(p => p.open && p.close);
+
     const schedule = {};
-    NW_DAY_KEYS.forEach(day => { schedule[day] = periods; });
+    NW_DAY_KEYS.forEach(day => { schedule[day] = workingDays.includes(day) ? periods : []; });
     return { is24_7: false, schedule };
   }
 
@@ -741,7 +769,6 @@
     const concurrentSlots = parseInt(document.getElementById('nwConcurrentSlots').value, 10) || 2;
     const slotIntervalMinutes = parseInt(document.getElementById('nwSlotInterval').value, 10) || 15;
     const autoAccept = document.getElementById('nwAutoAccept').checked;
-    const requireCashOnly = document.getElementById('nwCashOnly').checked;
     const description = document.getElementById('nwDescription').value.trim();
     const imageUrl = document.getElementById('nwImageUrl').value.trim();
     const isMobileType = serviceType !== 'location';
@@ -750,8 +777,8 @@
     const serviceRadiusKm = parseFloat(document.getElementById('nwServiceRadius').value) || 15;
 
     if (!name) { showToast(t('val_enter_business_name', 'Please enter your business name.'), true); return; }
-    if (!vehiclePricing.sedan) {
-      document.getElementById('nwExteriorPriceError').textContent = t('val_enter_exterior_price', 'Please enter at least a sedan price.');
+    if (!vehiclePricing.small) {
+      document.getElementById('nwExteriorPriceError').textContent = t('val_enter_exterior_price', 'Please enter at least a small-vehicle price.');
       document.getElementById('nwExteriorPriceError').classList.add('visible');
       return;
     }
@@ -760,8 +787,8 @@
     btn.classList.add('loading');
     const body = {
       name, serviceType, location,
-      exteriorPrice: vehiclePricing.sedan.exterior, fullWashAddon: vehiclePricing.sedan.full - vehiclePricing.sedan.exterior,
-      vehiclePricing, pointsRate, concurrentSlots, slotIntervalMinutes, autoAccept, requireCashOnly,
+      exteriorPrice: vehiclePricing.small.exterior, fullWashAddon: vehiclePricing.small.full - vehiclePricing.small.exterior,
+      vehiclePricing, pointsRate, concurrentSlots, slotIntervalMinutes, autoAccept,
       operatingHours: nwBuildOperatingHours(),
       extras: nwCollectExtras(),
       description: description || null,

@@ -43,7 +43,8 @@ CREATE TABLE vehicles (
   make VARCHAR(60),
   model VARCHAR(60),
   plate VARCHAR(20),
-  vehicle_type VARCHAR(20) NOT NULL -- sedan | suv | truck | van
+  vehicle_type VARCHAR(20) NOT NULL, -- small | medium | large | xlarge
+  is_default BOOLEAN NOT NULL DEFAULT FALSE -- used automatically as the pre-selected vehicle when booking
 );
 
 -- service_type:
@@ -75,13 +76,15 @@ CREATE TABLE car_washes (
   wait_time_minutes INTEGER DEFAULT 15,
   exterior_price NUMERIC(6,2) NOT NULL,
   full_wash_addon NUMERIC(6,2) NOT NULL DEFAULT 0,
+  interior_price NUMERIC(6,2), -- legacy-model "interior only" price (nullable — not every wash offers it)
   concurrent_slots INTEGER DEFAULT 2,      -- how many bookings can share one time slot
   slot_interval_minutes INTEGER DEFAULT 15, -- gap between bookable times, seller-configurable
   service_radius_km NUMERIC(4,1),
   points_per_visit INTEGER NOT NULL DEFAULT 10, -- legacy flat value, kept for old data; points_rate below is used now
   points_rate NUMERIC(4,2) NOT NULL DEFAULT 1.0, -- points earned per 1 SAR spent — pricier washes naturally earn more
   auto_accept BOOLEAN NOT NULL DEFAULT true, -- true: bookings confirm instantly; false: seller must accept each one
-  -- vehicle_pricing shape: { "sedan": {"exterior":15,"full":22}, "suv": {...}, "truck": {...}, "van": {...} }
+  -- vehicle_pricing shape: { "small": {"exterior":15,"full":22,"interior":18}, "medium": {...}, "large": {...}, "xlarge": {...} }
+  -- "interior" is optional per type — omit it if that wash doesn't offer an interior-only wash.
   -- The seller sets a real price per vehicle type directly (no more fixed
   -- global surcharge added on top) — moto-mobile washes only need
   -- sedan/suv keys since they can't service larger vehicles. NULL means

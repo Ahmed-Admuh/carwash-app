@@ -19,25 +19,26 @@ router.get("/", requireAuth, async (req, res) => {
 });
 
 // POST /api/payment-methods
-// type: 'visa' | 'mastercard' | 'amex' | 'discover' | 'apple-pay'
+// type: 'mada' | 'apple-pay' | 'samsung-pay' | 'google-pay'
+const WALLET_TYPES = ["apple-pay", "samsung-pay", "google-pay"];
 router.post("/", requireAuth, async (req, res) => {
   try {
     const { type, last4, label, isDefault } = req.body;
-    const validTypes = ["visa", "mastercard", "amex", "discover", "apple-pay"];
+    const validTypes = ["mada", ...WALLET_TYPES];
     if (!type || !validTypes.includes(type)) {
       return res.status(400).json({ error: "Please choose a valid payment method type." });
     }
-    if (type !== "apple-pay" && (!last4 || !/^\d{4}$/.test(last4))) {
+    if (!WALLET_TYPES.includes(type) && (!last4 || !/^\d{4}$/.test(last4))) {
       return res.status(400).json({ error: "Please enter the last 4 digits of the card." });
     }
 
-    if (type === "apple-pay") {
+    if (WALLET_TYPES.includes(type)) {
       const dupe = await pool.query(
-        "SELECT id FROM payment_methods WHERE user_id = $1 AND type = 'apple-pay'",
-        [req.user.id]
+        "SELECT id FROM payment_methods WHERE user_id = $1 AND type = $2",
+        [req.user.id, type]
       );
       if (dupe.rows.length > 0) {
-        return res.status(409).json({ error: "Apple Pay is already saved to your account." });
+        return res.status(409).json({ error: "This payment method is already saved to your account." });
       }
     }
 
@@ -48,7 +49,7 @@ router.post("/", requireAuth, async (req, res) => {
     const result = await pool.query(
       `INSERT INTO payment_methods (user_id, type, last4, label, is_default)
        VALUES ($1,$2,$3,$4,$5) RETURNING *`,
-      [req.user.id, type, type === "apple-pay" ? null : last4, label || null, !!isDefault]
+      [req.user.id, type, WALLET_TYPES.includes(type) ? null : last4, label || null, !!isDefault]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {

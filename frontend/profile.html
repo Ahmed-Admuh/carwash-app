@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <link rel="stylesheet" href="css/style.css?v=3">
+  <link rel="stylesheet" href="css/style.css?v=4">
   <style>
     .profile-header { display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 1.75rem; }
     .profile-avatar {
@@ -161,10 +161,10 @@
 <footer class="site-footer">
   <div data-i18n="footer_payment">Payment Methods Accepted</div>
   <div class="payment-icons">
-    <i class="fab fa-cc-visa"></i>
-    <i class="fab fa-cc-mastercard"></i>
-    <i class="fas fa-credit-card"></i>
-    <i class="fab fa-apple-pay"></i>
+    <i class="fas fa-credit-card" title="mada"></i>
+    <i class="fab fa-apple-pay" title="Apple Pay"></i>
+    <i class="fas fa-wallet" title="Samsung Pay"></i>
+    <i class="fab fa-google-pay" title="Google Pay"></i>
   </div>
   <p data-i18n="footer_rights">&copy; 2025 Car Wash Finder. All rights reserved.</p>
 </footer>
@@ -220,10 +220,10 @@
       <div class="form-group">
         <label for="vType" data-i18n="modal_vehicle_type">Vehicle type</label>
         <select id="vType" class="form-control">
-          <option value="sedan" data-i18n="vehicle_sedan">Sedan</option>
-          <option value="suv" data-i18n="vehicle_suv">SUV</option>
-          <option value="truck" data-i18n="vehicle_truck">Truck</option>
-          <option value="van" data-i18n="vehicle_van">Van</option>
+          <option value="small" data-i18n="vehicle_small">Small</option>
+          <option value="medium" data-i18n="vehicle_medium">Medium</option>
+          <option value="large" data-i18n="vehicle_large">Large</option>
+          <option value="xlarge" data-i18n="vehicle_xlarge">X-Large</option>
         </select>
       </div>
       <button type="submit" class="btn btn-block" data-i18n="btn_add_vehicle">Add Vehicle</button>
@@ -240,11 +240,10 @@
     </div>
     <form id="paymentForm">
       <div class="payment-type-grid" id="paymentTypeGrid">
-        <div class="payment-type-btn" data-type="visa"><i class="fab fa-cc-visa"></i></div>
-        <div class="payment-type-btn" data-type="mastercard"><i class="fab fa-cc-mastercard"></i></div>
-        <div class="payment-type-btn" data-type="amex"><i class="fab fa-cc-amex"></i></div>
-        <div class="payment-type-btn" data-type="discover"><i class="fab fa-cc-discover"></i></div>
-        <div class="payment-type-btn" data-type="apple-pay"><i class="fab fa-apple-pay"></i></div>
+        <div class="payment-type-btn" data-type="mada"><i class="fas fa-credit-card"></i><span>mada</span></div>
+        <div class="payment-type-btn" data-type="apple-pay"><i class="fab fa-apple-pay"></i><span data-i18n="pm_apple_pay">Apple Pay</span></div>
+        <div class="payment-type-btn" data-type="samsung-pay"><i class="fas fa-wallet"></i><span data-i18n="pm_samsung_pay">Samsung Pay</span></div>
+        <div class="payment-type-btn" data-type="google-pay"><i class="fab fa-google-pay"></i><span data-i18n="pm_google_pay">Google Pay</span></div>
       </div>
       <div class="form-group last4-group" id="last4Group">
         <label for="pLast4" data-i18n="modal_last4">Last 4 digits of card</label>
@@ -263,7 +262,7 @@
 <script src="js/demo-mode.js"></script>
 <script src="js/currency.js"></script>
 <script src="js/auth.js"></script>
-<script src="js/i18n.js?v=2"></script>
+<script src="js/i18n.js?v=3"></script>
 <script src="js/menu.js"></script>
 <script src="js/config.js"></script>
 <script src="js/gmaps.js?v=3"></script>
@@ -486,7 +485,7 @@
 
   function renderPaymentMethods(methods) {
     const list = document.getElementById('paymentList');
-    const iconMap = { visa: 'fab fa-cc-visa', mastercard: 'fab fa-cc-mastercard', amex: 'fab fa-cc-amex', discover: 'fab fa-cc-discover', 'apple-pay': 'fab fa-apple-pay' };
+    const iconMap = { mada: 'fas fa-credit-card', 'apple-pay': 'fab fa-apple-pay', 'samsung-pay': 'fas fa-wallet', 'google-pay': 'fab fa-google-pay' };
 
     if (methods.length === 0) {
       list.innerHTML = `<div class="text-muted" style="font-size: 0.85rem;">${t('profile_no_payments', 'No payment methods saved yet.')}</div>`;
@@ -599,8 +598,8 @@
 
   function renderVehicles(vehicles) {
     const list = document.getElementById('vehicleList');
-    const iconMap = { sedan: 'fa-car-side', suv: 'fa-truck-monster', truck: 'fa-truck-pickup', van: 'fa-shuttle-van' };
-    const VEHICLE_TYPE_KEYS = { sedan: 'vehicle_sedan', suv: 'vehicle_suv', truck: 'vehicle_truck', van: 'vehicle_van' };
+    const iconMap = { small: 'fa-car-side', medium: 'fa-truck-monster', large: 'fa-truck-pickup', xlarge: 'fa-shuttle-van' };
+    const VEHICLE_TYPE_KEYS = { small: 'vehicle_small', medium: 'vehicle_medium', large: 'vehicle_large', xlarge: 'vehicle_xlarge' };
 
     if (vehicles.length === 0) {
       list.innerHTML = `<div class="text-muted" style="font-size: 0.85rem;">${t('profile_no_vehicles', 'No vehicles saved yet.')}</div>`;
@@ -611,10 +610,11 @@
       <li class="vehicle-item">
         <i class="fas ${iconMap[v.vehicle_type] || 'fa-car'} vehicle-icon"></i>
         <div class="vehicle-info">
-          <h4>${v.model || t('profile_my_vehicle', 'My Vehicle')}</h4>
-          <p class="vehicle-meta">${v.plate || ''} • ${t(VEHICLE_TYPE_KEYS[v.vehicle_type] || 'vehicle_sedan', v.vehicle_type)}</p>
+          <h4>${v.model || t('profile_my_vehicle', 'My Vehicle')} ${v.is_default ? `<span class="default-vehicle-badge">${t('profile_default_badge', 'Default')}</span>` : ''}</h4>
+          <p class="vehicle-meta">${v.plate || ''} • ${t(VEHICLE_TYPE_KEYS[v.vehicle_type] || 'vehicle_small', v.vehicle_type)}</p>
         </div>
-        <button class="item-delete-btn" data-delete-vehicle="${v.id}" title="Remove" style="margin-left:auto;"><i class="fas fa-trash"></i></button>
+        ${!v.is_default ? `<button class="btn btn-outline" data-set-default-vehicle="${v.id}" style="margin-left:auto; padding:0.35rem 0.7rem; font-size:0.78rem;">${t('profile_set_default', 'Set Default')}</button>` : ''}
+        <button class="item-delete-btn" data-delete-vehicle="${v.id}" title="Remove" style="${v.is_default ? 'margin-left:auto;' : ''}"><i class="fas fa-trash"></i></button>
       </li>`).join('');
 
     list.querySelectorAll('[data-delete-vehicle]').forEach(btn => {
@@ -623,6 +623,18 @@
         try {
           await apiFetch(`/vehicles/${btn.dataset.deleteVehicle}`, { method: 'DELETE' });
           showToast(t('profile_vehicle_removed', 'Vehicle removed.'));
+          await loadProfile();
+        } catch (err) {
+          showToast(err.message, true);
+        }
+      });
+    });
+
+    list.querySelectorAll('[data-set-default-vehicle]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        try {
+          await apiFetch(`/vehicles/${btn.dataset.setDefaultVehicle}/default`, { method: 'PATCH' });
+          showToast(t('profile_default_vehicle_set', 'Default vehicle updated.'));
           await loadProfile();
         } catch (err) {
           showToast(err.message, true);
@@ -687,6 +699,7 @@
 
     // Payment type selection
     let selectedPaymentType = null;
+    const WALLET_TYPES_PROFILE = ['apple-pay', 'samsung-pay', 'google-pay'];
     const last4Group = document.getElementById('last4Group');
     const submitBtn = document.getElementById('paymentSubmitBtn');
 
@@ -695,7 +708,7 @@
         document.querySelectorAll('.payment-type-btn').forEach(b => b.classList.remove('selected'));
         btn.classList.add('selected');
         selectedPaymentType = btn.dataset.type;
-        last4Group.classList.toggle('visible', selectedPaymentType !== 'apple-pay');
+        last4Group.classList.toggle('visible', !WALLET_TYPES_PROFILE.includes(selectedPaymentType));
         submitBtn.disabled = false;
       });
     });
@@ -705,14 +718,14 @@
       if (!selectedPaymentType) return;
 
       const last4 = document.getElementById('pLast4').value.trim();
-      if (selectedPaymentType !== 'apple-pay' && !/^\d{4}$/.test(last4)) {
+      if (!WALLET_TYPES_PROFILE.includes(selectedPaymentType) && !/^\d{4}$/.test(last4)) {
         showToast(t('profile_enter_4_digits', 'Please enter exactly 4 digits.'), true);
         return;
       }
 
-      const labelMap = { visa: 'Visa', mastercard: 'Mastercard', amex: 'Amex', discover: 'Discover', 'apple-pay': 'Apple Pay' };
-      const label = selectedPaymentType === 'apple-pay'
-        ? 'Apple Pay'
+      const labelMap = { mada: 'Mada', 'apple-pay': 'Apple Pay', 'samsung-pay': 'Samsung Pay', 'google-pay': 'Google Pay' };
+      const label = WALLET_TYPES_PROFILE.includes(selectedPaymentType)
+        ? labelMap[selectedPaymentType]
         : `${labelMap[selectedPaymentType]} •••• ${last4}`;
 
       try {
@@ -720,7 +733,7 @@
           method: 'POST',
           body: JSON.stringify({
             type: selectedPaymentType,
-            last4: selectedPaymentType === 'apple-pay' ? null : last4,
+            last4: WALLET_TYPES_PROFILE.includes(selectedPaymentType) ? null : last4,
             label,
             isDefault: document.getElementById('pDefault').checked
           })
