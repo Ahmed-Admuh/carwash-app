@@ -10,5 +10,5 @@
 // and to your site's exact domains (HTTP referrers), not by hiding it.
 // ============================================================
 window.APP_CONFIG = {
-  GOOGLE_MAPS_API_KEY: "AIzaSyA1gS6-rK3A-W8fXYrctE1MSuFDNzD61eQ"
+  GOOGLE_MAPS_API_KEY: "AIzaSyAxWoJPFLjzUeu9CaxRPRILXuFiz8Jwj7o"
 };
