@@ -6,7 +6,7 @@
 // Requires window.APP_CONFIG.GOOGLE_MAPS_API_KEY to be set (see config.js).
 
 const GMaps = (function () {
-  const DEFAULT_CENTER = { lat: 24.7136, lng: 46.6753 }; // Riyadh, Saudi Arabia
+  const DEFAULT_CENTER = { lat: 26.5651, lng: 49.9970 }; // Al Qatif, Saudi Arabia — fallback when location isn't available
   let loadPromise = null;
 
   function loadGoogleMaps() {
@@ -118,6 +118,26 @@ const GMaps = (function () {
           if (options.onChange) options.onChange(pos.lat(), pos.lng(), place.formatted_address);
         });
       }
+    }
+
+    // If this picker wasn't given an existing saved position (i.e. it's a
+    // fresh pick, not editing something already set), try the visitor's
+    // current location automatically. If they deny it, it's unsupported,
+    // or it times out, we just quietly stay on the Al Qatif default center
+    // already set above — never blocks or errors the rest of the page.
+    if (!options.lat && !options.lng && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const latLng = new maps.LatLng(pos.coords.latitude, pos.coords.longitude);
+          marker.setPosition(latLng);
+          if (circle) circle.setCenter(latLng);
+          map.panTo(latLng);
+          map.setZoom(15);
+          reverseGeocode(latLng);
+        },
+        () => { /* denied/unavailable — Al Qatif default center stands */ },
+        { timeout: 8000 }
+      );
     }
 
     return {
