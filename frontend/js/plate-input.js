@@ -1,9 +1,20 @@
 // plate-input.js — renders a Saudi-style license plate widget: Arabic row on
-// top, English row on the bottom, exactly like a real KSA plate. Typing a
-// digit or letter in EITHER script instantly fills in its counterpart in
-// the other script, cell by cell, using the official Saudi plate
-// letter/digit table. Two hidden inputs keep the final EN letters/digits so
-// existing form-submit code doesn't need to change.
+// top, English row on the bottom, exactly like a real KSA plate.
+//
+// Interaction rules:
+//  - Digits are always entered left-to-right (start at the leftmost box,
+//    cursor moves right as you type) — true in both the Arabic and English
+//    digit row.
+//  - Letters are always entered right-to-left (start at the rightmost box,
+//    cursor moves left as you type) — true in both the Arabic and English
+//    letter row, since that's the natural reading direction for the
+//    Arabic word, and the English row mirrors the same physical columns.
+//  - Typing detects the script of the character itself: if you type an
+//    English character while a box in the Arabic row has focus, it's
+//    written into the matching English box instead (and mirrored back into
+//    Arabic), and the cursor continues in the English row from there on —
+//    and the same the other way around. Which row you started clicking in
+//    doesn't matter; the keys you press decide where the cursor goes next.
 
 const KsaPlate = (function () {
   // Official Arabic → Latin letter table used on real Saudi plates
@@ -36,6 +47,11 @@ const KsaPlate = (function () {
   const AR_TO_EN_DIGIT = { "٠": "0", "١": "1", "٢": "2", "٣": "3", "٤": "4", "٥": "5", "٦": "6", "٧": "7", "٨": "8", "٩": "9" };
   const EN_TO_AR_DIGIT = { "0": "٠", "1": "١", "2": "٢", "3": "٣", "4": "٤", "5": "٥", "6": "٦", "7": "٧", "8": "٨", "9": "٩" };
 
+  // Typing/focus traversal order for each group (as DOM indices, left to
+  // right = 0,1,2,3...). Digits fill left→right; letters fill right→left.
+  const DIGIT_ORDER = [0, 1, 2, 3];
+  const LETTER_ORDER = [2, 1, 0];
+
   function cellRow(prefix, count, extraClass) {
     let html = "";
     for (let i = 0; i < count; i++) {
@@ -60,10 +76,7 @@ const KsaPlate = (function () {
             <div class="ksa-cell-group" data-role="letters-en">${cellRow("le", 3, "ksa-cell-letter ksa-cell-en")}</div>
           </div>
         </div>
-        <div class="ksa-plate-strip">
-          <div class="ksa-plate-emblem">&#x1F1F8;&#x1F1E6;</div>
-          <div class="ksa-plate-ksa">KSA</div>
-        </div>
+        <div class="ksa-plate-strip"></div>
       </div>`;
   }
 
@@ -71,11 +84,17 @@ const KsaPlate = (function () {
     return Array.from(container.querySelectorAll(`[data-role="${role}"] .ksa-cell`));
   }
 
-  function focusNext(cells, idx) {
-    if (cells[idx + 1]) cells[idx + 1].focus();
+  function firstEmptyInOrder(cells, order) {
+    for (const idx of order) if (!cells[idx].value) return idx;
+    return order[order.length - 1]; // all full — land on the last one typed
   }
-  function focusPrev(cells, idx) {
-    if (cells[idx - 1]) cells[idx - 1].focus();
+  function nextInOrder(order, idx) {
+    const pos = order.indexOf(idx);
+    return (pos >= 0 && pos + 1 < order.length) ? order[pos + 1] : null;
+  }
+  function prevInOrder(order, idx) {
+    const pos = order.indexOf(idx);
+    return pos > 0 ? order[pos - 1] : null;
   }
 
   function init(config) {
@@ -88,15 +107,6 @@ const KsaPlate = (function () {
     const digitsAr = cellsOf(container, "digits-ar");
     const digitsEn = cellsOf(container, "digits-en");
 
-    // One continuous left-to-right sequence per row: digits then letters —
-    // so the cursor keeps moving forward automatically across that
-    // boundary instead of stopping at the last digit. Position j is the
-    // same physical column in both scripts, so cell j in one script always
-    // mirrors into cell j of the other script.
-    const rowEn = [...digitsEn, ...lettersEn];
-    const rowAr = [...digitsAr, ...lettersAr];
-    const isDigitAt = (j) => j < digitsEn.length;
-
     function emitChange() {
       const letters = lettersEn.map(c => c.value).join("");
       const digits = digitsEn.map(c => c.value).join("");
@@ -107,57 +117,101 @@ const KsaPlate = (function () {
       if (config.onChange) config.onChange(letters, digits);
     }
 
-    function wireRow(enCells, arCells) {
-      enCells.forEach((enCell, j) => {
-        enCell.addEventListener("input", () => {
-          let ch = enCell.value;
-          if (isDigitAt(j)) {
-            if (ch && !/^[0-9]$/.test(ch)) { enCell.value = ""; return; }
-            arCells[j].value = ch ? EN_TO_AR_DIGIT[ch] : "";
-          } else {
-            ch = ch.toUpperCase();
-            if (ch && !VALID_EN_LETTERS.includes(ch)) { enCell.value = ""; return; }
-            enCell.value = ch;
-            arCells[j].value = ch ? EN_TO_AR_LETTER[ch] : "";
-          }
-          if (ch) focusNext(enCells, j);
-          emitChange();
-        });
-        enCell.addEventListener("keydown", (e) => {
-          if (e.key === "Backspace" && !enCell.value) focusPrev(enCells, j);
-        });
-      });
-      arCells.forEach((arCell, j) => {
-        arCell.addEventListener("input", () => {
-          const ch = arCell.value;
-          const mapped = isDigitAt(j) ? AR_TO_EN_DIGIT[ch] : AR_TO_EN_LETTER[ch];
-          if (ch && !mapped) { arCell.value = ""; return; }
-          enCells[j].value = mapped || "";
-          if (mapped) focusNext(arCells, j);
-          emitChange();
-        });
-        arCell.addEventListener("keydown", (e) => {
-          if (e.key === "Backspace" && !arCell.value) focusPrev(arCells, j);
+    // Wires one group (digits or letters), across both its Arabic and
+    // English cell rows. `onGroupDone(isArabicInput)` fires once the last
+    // cell in the group's order is filled — used to hand off focus into
+    // the next group. `onBackAtStart(isArRow)` fires when Backspace is hit
+    // on an already-empty cell at the very start of this group's order.
+    function wireGroup(enCells, arCells, isDigitGroup, onGroupDone, onBackAtStart) {
+      const order = isDigitGroup ? DIGIT_ORDER : LETTER_ORDER;
+
+      [[enCells, false], [arCells, true]].forEach(([cells, isArRow]) => {
+        cells.forEach((cell, idx) => {
+          cell.addEventListener("focus", () => {
+            const targetIdx = firstEmptyInOrder(cells, order);
+            if (targetIdx !== idx) cells[targetIdx].focus();
+          });
+
+          cell.addEventListener("input", () => {
+            const raw = cell.value;
+            if (!raw) {
+              enCells[idx].value = "";
+              arCells[idx].value = "";
+              emitChange();
+              return;
+            }
+
+            let enValue, isArabicInput;
+            if (isDigitGroup) {
+              if (/^[0-9]$/.test(raw)) { enValue = raw; isArabicInput = false; }
+              else if (AR_TO_EN_DIGIT[raw]) { enValue = AR_TO_EN_DIGIT[raw]; isArabicInput = true; }
+              else { cell.value = ""; return; }
+            } else {
+              const up = raw.toUpperCase();
+              if (VALID_EN_LETTERS.includes(up)) { enValue = up; isArabicInput = false; }
+              else if (AR_TO_EN_LETTER[raw]) { enValue = AR_TO_EN_LETTER[raw]; isArabicInput = true; }
+              else { cell.value = ""; return; }
+            }
+
+            enCells[idx].value = enValue;
+            arCells[idx].value = isDigitGroup ? EN_TO_AR_DIGIT[enValue] : EN_TO_AR_LETTER[enValue];
+
+            // The script just typed decides which row the cursor continues
+            // in next — not which row was physically clicked.
+            const activeCells = isArabicInput ? arCells : enCells;
+            const next = nextInOrder(order, idx);
+            if (next !== null) {
+              activeCells[next].focus();
+            } else if (onGroupDone) {
+              onGroupDone(isArabicInput);
+            }
+            emitChange();
+          });
+
+          cell.addEventListener("keydown", (e) => {
+            if (e.key !== "Backspace" || cell.value) return;
+            const prev = prevInOrder(order, idx);
+            if (prev !== null) {
+              cells[prev].focus();
+            } else if (onBackAtStart) {
+              onBackAtStart(isArRow);
+            }
+          });
         });
       });
     }
 
-    wireRow(rowEn, rowAr);
+    // Digits (left→right) hand off into letters (right→left) once full,
+    // continuing in whichever script row was actually being typed.
+    wireGroup(digitsEn, digitsAr, true, (isArabicInput) => {
+      const firstLetterIdx = LETTER_ORDER[0];
+      (isArabicInput ? lettersAr : lettersEn)[firstLetterIdx].focus();
+    }, null);
 
-    // Optional pre-fill (e.g. editing an existing vehicle).
+    // Backspacing past the first-typed (rightmost) letter box steps back
+    // into the last digit box of that same script row.
+    wireGroup(lettersEn, lettersAr, false, null, (isArRow) => {
+      const lastDigitIdx = DIGIT_ORDER[DIGIT_ORDER.length - 1];
+      (isArRow ? digitsAr : digitsEn)[lastDigitIdx].focus();
+    });
+
+    // Optional pre-fill (e.g. editing an existing vehicle). Letters fill in
+    // typing order (first character = rightmost box), digits left to right.
     if (config.initialLetters) {
       config.initialLetters.toUpperCase().split("").forEach((ch, i) => {
-        if (lettersEn[i] && VALID_EN_LETTERS.includes(ch)) {
-          lettersEn[i].value = ch;
-          lettersAr[i].value = EN_TO_AR_LETTER[ch];
+        const domIdx = LETTER_ORDER[i];
+        if (domIdx !== undefined && VALID_EN_LETTERS.includes(ch)) {
+          lettersEn[domIdx].value = ch;
+          lettersAr[domIdx].value = EN_TO_AR_LETTER[ch];
         }
       });
     }
     if (config.initialDigits) {
       config.initialDigits.split("").forEach((ch, i) => {
-        if (digitsEn[i] && /^[0-9]$/.test(ch)) {
-          digitsEn[i].value = ch;
-          digitsAr[i].value = EN_TO_AR_DIGIT[ch];
+        const domIdx = DIGIT_ORDER[i];
+        if (domIdx !== undefined && /^[0-9]$/.test(ch)) {
+          digitsEn[domIdx].value = ch;
+          digitsAr[domIdx].value = EN_TO_AR_DIGIT[ch];
         }
       });
     }
