@@ -265,7 +265,7 @@
 <script src="js/demo-mode.js"></script>
 <script src="js/currency.js"></script>
 <script src="js/auth.js"></script>
-<script src="js/i18n.js?v=6"></script>
+<script src="js/i18n.js?v=7"></script>
 <script src="js/menu.js"></script>
 <script src="js/config.js"></script>
 <script src="js/gmaps.js?v=3"></script>
@@ -400,7 +400,7 @@
         <div class="points-value">${points.balance} <span data-i18n="profile_pts_short">pts</span></div>
         <div class="tier-progress-track"><div class="tier-progress-fill" style="width:${progressPct}%"></div></div>
         <div class="tier-progress-caption">
-          ${nextTier ? `${nextTier.points - points.balance} ${t('profile_points_to_next', 'points to')} "${tierLabel(nextTier.label)}"` : t('profile_all_unlocked', "You've unlocked every reward tier!")}
+          ${nextTier ? `\u2068${nextTier.points - points.balance}\u2069 ${t('profile_points_to_next', 'points to')} "\u2068${tierLabel(nextTier.label)}\u2069"` : t('profile_all_unlocked', "You've unlocked every reward tier!")}
         </div>
       </div>
       <div class="tier-list">

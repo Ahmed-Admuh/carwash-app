@@ -531,8 +531,19 @@ const I18n = {
   },
   toggle() {
     I18n.lang = I18n.lang === "en" ? "ar" : "en";
-    I18n.applyTranslations();
-    injectLangToggle(); // refresh button label
+    // A lot of this app's content (bookings, points/rewards, vehicles,
+    // payment methods, wash cards, etc.) is built once at page-load time
+    // with JS template strings that call t() directly — not through
+    // [data-i18n] attributes. Only calling applyTranslations() here would
+    // update the static chrome (nav labels, buttons) but leave all of
+    // that dynamic content frozen in whichever language was active when
+    // the page first rendered — which is exactly why switching languages
+    // could look like it "didn't take" until you toggled again (that
+    // second toggle just happened to coincide with something re-rendering
+    // fresh). Reloading guarantees every single thing on the page —
+    // static and dynamic — re-renders from scratch in the language that
+    // was just selected, consistently, on every page.
+    window.location.reload();
   }
 };
 
