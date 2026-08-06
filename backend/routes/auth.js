@@ -91,7 +91,7 @@ router.post("/signup", async (req, res) => {
          RETURNING id`,
         [
           user.id, business.name.trim(), business.serviceType,
-          business.location ? business.location.trim() : (isMobile ? "Comes to your home" : null),
+          business.location ? business.location.trim() : null,
           business.exteriorPrice, business.fullWashAddon || 0, business.pointsRate || 1.0,
           business.autoAccept !== false,
           business.concurrentSlots || (isMobile ? 1 : 2),

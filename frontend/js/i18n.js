@@ -198,8 +198,6 @@ const I18N_DICT = {
   profile_no_bookings: { en: "No bookings yet — go book your first wash!", ar: "لا توجد حجوزات بعد — احجز أول غسيل لك!" },
   profile_no_payments: { en: "No payment methods saved yet.", ar: "لا توجد وسائل دفع محفوظة بعد." },
   profile_no_vehicles: { en: "No vehicles saved yet.", ar: "لا توجد مركبات محفوظة بعد." },
-  profile_default_badge: { en: "Default", ar: "افتراضي" },
-  profile_set_default: { en: "Set as Default", ar: "تعيين كافتراضي" },
   profile_default_updated: { en: "Default payment method updated.", ar: "تم تحديث وسيلة الدفع الافتراضية." },
   profile_points_to_next: { en: "points to", ar: "نقطة للوصول إلى" },
   profile_all_unlocked: { en: "You've unlocked every reward tier!", ar: "لقد فتحت جميع مستويات المكافآت!" },
@@ -459,7 +457,6 @@ const I18N_DICT = {
   pm_apple_pay: { en: "Apple Pay", ar: "آبل باي" },
   pm_samsung_pay: { en: "Samsung Pay", ar: "سامسونج باي" },
   pm_google_pay: { en: "Google Pay", ar: "جوجل باي" },
-  pm_cod: { en: "Pay on Delivery", ar: "الدفع عند الاستلام" },
   bd_no_payment_methods: { en: "Add a payment method to continue.", ar: "أضف وسيلة دفع للمتابعة." },
 
   // ---- Working days (Seller dashboard) ----

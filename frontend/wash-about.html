@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <link rel="stylesheet" href="css/style.css?v=5">
+  <link rel="stylesheet" href="css/style.css?v=6">
   <style>
     .wash-hero { position: relative; margin: 1.25rem; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-md); height: 200px; }
     .wash-hero img { width: 100%; height: 100%; object-fit: cover; }
@@ -44,6 +44,8 @@
 <header class="appbar">
   <button class="appbar-btn" onclick="window.history.back()" aria-label="Back"><i class="fas fa-arrow-left"></i></button>
   <div class="appbar-title" data-i18n="about_this_wash">About This Wash</div>
+  <div class="appbar-spacer"></div>
+  <button class="appbar-btn" data-menu-toggle aria-label="Menu"><i class="fas fa-bars"></i></button>
 </header>
 
 <div id="pageContent">
@@ -64,7 +66,7 @@
 <script src="js/demo-mode.js"></script>
 <script src="js/currency.js"></script>
 <script src="js/auth.js"></script>
-<script src="js/i18n.js?v=5"></script>
+<script src="js/i18n.js?v=6"></script>
 <script src="js/menu.js"></script>
 <script>
   function t(key, fallback) { return window.I18n ? I18n.t(key) : fallback; }

@@ -68,7 +68,7 @@ router.post("/washes", async (req, res) => {
        RETURNING *`,
       [
         req.user.id, name.trim(), serviceType,
-        location ? location.trim() : (isMobile ? "Comes to your home" : null),
+        location ? location.trim() : null,
         address || null, exteriorPrice, fullWashAddon || 0,
         pointsRate || 1.0, autoAccept !== false, concurrentSlots || (isMobile ? 1 : 2),
         slotIntervalMinutes || (isMobile ? 45 : 15), isMobile ? (serviceRadiusKm || 15) : null,
@@ -285,8 +285,8 @@ router.patch("/bookings/:id/status", async (req, res) => {
       let pointsToAward = 0;
       let newPaymentStatus = booking.payment_status;
 
-      // Cash bookings are settled (and points earned) at completion time,
-      // since that's when the money actually changes hands.
+      // Pay on Delivery bookings are settled (and points earned) at
+      // completion time, since that's when the money actually changes hands.
       if (booking.payment_status === "unpaid") {
         pointsToAward = Math.round(parseFloat(booking.total_price) * parseFloat(booking.points_rate));
         newPaymentStatus = "paid";

@@ -11,7 +11,7 @@ const VEHICLE_SURCHARGE = {
   xlarge: 10
 };
 
-const VALID_PAYMENT_TYPES = ["mada", "apple-pay", "samsung-pay", "google-pay"];
+const VALID_PAYMENT_TYPES = ["mada", "apple-pay", "samsung-pay", "google-pay", "cod"];
 // Note: no separate tax calculation — in Saudi Arabia, prices sellers set
 // are expected to already be VAT-inclusive, so nothing is added on top.
 // The `tax` column stays in the schema (old bookings still have real
@@ -50,8 +50,8 @@ router.post("/", requireAuth, async (req, res) => {
     if (!paymentMethodType || !VALID_PAYMENT_TYPES.includes(paymentMethodType)) {
       return res.status(400).json({ error: "Please choose a payment method." });
     }
-    if (!paymentMethodId) {
-      return res.status(400).json({ error: "Please choose a saved payment method." });
+    if (paymentMethodType !== "cod" && !paymentMethodId) {
+      return res.status(400).json({ error: "Please choose a saved payment method, or select Pay on Delivery." });
     }
 
     await client.query("BEGIN");
@@ -163,14 +163,17 @@ router.post("/", requireAuth, async (req, res) => {
     const preTaxAmount = Math.round((total / (1 + VAT_RATE)) * 100) / 100;
     const tax = Math.round((total - preTaxAmount) * 100) / 100;
 
-    // Every remaining payment method (Mada, Apple/Samsung/Google Pay) is
-    // treated as paid immediately — there's no real payment gateway wired
-    // up yet, so this simulates an instant successful charge.
-    const paymentStatus = "paid";
+    // Mada / Apple / Samsung / Google Pay are simulated as charged
+    // instantly (no real gateway wired up yet). Pay on Delivery is settled
+    // in person when the wash is completed, so it stays "unpaid" until then.
+    const paymentStatus = paymentMethodType === "cod" ? "unpaid" : "paid";
 
     // Points are earned proportional to what's actually paid — pricier
-    // washes (or washes with a higher points_rate) earn more.
-    const pointsEarned = Math.round(total * parseFloat(wash.points_rate));
+    // washes (or washes with a higher points_rate) earn more. For Pay on
+    // Delivery, points are awarded later when the seller marks the
+    // booking completed (see sellers.js), since that's when payment
+    // actually happens.
+    const pointsEarned = paymentStatus === "paid" ? Math.round(total * parseFloat(wash.points_rate)) : 0;
 
     // If the seller hasn't turned on auto-accept, new bookings need their
     // explicit sign-off before they're confirmed.
