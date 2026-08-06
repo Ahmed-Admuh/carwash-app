@@ -128,6 +128,14 @@ const KsaPlate = (function () {
       [[enCells, false], [arCells, true]].forEach(([cells, isArRow]) => {
         cells.forEach((cell, idx) => {
           cell.addEventListener("focus", () => {
+            // Clicking directly on a cell that already has a value means
+            // the person wants to fix/retype that exact character — select
+            // it so the next keystroke replaces it outright, instead of
+            // getting silently blocked by maxlength or redirected away.
+            if (cell.value) {
+              cell.select();
+              return;
+            }
             const targetIdx = firstEmptyInOrder(cells, order);
             if (targetIdx !== idx) cells[targetIdx].focus();
           });

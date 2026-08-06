@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <link rel="stylesheet" href="css/style.css?v=4">
+  <link rel="stylesheet" href="css/style.css?v=5">
   <style>
     .hero {
       position: relative;
@@ -28,11 +28,14 @@
 
     .image-carousel {
       display: flex;
-      overflow-x: hidden;
+      overflow-x: auto;
       scroll-snap-type: x mandatory;
       position: relative;
       height: 220px;
+      scrollbar-width: none;      /* Firefox */
+      -ms-overflow-style: none;   /* old Edge/IE */
     }
+    .image-carousel::-webkit-scrollbar { display: none; } /* Safari/Chrome */
 
     .carousel-img {
       flex: 0 0 100%;
@@ -338,7 +341,7 @@
 <script src="js/demo-mode.js"></script>
 <script src="js/currency.js"></script>
 <script src="js/auth.js"></script>
-<script src="js/i18n.js?v=4"></script>
+<script src="js/i18n.js?v=5"></script>
 <script src="js/menu.js"></script>
 <script>
   const sampleCarWashes = [
@@ -526,9 +529,20 @@
     const indicators = document.querySelectorAll(".indicator");
     let index = 0;
 
+    let snapRestoreTimer = null;
     function updateCarousel() {
-      carousel.scrollTo({ left: carousel.clientWidth * index, behavior: "smooth" });
+      const target = slides[index];
+      // Mobile Safari/Chrome sometimes fight a programmatic smooth-scroll
+      // while `scroll-snap-type: mandatory` is active — it silently snaps
+      // straight back to the current slide instead of animating to the
+      // new one (this is why the carousel could look "stuck" on a phone
+      // but work fine on desktop, where this conflict doesn't happen).
+      // Turning snapping off for the duration of the scroll avoids that.
+      carousel.style.scrollSnapType = "none";
+      target.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
       indicators.forEach((ind, i) => ind.classList.toggle("active", i === index));
+      clearTimeout(snapRestoreTimer);
+      snapRestoreTimer = setTimeout(() => { carousel.style.scrollSnapType = "x mandatory"; }, 500);
     }
 
     function scrollNext() {
@@ -541,6 +555,18 @@
         index = parseInt(ind.dataset.index);
         updateCarousel();
       });
+    });
+
+    // Keep `index` in sync if the visitor swipes manually — otherwise the
+    // next auto-advance would jump back to wherever the timer last thought
+    // it was, fighting the user's own swipe.
+    let scrollSyncTimer = null;
+    carousel.addEventListener("scroll", () => {
+      clearTimeout(scrollSyncTimer);
+      scrollSyncTimer = setTimeout(() => {
+        index = Math.round(carousel.scrollLeft / carousel.clientWidth);
+        indicators.forEach((ind, i) => ind.classList.toggle("active", i === index));
+      }, 120);
     });
 
     setInterval(scrollNext, 4000);

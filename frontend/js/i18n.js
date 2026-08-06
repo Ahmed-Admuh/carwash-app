@@ -459,6 +459,7 @@ const I18N_DICT = {
   pm_apple_pay: { en: "Apple Pay", ar: "آبل باي" },
   pm_samsung_pay: { en: "Samsung Pay", ar: "سامسونج باي" },
   pm_google_pay: { en: "Google Pay", ar: "جوجل باي" },
+  pm_cod: { en: "Pay on Delivery", ar: "الدفع عند الاستلام" },
   bd_no_payment_methods: { en: "Add a payment method to continue.", ar: "أضف وسيلة دفع للمتابعة." },
 
   // ---- Working days (Seller dashboard) ----
@@ -488,7 +489,20 @@ const I18N_DICT = {
 
   heading_bill_details: { en: "Bill Details", ar: "تفاصيل الفاتورة" },
 
-  brand_name: { en: "Sabouna", ar: "صابونة" }
+  brand_name: { en: "Sabouna", ar: "صابونة" },
+
+  // ---- Vehicle size examples (helps people who aren't sure which size their car is) ----
+  vehicle_small_desc: { en: "Sedan, hatchback, compact — e.g. Corolla, Elantra", ar: "سيدان أو هاتشباك صغيرة — مثل كورولا، إلنترا" },
+  vehicle_medium_desc: { en: "SUV, crossover — e.g. Tucson, CR-V", ar: "دفع رباعي متوسط — مثل توسان، CR-V" },
+  vehicle_large_desc: { en: "Pickup, full-size SUV — e.g. Land Cruiser, Tahoe", ar: "بيك أب أو دفع رباعي كبير — مثل لاند كروزر، تاهو" },
+  vehicle_xlarge_desc: { en: "Van, large SUV — e.g. H1, Suburban, Yukon XL", ar: "فان أو دفع رباعي كبير جدًا — مثل H1، سوبربان، يوكن XL" },
+  vehicle_size_help: { en: "Not sure? Match your car to the closest example.", ar: "غير متأكد؟ طابق سيارتك مع أقرب مثال." },
+
+  // ---- Payment: Pay on Delivery ----
+  pm_cod: { en: "Pay on Delivery", ar: "الدفع عند الاستلام" },
+  bd_cod_notice: { en: "Pay in person once the wash is done.", ar: "ادفع شخصيًا بعد انتهاء الغسيل." },
+  nav_role_seller: { en: "Wash Owner", ar: "صاحب مغسلة" },
+  nav_role_customer: { en: "Customer", ar: "عميل" }
 };
 
 const I18n = {

@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <link rel="stylesheet" href="css/style.css?v=4">
+  <link rel="stylesheet" href="css/style.css?v=5">
   <style>
     body { padding-bottom: 90px; }
 
@@ -207,7 +207,7 @@
 <script src="js/demo-mode.js"></script>
 <script src="js/currency.js"></script>
 <script src="js/auth.js"></script>
-<script src="js/i18n.js?v=4"></script>
+<script src="js/i18n.js?v=5"></script>
 <script src="js/menu.js"></script>
 <script src="js/config.js"></script>
 <script src="js/gmaps.js?v=3"></script>
@@ -215,10 +215,10 @@
   function t(key, fallback) { return window.I18n ? I18n.t(key) : fallback; }
 
   const VEHICLE_TYPES = [
-    { key: "small", get label() { return t('vehicle_small', 'Small'); }, icon: "fa-car-side", surcharge: 0 },
-    { key: "medium", get label() { return t('vehicle_medium', 'Medium'); }, icon: "fa-truck-monster", surcharge: 5 },
-    { key: "large", get label() { return t('vehicle_large', 'Large'); }, icon: "fa-truck-pickup", surcharge: 8 },
-    { key: "xlarge", get label() { return t('vehicle_xlarge', 'X-Large'); }, icon: "fa-shuttle-van", surcharge: 10 }
+    { key: "small", get label() { return t('vehicle_small', 'Small'); }, get desc() { return t('vehicle_small_desc', ''); }, icon: "fa-car-side", surcharge: 0 },
+    { key: "medium", get label() { return t('vehicle_medium', 'Medium'); }, get desc() { return t('vehicle_medium_desc', ''); }, icon: "fa-truck-monster", surcharge: 5 },
+    { key: "large", get label() { return t('vehicle_large', 'Large'); }, get desc() { return t('vehicle_large_desc', ''); }, icon: "fa-truck-pickup", surcharge: 8 },
+    { key: "xlarge", get label() { return t('vehicle_xlarge', 'X-Large'); }, get desc() { return t('vehicle_xlarge_desc', ''); }, icon: "fa-shuttle-van", surcharge: 10 }
   ];
 
   const sampleWash = {
@@ -496,6 +496,7 @@
       <div class="vehicle-type-btn ${state.vehicleType === v.key ? 'selected' : ''}" data-vehicle="${v.key}">
         <i class="fas ${v.icon}"></i>
         ${v.label}
+        <div class="choice-desc">${v.desc}</div>
       </div>
     `).join('');
     grid.querySelectorAll('.vehicle-type-btn').forEach(btn => {
@@ -632,26 +633,25 @@
       ];
     }
 
+    // Pay on Delivery is always offered, even with no saved cards — settled
+    // in person when the wash is done, not tied to any saved payment method.
+    const codOption = { id: 'cod', type: 'cod', label: t('pm_cod', 'Pay on Delivery'), is_default: false };
+    const allMethods = [...methods, codOption];
+
     document.getElementById('cashOnlyNotice').innerHTML = '';
     document.getElementById('addPaymentBtnBD').style.display = '';
 
-    if (methods.length === 0) {
-      container.innerHTML = `<div class="text-muted" style="font-size: 0.85rem;">${t('bd_no_payment_methods', 'Add a payment method to continue.')}</div>`;
-      state.selectedPayment = null;
-      state.selectedPaymentType = null;
-      return;
-    }
-
-    const defaultMethod = methods.find(m => m.is_default) || methods[0];
+    const defaultMethod = methods.find(m => m.is_default) || methods[0] || codOption;
     state.selectedPayment = defaultMethod.id;
     state.selectedPaymentType = defaultMethod.type;
 
     const iconMap = {
       mada: 'fas fa-credit-card', 'apple-pay': 'fab fa-apple-pay',
-      'samsung-pay': 'fas fa-wallet', 'google-pay': 'fab fa-google-pay'
+      'samsung-pay': 'fas fa-wallet', 'google-pay': 'fab fa-google-pay',
+      cod: 'fas fa-hand-holding-dollar'
     };
 
-    container.innerHTML = methods.map(m => `
+    container.innerHTML = allMethods.map(m => `
       <div class="payment-method ${m.id === state.selectedPayment ? 'selected' : ''}" data-payment-id="${m.id}" data-payment-type="${m.type}">
         <i class="${iconMap[m.type] || 'fas fa-credit-card'} payment-icon"></i>
         <div>${m.label}</div>
@@ -660,7 +660,8 @@
 
     container.querySelectorAll('.payment-method').forEach(el => {
       el.addEventListener('click', function() {
-        state.selectedPayment = parseInt(this.dataset.paymentId, 10);
+        const idAttr = this.dataset.paymentId;
+        state.selectedPayment = idAttr === 'cod' ? 'cod' : parseInt(idAttr, 10);
         state.selectedPaymentType = this.dataset.paymentType;
         container.querySelectorAll('.payment-method').forEach(p => p.classList.remove('selected'));
         this.classList.add('selected');
@@ -858,7 +859,7 @@
           addonIds: Array.from(state.selectedAddonIds),
           date: state.selectedDate,
           time: state.selectedTime,
-          paymentMethodId: state.selectedPayment,
+          paymentMethodId: state.selectedPayment === 'cod' ? null : state.selectedPayment,
           paymentMethodType: state.selectedPaymentType,
           specialRequests: document.getElementById('special-requests').value,
           address: address,
