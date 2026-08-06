@@ -1,4 +1,4 @@
-# Car Wash Finder — Backend
+# Sabouna — Backend
 
 A real Express + PostgreSQL API: signup/login, car washes (fixed locations + mobile
 home/motorcycle services), bookings with live slot availability, offers, vehicles,

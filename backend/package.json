@@ -1,7 +1,7 @@
 {
   "name": "carwash-backend",
   "version": "2.0.0",
-  "description": "Car Wash Finder API — Express + PostgreSQL",
+  "description": "Sabouna API — Express + PostgreSQL",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

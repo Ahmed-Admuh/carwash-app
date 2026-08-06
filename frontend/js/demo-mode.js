@@ -109,14 +109,13 @@ function buildSeedData() {
   ];
 
   const vehicles = [
-    { id: 1, user_id: 1, model: "Camry", plate: "ABC 1234", vehicle_type: "sedan" },
-    { id: 2, user_id: 1, model: "CR-V", plate: "XYZ 5678", vehicle_type: "suv" }
+    { id: 1, user_id: 1, model: "Camry", plate: "ABC 1234", vehicle_type: "small", is_default: true },
+    { id: 2, user_id: 1, model: "CR-V", plate: "XYZ 5678", vehicle_type: "medium", is_default: false }
   ];
 
   const paymentMethods = [
-    { id: 1, user_id: 1, type: "visa", last4: "1234", label: "Visa •••• 1234", is_default: true, created_at: now },
-    { id: 2, user_id: 1, type: "mastercard", last4: "5678", label: "Mastercard •••• 5678", is_default: false, created_at: now },
-    { id: 3, user_id: 1, type: "apple-pay", last4: null, label: "Apple Pay", is_default: false, created_at: now }
+    { id: 1, user_id: 1, type: "mada", last4: "1234", label: "Mada •••• 1234", is_default: true, created_at: now },
+    { id: 2, user_id: 1, type: "apple-pay", last4: null, label: "Apple Pay", is_default: false, created_at: now }
   ];
 
   const bookings = [
@@ -182,8 +181,8 @@ function apiError(message, status = 400) {
   return e;
 }
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const VEHICLE_SURCHARGE = { sedan: 0, suv: 5, truck: 8, van: 10 };
-const VALID_PAYMENT_TYPES = ["visa", "mastercard", "amex", "discover", "apple-pay", "cash"];
+const VEHICLE_SURCHARGE = { small: 0, medium: 5, large: 8, xlarge: 10 };
+const VALID_PAYMENT_TYPES = ["mada", "apple-pay", "samsung-pay", "google-pay", "cod"];
 const TIERS = [
   { points: 500, label: "Free Basic Wash (Exterior Only)" },
   { points: 1000, label: "Free Full Detail (Exterior + Interior)" },
@@ -271,9 +270,9 @@ const DemoAPI = {
           slot_interval_minutes: business.slotIntervalMinutes || (isMobile ? 45 : 15),
           service_radius_km: isMobile ? (business.serviceRadiusKm || 15) : null,
           operating_hours: business.operatingHours || { is24_7: true, schedule: {} },
-          vehicle_pricing: business.vehiclePricing || null, require_cash_only: !!business.requireCashOnly,
+          vehicle_pricing: business.vehiclePricing || null,
           gallery_images: [], image_url: null,
-          description: "New on Car Wash Finder — add photos and fine-tune details from your seller dashboard."
+          description: "New on Sabouna — add photos and fine-tune details from your seller dashboard."
         };
         db.carWashes.push(newWash);
         if (Array.isArray(business.extras)) {
@@ -396,17 +395,18 @@ const DemoAPI = {
     if (method === "POST" && pathname === "/payment-methods") {
       const user = requireUser();
       const { type, last4, label, isDefault } = body;
-      const validTypes = ["visa", "mastercard", "amex", "discover", "apple-pay"];
+      const walletTypes = ["apple-pay", "samsung-pay", "google-pay"];
+      const validTypes = ["mada", ...walletTypes];
       if (!type || !validTypes.includes(type)) throw apiError("Please choose a valid payment method type.");
-      if (type !== "apple-pay" && (!last4 || !/^\d{4}$/.test(last4))) throw apiError("Please enter the last 4 digits of the card.");
-      if (type === "apple-pay" && db.paymentMethods.some(p => p.user_id === user.id && p.type === "apple-pay")) {
-        throw apiError("Apple Pay is already saved to your account.", 409);
+      if (!walletTypes.includes(type) && (!last4 || !/^\d{4}$/.test(last4))) throw apiError("Please enter the last 4 digits of the card.");
+      if (walletTypes.includes(type) && db.paymentMethods.some(p => p.user_id === user.id && p.type === type)) {
+        throw apiError("This payment method is already saved to your account.", 409);
       }
-      if (!type.includes("apple-pay") && db.paymentMethods.some(p => p.user_id === user.id && p.type === type && p.last4 === last4)) {
+      if (!walletTypes.includes(type) && db.paymentMethods.some(p => p.user_id === user.id && p.type === type && p.last4 === last4)) {
         throw apiError("You've already saved this exact payment method.", 409);
       }
       if (isDefault) db.paymentMethods.forEach(p => { if (p.user_id === user.id) p.is_default = false; });
-      const method_ = { id: db.nextId.paymentMethod++, user_id: user.id, type, last4: type === "apple-pay" ? null : last4, label: label || null, is_default: !!isDefault, created_at: new Date().toISOString() };
+      const method_ = { id: db.nextId.paymentMethod++, user_id: user.id, type, last4: walletTypes.includes(type) ? null : last4, label: label || null, is_default: !!isDefault, created_at: new Date().toISOString() };
       db.paymentMethods.push(method_);
       saveDB(db);
       return { status: 201, data: method_ };
@@ -434,29 +434,41 @@ const DemoAPI = {
     // ---------- BOOKINGS ----------
     if (method === "POST" && pathname === "/bookings") {
       const user = requireUser();
-      const { carWashId, vehicleId, vehicleType, washType, addonIds = [], date, time, paymentMethodId, paymentMethodType, specialRequests, address } = body;
+      const { carWashId, vehicleId, vehicleType, washType, addonIds = [], date, time, paymentMethodId, paymentMethodType, specialRequests, address, addressLat, addressLng } = body;
       if (!carWashId || !washType || !date || !time) throw apiError("Missing required booking fields.");
-      if (!["exterior", "full"].includes(washType)) throw apiError("washType must be 'exterior' or 'full'.");
+      if (!["exterior", "interior", "full"].includes(washType)) throw apiError("washType must be 'exterior', 'interior', or 'full'.");
       if (!paymentMethodType || !VALID_PAYMENT_TYPES.includes(paymentMethodType)) throw apiError("Please choose a payment method.");
-      if (paymentMethodType !== "cash" && !paymentMethodId) throw apiError("Please choose a saved payment method, or select Pay at Location.");
+      if (paymentMethodType !== "cod" && !paymentMethodId) throw apiError("Please choose a saved payment method, or select Pay on Delivery.");
 
       const wash = db.carWashes.find(w => w.id === carWashId);
       if (!wash) throw apiError("Car wash not found.", 404);
-      if (wash.service_type !== "location" && (!address || !address.trim())) throw apiError("Please provide an address for this mobile service.");
+
+      // Address resolution mirrors the real API: 'location' needs none,
+      // 'home-service' takes a fresh address for this booking, and
+      // 'moto-mobile' always uses the customer's saved profile address.
+      let resolvedAddress = null, resolvedAddressLat = null, resolvedAddressLng = null;
+      if (wash.service_type === "home-service") {
+        if (!address || !address.trim()) throw apiError("Please provide an address for this mobile service.");
+        resolvedAddress = address.trim();
+        resolvedAddressLat = addressLat ?? null;
+        resolvedAddressLng = addressLng ?? null;
+      } else if (wash.service_type === "moto-mobile") {
+        if (!user.saved_address) throw apiError("Please add your address in your Profile first — moto-mobile bookings always use your saved address.");
+        resolvedAddress = user.saved_address;
+        resolvedAddressLat = user.saved_address_lat ?? null;
+        resolvedAddressLng = user.saved_address_lng ?? null;
+      }
 
       const bookedCount = db.bookings.filter(b => b.car_wash_id === carWashId && b.booking_date === date && b.booking_time === time && b.status !== "cancelled").length;
       if (bookedCount >= wash.concurrent_slots) throw apiError("That time slot just filled up. Please pick another.", 409);
 
-      let resolvedVehicleType = vehicleType || "sedan";
+      let resolvedVehicleType = vehicleType || "small";
       if (vehicleId) {
         const v = db.vehicles.find(v => v.id === vehicleId && v.user_id === user.id);
         if (v) resolvedVehicleType = v.vehicle_type;
       }
-      if (wash.service_type === "moto-mobile" && !["sedan", "suv"].includes(resolvedVehicleType)) {
-        throw apiError("This motorcycle-delivered wash can only service sedans and SUVs — try a home-service (van) or a fixed location for larger vehicles.");
-      }
-      if (wash.require_cash_only && paymentMethodType !== "cash") {
-        throw apiError("This wash only accepts payment at the location — please select Pay at Location to continue.");
+      if (wash.service_type === "moto-mobile" && !["small", "medium"].includes(resolvedVehicleType)) {
+        throw apiError("This motorcycle-delivered wash can only service small and medium vehicles — try a home-service (van) or a fixed location for larger vehicles.");
       }
 
       let addons = [];
@@ -470,7 +482,11 @@ const DemoAPI = {
       // fall back to the legacy flat-surcharge model.
       let basePrice;
       const vp = wash.vehicle_pricing && wash.vehicle_pricing[resolvedVehicleType];
-      if (vp) {
+      if (washType === "interior") {
+        const interiorPrice = vp ? vp.interior : wash.interior_price;
+        if (interiorPrice == null) throw apiError("This wash doesn't offer an interior-only option.");
+        basePrice = parseFloat(interiorPrice);
+      } else if (vp) {
         basePrice = parseFloat(washType === "full" ? vp.full : vp.exterior);
       } else {
         const vehicleSurcharge = VEHICLE_SURCHARGE[resolvedVehicleType] ?? 0;
@@ -486,9 +502,10 @@ const DemoAPI = {
       const preTaxAmount = Math.round((total / (1 + VAT_RATE)) * 100) / 100;
       const tax = Math.round((total - preTaxAmount) * 100) / 100;
 
-      // Cash is settled later in person (unpaid until then); everything
-      // else is treated as paid immediately (no real payment gateway here).
-      const paymentStatus = paymentMethodType === "cash" ? "unpaid" : "paid";
+      // Pay on Delivery is settled later in person (unpaid until then);
+      // everything else is treated as paid immediately (no real payment
+      // gateway here).
+      const paymentStatus = paymentMethodType === "cod" ? "unpaid" : "paid";
       const pointsEarned = paymentStatus === "paid" ? Math.round(total * parseFloat(wash.points_rate || 1)) : 0;
       const initialStatus = wash.auto_accept === false ? "pending" : "confirmed";
 
@@ -497,7 +514,8 @@ const DemoAPI = {
         user_id: user.id, car_wash_id: carWashId, vehicle_id: vehicleId || null, wash_type: washType,
         addons, booking_date: date, booking_time: time, base_price: basePrice, addons_price: addonsPrice,
         tax, total_price: total, payment_method_id: paymentMethodId || null, payment_method_type: paymentMethodType,
-        payment_status: paymentStatus, address: (address && address.trim()) || null, special_requests: specialRequests || null,
+        payment_status: paymentStatus, address: resolvedAddress, address_lat: resolvedAddressLat, address_lng: resolvedAddressLng,
+        special_requests: specialRequests || null,
         points_earned: pointsEarned, status: initialStatus, cancelled_by: null, cancellation_reason: null,
         created_at: new Date().toISOString()
       };
@@ -610,7 +628,7 @@ const DemoAPI = {
         name, serviceType, location, address, exteriorPrice, fullWashAddon,
         pointsRate, autoAccept, concurrentSlots, slotIntervalMinutes,
         serviceRadiusKm, operatingHours, description, imageUrl, extras,
-        vehiclePricing, requireCashOnly, galleryImages
+        vehiclePricing, galleryImages
       } = body;
       if (!name || !name.trim()) throw apiError("Please name your wash place.");
       if (!["location", "home-service", "moto-mobile"].includes(serviceType)) throw apiError("Please choose a valid service type.");
@@ -619,14 +637,14 @@ const DemoAPI = {
       const isMobile = serviceType !== "location";
       const wash = {
         id: db.nextId.carWash++, owner_id: user.id, name: name.trim(), service_type: serviceType,
-        location: location ? location.trim() : (isMobile ? "Comes to your home" : null),
+        location: location ? location.trim() : null,
         address: address || null, distance_km: 0, rating: 4.5, review_count: 0, wait_time_minutes: isMobile ? 0 : 15,
         exterior_price: exteriorPrice, full_wash_addon: fullWashAddon || 0, points_rate: pointsRate || 1.0,
         auto_accept: autoAccept !== false, concurrent_slots: concurrentSlots || (isMobile ? 1 : 2),
         slot_interval_minutes: slotIntervalMinutes || (isMobile ? 45 : 15),
         service_radius_km: isMobile ? (serviceRadiusKm || 15) : null,
         operating_hours: operatingHours || { is24_7: true, schedule: {} },
-        vehicle_pricing: vehiclePricing || null, require_cash_only: !!requireCashOnly,
+        vehicle_pricing: vehiclePricing || null,
         gallery_images: Array.isArray(galleryImages) ? galleryImages : [], image_url: imageUrl || null, description: description || null
       };
       db.carWashes.push(wash);
@@ -651,7 +669,7 @@ const DemoAPI = {
         concurrentSlots: "concurrent_slots", slotIntervalMinutes: "slot_interval_minutes",
         serviceRadiusKm: "service_radius_km", operatingHours: "operating_hours",
         description: "description", imageUrl: "image_url", galleryImages: "gallery_images",
-        vehiclePricing: "vehicle_pricing", requireCashOnly: "require_cash_only"
+        vehiclePricing: "vehicle_pricing"
       };
       Object.keys(map).forEach(key => {
         if (fields[key] !== undefined) wash[map[key]] = fields[key];

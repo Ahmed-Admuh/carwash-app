@@ -17,7 +17,7 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/", (req, res) => {
-  res.send("Car Wash Finder API is running.");
+  res.send("Sabouna API is running.");
 });
 
 app.use("/api/auth", authRoutes);
@@ -38,5 +38,5 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Car Wash Finder API running on http://localhost:${PORT}`);
+  console.log(`Sabouna API running on http://localhost:${PORT}`);
 });

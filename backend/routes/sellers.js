@@ -35,12 +35,13 @@ router.get("/washes", async (req, res) => {
 //         serviceRadiusKm, operatingHours, description, imageUrl,
 //         extras: [{ name, price, appliesTo }] }
 router.post("/washes", async (req, res) => {
+  const client = await pool.connect();
   try {
     const {
       name, serviceType, location, address, exteriorPrice, fullWashAddon,
       pointsRate, autoAccept, concurrentSlots, slotIntervalMinutes,
       serviceRadiusKm, operatingHours, description, imageUrl, extras,
-      vehiclePricing, requireCashOnly, galleryImages,
+      vehiclePricing, galleryImages,
       latitude, longitude, serviceAreaLat, serviceAreaLng
     } = req.body;
 
@@ -58,13 +59,15 @@ router.post("/washes", async (req, res) => {
 
     const isMobile = serviceType !== "location";
 
-    const result = await pool.query(
+    await client.query("BEGIN");
+
+    const result = await client.query(
       `INSERT INTO car_washes
         (owner_id, name, service_type, location, address, exterior_price, full_wash_addon,
          points_rate, auto_accept, concurrent_slots, slot_interval_minutes, service_radius_km,
-         operating_hours, description, image_url, vehicle_pricing, require_cash_only, gallery_images,
+         operating_hours, description, image_url, vehicle_pricing, gallery_images,
          latitude, longitude, service_area_lat, service_area_lng)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
        RETURNING *`,
       [
         req.user.id, name.trim(), serviceType,
@@ -75,7 +78,6 @@ router.post("/washes", async (req, res) => {
         JSON.stringify(operatingHours || { is24_7: true, schedule: {} }),
         description || null, imageUrl || null,
         vehiclePricing ? JSON.stringify(vehiclePricing) : null,
-        !!requireCashOnly,
         JSON.stringify(Array.isArray(galleryImages) ? galleryImages : []),
         !isMobile ? (latitude ?? null) : null,
         !isMobile ? (longitude ?? null) : null,
@@ -88,17 +90,21 @@ router.post("/washes", async (req, res) => {
     if (Array.isArray(extras)) {
       for (const extra of extras) {
         if (!extra.name || extra.price == null) continue;
-        await pool.query(
+        await client.query(
           "INSERT INTO addon_services (car_wash_id, name, price, applies_to) VALUES ($1,$2,$3,$4)",
           [wash.id, extra.name, extra.price, extra.appliesTo || "both"]
         );
       }
     }
 
+    await client.query("COMMIT");
     res.status(201).json(wash);
   } catch (err) {
+    await client.query("ROLLBACK");
     console.error(err);
     res.status(500).json({ error: "Could not add wash place." });
+  } finally {
+    client.release();
   }
 });
 
@@ -116,7 +122,7 @@ router.patch("/washes/:id", async (req, res) => {
       name, location, address, exteriorPrice, fullWashAddon, pointsRate,
       autoAccept, concurrentSlots, slotIntervalMinutes, serviceRadiusKm,
       operatingHours, description, imageUrl, galleryImages,
-      vehiclePricing, requireCashOnly,
+      vehiclePricing,
       latitude, longitude, serviceAreaLat, serviceAreaLng
     } = req.body;
 
@@ -129,9 +135,9 @@ router.patch("/washes/:id", async (req, res) => {
          name = $1, location = $2, address = $3, exterior_price = $4, full_wash_addon = $5,
          points_rate = $6, auto_accept = $7, concurrent_slots = $8, slot_interval_minutes = $9,
          service_radius_km = $10, operating_hours = $11, description = $12, image_url = $13,
-         gallery_images = $14, vehicle_pricing = $15, require_cash_only = $16,
-         latitude = $17, longitude = $18, service_area_lat = $19, service_area_lng = $20
-       WHERE id = $21 RETURNING *`,
+         gallery_images = $14, vehicle_pricing = $15,
+         latitude = $16, longitude = $17, service_area_lat = $18, service_area_lng = $19
+       WHERE id = $20 RETURNING *`,
       [
         name ?? current.name, location ?? current.location, address ?? current.address,
         exteriorPrice ?? current.exterior_price, fullWashAddon ?? current.full_wash_addon,
@@ -142,7 +148,6 @@ router.patch("/washes/:id", async (req, res) => {
         description ?? current.description, imageUrl ?? current.image_url,
         JSON.stringify(galleryImages || current.gallery_images),
         vehiclePricing ? JSON.stringify(vehiclePricing) : (current.vehicle_pricing ? JSON.stringify(current.vehicle_pricing) : null),
-        requireCashOnly ?? current.require_cash_only,
         latitude ?? current.latitude, longitude ?? current.longitude,
         serviceAreaLat ?? current.service_area_lat, serviceAreaLng ?? current.service_area_lng,
         req.params.id

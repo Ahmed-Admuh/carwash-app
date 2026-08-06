@@ -11,6 +11,7 @@ const router = express.Router();
 // U V (Latin) — entered either in English or in their exact Arabic
 // counterpart (the frontend keeps both sides in sync automatically).
 const PLATE_RE = /^[ABJDRSXTEGKLZNHUVabjdrsxtegklznhuv\u0623\u0627\u0628\u062D\u062F\u0631\u0633\u0635\u0637\u0639\u0642\u0643\u0644\u0645\u0646\u0647\u0648\u0649\u064A]{1,3}\s\d{1,4}$/;
+const VALID_VEHICLE_TYPES = ["small", "medium", "large", "xlarge"];
 
 // GET /api/vehicles
 router.get("/", requireAuth, async (req, res) => {
@@ -31,6 +32,9 @@ router.post("/", requireAuth, async (req, res) => {
   try {
     const { model, plate, vehicleType } = req.body;
     if (!vehicleType) return res.status(400).json({ error: "Please choose a vehicle type." });
+    if (!VALID_VEHICLE_TYPES.includes(vehicleType)) {
+      return res.status(400).json({ error: "Please choose a valid vehicle size (small, medium, large, or x-large)." });
+    }
     if (!plate || !PLATE_RE.test(plate.trim())) {
       return res.status(400).json({ error: "Please enter a valid plate — 1-3 letters, a space, then 1-4 digits (e.g. ABC 1234)." });
     }

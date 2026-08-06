@@ -40,6 +40,7 @@ function publicUser(row) {
 //   operatingHours, extras: [{ name, price, appliesTo }]
 // }
 router.post("/signup", async (req, res) => {
+  const client = await pool.connect();
   try {
     const { name, email, password, role, business } = req.body;
     const accountRole = role === "seller" ? "seller" : "customer";
@@ -68,13 +69,15 @@ router.post("/signup", async (req, res) => {
       }
     }
 
-    const existing = await pool.query("SELECT id FROM users WHERE email = $1", [email.trim().toLowerCase()]);
+    const existing = await client.query("SELECT id FROM users WHERE email = $1", [email.trim().toLowerCase()]);
     if (existing.rows.length > 0) {
       return res.status(409).json({ error: "An account with this email already exists. Try logging in instead." });
     }
 
+    await client.query("BEGIN");
+
     const passwordHash = await bcrypt.hash(password, 10);
-    const result = await pool.query(
+    const result = await client.query(
       `INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING *`,
       [name.trim(), email.trim().toLowerCase(), passwordHash, accountRole]
     );
@@ -82,7 +85,7 @@ router.post("/signup", async (req, res) => {
 
     if (accountRole === "seller") {
       const isMobile = business.serviceType !== "location";
-      const washResult = await pool.query(
+      const washResult = await client.query(
         `INSERT INTO car_washes
           (owner_id, name, service_type, location, exterior_price, full_wash_addon, points_rate,
            auto_accept, concurrent_slots, slot_interval_minutes, service_radius_km, operating_hours, description,
@@ -98,7 +101,7 @@ router.post("/signup", async (req, res) => {
           business.slotIntervalMinutes || (isMobile ? 45 : 15),
           isMobile ? (business.serviceRadiusKm || 15) : null,
           JSON.stringify(business.operatingHours || { is24_7: true, schedule: {} }),
-          "New on Car Wash Finder — add photos and fine-tune details from your seller dashboard.",
+          "New on Sabouna — add photos and fine-tune details from your seller dashboard.",
           business.vehiclePricing ? JSON.stringify(business.vehiclePricing) : null,
           !isMobile ? (business.latitude ?? null) : null,
           !isMobile ? (business.longitude ?? null) : null,
@@ -110,7 +113,7 @@ router.post("/signup", async (req, res) => {
       if (Array.isArray(business.extras)) {
         for (const extra of business.extras) {
           if (!extra.name || extra.price == null) continue;
-          await pool.query(
+          await client.query(
             "INSERT INTO addon_services (car_wash_id, name, price, applies_to) VALUES ($1,$2,$3,$4)",
             [washResult.rows[0].id, extra.name, extra.price, extra.appliesTo || "both"]
           );
@@ -118,11 +121,15 @@ router.post("/signup", async (req, res) => {
       }
     }
 
+    await client.query("COMMIT");
     const token = signToken(user);
     res.status(201).json({ token, user: publicUser(user) });
   } catch (err) {
+    await client.query("ROLLBACK");
     console.error(err);
     res.status(500).json({ error: "Something went wrong creating your account. Please try again." });
+  } finally {
+    client.release();
   }
 });
 

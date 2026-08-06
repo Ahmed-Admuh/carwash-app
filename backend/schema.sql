@@ -1,5 +1,5 @@
 -- ============================================================
--- Car Wash Finder — PostgreSQL schema (v3)
+-- Sabouna — PostgreSQL schema (v3)
 -- Run once against your local Postgres database, e.g.:
 --   createdb carwash
 --   psql -U postgres -d carwash -f schema.sql

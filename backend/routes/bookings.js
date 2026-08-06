@@ -267,8 +267,8 @@ router.patch("/:id/cancel", requireAuth, async (req, res) => {
       return res.status(404).json({ error: "Booking not found, already cancelled, or already completed." });
     }
 
-    // If this booking was already paid (card/Apple Pay, or cash already
-    // collected), the points it earned get taken back along with it.
+    // If this booking was already paid (card/wallet, or Pay on Delivery
+    // already collected), the points it earned get taken back along with it.
     if (booking.payment_status === "paid" && booking.points_earned > 0) {
       await client.query(
         "UPDATE users SET points_balance = GREATEST(0, points_balance - $1) WHERE id = $2",

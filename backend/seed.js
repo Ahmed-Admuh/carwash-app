@@ -196,7 +196,7 @@ async function seed() {
   await pool.query(
     `INSERT INTO offers (title, description, icon, discount_text, scope, expires_at) VALUES
       ('20% Off New Users',
-       'Get 20% off your very first booking on Car Wash Finder — any location, any service type. Applied automatically at checkout on your first order.',
+       'Get 20% off your very first booking on Sabouna — any location, any service type. Applied automatically at checkout on your first order.',
        'fa-gift', '20% OFF', 'app-only', CURRENT_DATE + INTERVAL '30 days'),
       ('Monthly Value Pack — 4 Washes',
        'Prepay for 4 washes in a calendar month at any single location and get 15% off the total, worked out per-wash. Great for regular commuters — mention this offer when booking your first wash of the month.',
